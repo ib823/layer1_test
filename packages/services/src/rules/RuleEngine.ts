@@ -131,8 +131,8 @@ export class RuleEngine {
       if (hasConflict) {
         matches.push({
           userId,
-          conflictingRoles: rolesArray.filter(r => conflictingRoles.includes(r)),
-          allRoles: rolesArray,
+          roles: rolesArray,
+          conflictingRoles: conflictingRoles.filter(r => rolesArray.includes(r)),
           user,
         });
       }
@@ -143,7 +143,7 @@ export class RuleEngine {
 
   /**
    * Match threshold patterns
-   * Detects values exceeding/below thresholds
+   * Detects when values exceed/fall below thresholds
    */
   private matchThreshold(data: any, pattern: ThresholdPattern): any[] {
     const matches: any[] = [];
@@ -153,26 +153,32 @@ export class RuleEngine {
     const records = Array.isArray(data) ? data : [data];
 
     if (aggregation) {
-      // Aggregate before comparison
+      // Aggregate across all records
       const aggregatedValue = this.aggregate(records, field, aggregation);
-      if (this.compareValues(aggregatedValue, operator, value)) {
+      const meetsThreshold = this.compareValues(aggregatedValue, operator, value);
+
+      if (meetsThreshold) {
         matches.push({
-          aggregation,
           field,
+          aggregation,
           value: aggregatedValue,
           threshold: value,
+          operator,
           recordCount: records.length,
         });
       }
     } else {
-      // Compare each record
+      // Check each record individually
       for (const record of records) {
-        const fieldValue = this.getNestedValue(record, field);
-        if (this.compareValues(fieldValue, operator, value)) {
+        const recordValue = this.getNestedValue(record, field);
+        const meetsThreshold = this.compareValues(recordValue, operator, value);
+
+        if (meetsThreshold) {
           matches.push({
             field,
-            value: fieldValue,
+            value: recordValue,
             threshold: value,
+            operator,
             record,
           });
         }
@@ -183,7 +189,7 @@ export class RuleEngine {
   }
 
   /**
-   * Match generic patterns using JavaScript expressions
+   * Match generic patterns using custom conditions
    */
   private matchGenericPattern(data: any, pattern: GenericPattern): any[] {
     const matches: any[] = [];
@@ -300,22 +306,23 @@ export class RuleEngine {
   }
 
   /**
-   * Safely evaluate a condition expression
-   * WARNING: In production, use a proper sandboxed evaluation library
+   * Evaluate a condition string (SIMPLIFIED - production should use sandboxed eval)
+   * Example: "value > 1000 && record.status === 'ACTIVE'"
    */
   private evaluateCondition(condition: string, context: any): boolean {
     try {
-      // Create function with context variables
-      const func = new Function(...Object.keys(context), `return ${condition};`);
+      // WARNING: Using Function constructor is not safe for untrusted input
+      // In production, use a proper expression parser/sandbox like vm2 or expr-eval
+      const func = new Function(...Object.keys(context), `return ${condition}`);
       return func(...Object.values(context));
     } catch (error) {
-      console.error('Error evaluating condition:', error);
+      console.error(`Error evaluating condition: ${condition}`, error);
       return false;
     }
   }
 
   /**
-   * Get cached rule by ID
+   * Get cached rule
    */
   getRule(ruleId: string): Rule | undefined {
     return this.ruleCache.get(ruleId);
@@ -326,5 +333,15 @@ export class RuleEngine {
    */
   clearCache(): void {
     this.ruleCache.clear();
+  }
+
+  /**
+   * Get rule statistics
+   */
+  getStats() {
+    return {
+      cachedRules: this.ruleCache.size,
+      violationsDetected: this.violationCounter,
+    };
   }
 }
