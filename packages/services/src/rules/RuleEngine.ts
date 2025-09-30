@@ -39,7 +39,7 @@ export interface Violation {
 
 export interface SoDPattern {
   conflictingRoles: string[];
-  requiresAll?: boolean; // true = user must have ALL roles, false = ANY combination
+  requiresAll?: boolean;
   userIdField?: string;
   rolesField?: string;
 }
@@ -53,7 +53,7 @@ export interface ThresholdPattern {
 
 export interface GenericPattern {
   field: string;
-  condition: string; // JavaScript expression
+  condition: string;
   contextFields?: string[];
 }
 
@@ -61,21 +61,14 @@ export class RuleEngine {
   private ruleCache: Map<string, Rule> = new Map();
   private violationCounter: number = 0;
 
-  /**
-   * Evaluate data against a set of rules
-   */
   async evaluate(data: any, rules: Rule[]): Promise<Violation[]> {
     const violations: Violation[] = [];
 
     for (const rule of rules) {
-      // Cache rule for performance
       this.ruleCache.set(rule.id, rule);
-
-      // Match pattern and get violations
       const matches = await this.matchPattern(data, rule.pattern);
       
       if (matches.length > 0) {
-        // Create violations for each match
         for (const match of matches) {
           violations.push(this.createViolation(rule, match));
         }
@@ -85,45 +78,30 @@ export class RuleEngine {
     return violations;
   }
 
-  /**
-   * Pattern matching dispatcher
-   */
   private async matchPattern(data: any, pattern: Rule['pattern']): Promise<any[]> {
     switch (pattern.type) {
       case 'SOD':
         return this.matchSoDPattern(data, pattern.definition as SoDPattern);
-      
       case 'THRESHOLD':
         return this.matchThreshold(data, pattern.definition as ThresholdPattern);
-      
       case 'PATTERN':
         return this.matchGenericPattern(data, pattern.definition as GenericPattern);
-      
       default:
         console.warn(`Unknown pattern type: ${pattern.type}`);
         return [];
     }
   }
 
-  /**
-   * Match Segregation of Duties (SoD) patterns
-   * Detects users with conflicting role combinations
-   */
   private matchSoDPattern(data: any, pattern: SoDPattern): any[] {
     const matches: any[] = [];
     const { conflictingRoles, requiresAll = true, userIdField = 'userId', rolesField = 'roles' } = pattern;
-
-    // Ensure data is array
     const users = Array.isArray(data) ? data : [data];
 
     for (const user of users) {
       const userId = user[userIdField];
       const userRoles = user[rolesField] || [];
-
-      // Convert to array if needed
       const rolesArray = Array.isArray(userRoles) ? userRoles : [userRoles];
 
-      // Check if user has conflicting roles
       const hasConflict = requiresAll
         ? conflictingRoles.every(role => rolesArray.includes(role))
         : conflictingRoles.some(role => rolesArray.includes(role));
@@ -141,19 +119,12 @@ export class RuleEngine {
     return matches;
   }
 
-  /**
-   * Match threshold patterns
-   * Detects when values exceed/fall below thresholds
-   */
   private matchThreshold(data: any, pattern: ThresholdPattern): any[] {
     const matches: any[] = [];
     const { field, operator, value, aggregation } = pattern;
-
-    // Ensure data is array
     const records = Array.isArray(data) ? data : [data];
 
     if (aggregation) {
-      // Aggregate across all records
       const aggregatedValue = this.aggregate(records, field, aggregation);
       const meetsThreshold = this.compareValues(aggregatedValue, operator, value);
 
@@ -168,7 +139,6 @@ export class RuleEngine {
         });
       }
     } else {
-      // Check each record individually
       for (const record of records) {
         const recordValue = this.getNestedValue(record, field);
         const meetsThreshold = this.compareValues(recordValue, operator, value);
@@ -188,30 +158,22 @@ export class RuleEngine {
     return matches;
   }
 
-  /**
-   * Match generic patterns using custom conditions
-   */
   private matchGenericPattern(data: any, pattern: GenericPattern): any[] {
     const matches: any[] = [];
     const { field, condition, contextFields = [] } = pattern;
-
-    // Ensure data is array
     const records = Array.isArray(data) ? data : [data];
 
     for (const record of records) {
       try {
-        // Build context for evaluation
         const context: any = {
           value: this.getNestedValue(record, field),
           record,
         };
 
-        // Add context fields
         for (const contextField of contextFields) {
           context[contextField] = this.getNestedValue(record, contextField);
         }
 
-        // Evaluate condition (safe evaluation in production would use a sandboxed environment)
         const result = this.evaluateCondition(condition, context);
 
         if (result) {
@@ -230,9 +192,6 @@ export class RuleEngine {
     return matches;
   }
 
-  /**
-   * Create a violation record
-   */
   private createViolation(rule: Rule, matchData: any): Violation {
     return {
       id: `VIOLATION-${++this.violationCounter}`,
@@ -245,9 +204,6 @@ export class RuleEngine {
     };
   }
 
-  /**
-   * Aggregate values from an array of records
-   */
   private aggregate(
     records: any[],
     field: string,
@@ -260,27 +216,19 @@ export class RuleEngine {
     switch (aggregation) {
       case 'SUM':
         return values.reduce((sum, v) => sum + v, 0);
-      
       case 'AVG':
         return values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
-      
       case 'MAX':
         return values.length > 0 ? Math.max(...values) : 0;
-      
       case 'MIN':
         return values.length > 0 ? Math.min(...values) : 0;
-      
       case 'COUNT':
         return values.length;
-      
       default:
         return 0;
     }
   }
 
-  /**
-   * Compare values based on operator
-   */
   private compareValues(
     actualValue: any,
     operator: ThresholdPattern['operator'],
@@ -297,22 +245,12 @@ export class RuleEngine {
     }
   }
 
-  /**
-   * Get nested value from object using dot notation
-   * Example: getNestedValue(obj, 'user.profile.name')
-   */
   private getNestedValue(obj: any, path: string): any {
     return path.split('.').reduce((current, key) => current?.[key], obj);
   }
 
-  /**
-   * Evaluate a condition string (SIMPLIFIED - production should use sandboxed eval)
-   * Example: "value > 1000 && record.status === 'ACTIVE'"
-   */
   private evaluateCondition(condition: string, context: any): boolean {
     try {
-      // WARNING: Using Function constructor is not safe for untrusted input
-      // In production, use a proper expression parser/sandbox like vm2 or expr-eval
       const func = new Function(...Object.keys(context), `return ${condition}`);
       return func(...Object.values(context));
     } catch (error) {
@@ -321,23 +259,14 @@ export class RuleEngine {
     }
   }
 
-  /**
-   * Get cached rule
-   */
   getRule(ruleId: string): Rule | undefined {
     return this.ruleCache.get(ruleId);
   }
 
-  /**
-   * Clear rule cache
-   */
   clearCache(): void {
     this.ruleCache.clear();
   }
 
-  /**
-   * Get rule statistics
-   */
   getStats() {
     return {
       cachedRules: this.ruleCache.size,
