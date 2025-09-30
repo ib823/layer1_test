@@ -1,26 +1,28 @@
+/**
+ * S/4HANA Connector - SAP S/4HANA Cloud/On-Premise
+ */
+
 import { BaseSAPConnector, SAPConnectorConfig } from '../base/BaseSAPConnector';
-import {
-  FrameworkError,
-  AuthenticationError,
-  ValidationError,
-  NotFoundError,
-} from '../../errors';
-import { RetryStrategy, RetryConfig } from '../../utils/retry';
-import { CircuitBreaker, CircuitBreakerConfig } from '../../utils/circuitBreaker';
-import { ODataQueryBuilder, escapeODataString } from '../../utils/odata';
 import {
   S4HANAUser,
   S4HANARole,
   S4HANAUserRole,
-  S4HANAQueryOptions,
   S4HANAODataResponse,
   S4HANABatchRequest,
   S4HANABatchResponse,
 } from './types';
+import { ODataQueryBuilder, escapeODataString } from '../../utils/odata';
+import { RetryStrategy, RetryConfig } from '../../utils/retry';
+import { CircuitBreaker, CircuitBreakerConfig } from '../../utils/circuitBreaker';
+import {
+  AuthenticationError,
+  ValidationError,
+  NotFoundError,
+  FrameworkError,
+} from '../../errors';
 
 export interface S4HANAConnectorConfig extends SAPConnectorConfig {
-  odata: {
-    version: 'v2' | 'v4';
+  odata?: {
     useBatch?: boolean;
     batchSize?: number;
   };
@@ -29,7 +31,6 @@ export interface S4HANAConnectorConfig extends SAPConnectorConfig {
 }
 
 export class S4HANAConnector extends BaseSAPConnector {
-  // Shadow parent config with correct type
   protected declare config: S4HANAConnectorConfig;
   
   private retryStrategy: RetryStrategy;
@@ -39,23 +40,17 @@ export class S4HANAConnector extends BaseSAPConnector {
   constructor(config: S4HANAConnectorConfig) {
     super(config);
 
-    // Initialize retry strategy
     this.retryStrategy = new RetryStrategy();
 
-    // Initialize circuit breaker
     this.circuitBreaker = new CircuitBreaker(
       config.circuitBreaker || {
         failureThreshold: 5,
         successThreshold: 2,
-        resetTimeout: 60000, // 1 minute
+        resetTimeout: 60000,
         name: 'S4HANA',
       }
     );
   }
-
-  // ============================================================
-  // USER-ROLE QUERIES (for SoD Analysis)
-  // ============================================================
 
   async getUserRoles(options: {
     activeOnly?: boolean;
@@ -64,7 +59,6 @@ export class S4HANAConnector extends BaseSAPConnector {
   }): Promise<S4HANAUserRole[]> {
     const query = new ODataQueryBuilder();
 
-    // Build filter
     const filters: string[] = [];
 
     if (options.activeOnly) {
@@ -141,10 +135,6 @@ export class S4HANAConnector extends BaseSAPConnector {
     );
   }
 
-  // ============================================================
-  // GENERIC ODATA QUERY
-  // ============================================================
-
   async executeQuery<T>(
     endpoint: string,
     queryBuilder: ODataQueryBuilder
@@ -167,36 +157,22 @@ export class S4HANAConnector extends BaseSAPConnector {
     });
   }
 
-  // ============================================================
-  // BATCH OPERATIONS
-  // ============================================================
-
-  async executeBatch(requests: S4HANABatchRequest[]): Promise<S4HANABatchResponse[]> {
+  async executeBatch(_requests: S4HANABatchRequest[]): Promise<S4HANABatchResponse[]> {
     if (!this.config.odata?.useBatch) {
       throw new ValidationError('Batch operations not enabled in configuration');
     }
 
-    // Implementation of OData batch protocol
-    // This is complex and requires proper multipart/mixed formatting
-    // For now, throw not implemented
     throw new Error('Batch operations not yet implemented');
   }
 
-  // ============================================================
-  // ABSTRACT METHOD IMPLEMENTATIONS
-  // ============================================================
-
   protected async getAuthToken(): Promise<string> {
-    // Check cache
     if (this.tokenCache && Date.now() < this.tokenCache.expiry) {
       return this.tokenCache.token;
     }
 
-    // Acquire new token
     try {
       const tokenResponse = await this.acquireOAuthToken();
 
-      // Cache token (with 5-minute buffer before expiry)
       this.tokenCache = {
         token: tokenResponse.access_token,
         expiry: Date.now() + (tokenResponse.expires_in - 300) * 1000,
@@ -212,13 +188,9 @@ export class S4HANAConnector extends BaseSAPConnector {
     access_token: string;
     expires_in: number;
   }> {
-    // OAuth token acquisition logic
-    // This depends on your auth config (client credentials, password, etc.)
-    const { type, credentials } = this.config.auth;
+    const { type } = this.config.auth;
 
     if (type === 'OAUTH') {
-      // Implement OAuth2 client credentials flow
-      // This is a placeholder - actual implementation depends on your setup
       throw new Error('OAuth token acquisition not implemented');
     }
 
@@ -229,7 +201,6 @@ export class S4HANAConnector extends BaseSAPConnector {
     const status = error.response?.status;
     const sapError = error.response?.data?.error;
 
-    // Map common SAP error codes
     switch (status) {
       case 400:
         return new ValidationError(
@@ -288,16 +259,10 @@ export class S4HANAConnector extends BaseSAPConnector {
   }
 
   protected getHealthCheckEndpoint(): string {
-    // Use OData service document as health check
     return '/sap/opu/odata/iwfnd/catalogservice;v=2';
   }
 
-  // ============================================================
-  // CONFIGURATION
-  // ============================================================
-
   private getRetryConfig(): RetryConfig {
-    // Always return complete RetryConfig by merging with defaults
     const defaults: RetryConfig = {
       maxRetries: 3,
       baseDelay: 1000,
@@ -310,10 +275,6 @@ export class S4HANAConnector extends BaseSAPConnector {
       ...this.config.retry,
     };
   }
-
-  // ============================================================
-  // UTILITIES
-  // ============================================================
 
   getCircuitBreakerState() {
     return this.circuitBreaker.getMetrics();

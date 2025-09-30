@@ -2,22 +2,18 @@ import { S4HANAConnector } from '../../src/connectors/s4hana';
 import { IPSConnector } from '../../src/connectors/ips';
 
 describe('S/4HANA + IPS Integration', () => {
-  // These tests require actual SAP systems - mark as skipped by default
   describe.skip('S/4HANA Connector', () => {
     let connector: S4HANAConnector;
 
     beforeAll(() => {
       connector = new S4HANAConnector({
-        baseUrl: process.env.S4_BASE_URL!,
+        baseUrl: process.env.S4_BASE_URL || 'https://example.com',
         auth: {
           type: 'OAUTH',
           credentials: {
             clientId: process.env.S4_CLIENT_ID,
             clientSecret: process.env.S4_CLIENT_SECRET,
           },
-        },
-        odata: {
-          version: 'v2',
         },
       });
     });
@@ -36,7 +32,7 @@ describe('S/4HANA + IPS Integration', () => {
 
     beforeAll(() => {
       connector = new IPSConnector({
-        baseUrl: process.env.IPS_BASE_URL!,
+        baseUrl: process.env.IPS_BASE_URL || 'https://example.com',
         auth: {
           type: 'OAUTH',
           credentials: {
