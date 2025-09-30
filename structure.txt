@@ -1,0 +1,169 @@
+.
+├── .git
+│   ├── FETCH_HEAD
+│   ├── HEAD
+│   ├── config
+│   ├── description
+│   ├── hooks
+│   │   ├── applypatch-msg.sample
+│   │   ├── commit-msg.sample
+│   │   ├── fsmonitor-watchman.sample
+│   │   ├── post-checkout
+│   │   ├── post-commit
+│   │   ├── post-merge
+│   │   ├── post-update.sample
+│   │   ├── pre-applypatch.sample
+│   │   ├── pre-commit.sample
+│   │   ├── pre-merge-commit.sample
+│   │   ├── pre-push
+│   │   ├── pre-push.sample
+│   │   ├── pre-rebase.sample
+│   │   ├── pre-receive.sample
+│   │   ├── prepare-commit-msg.sample
+│   │   ├── push-to-checkout.sample
+│   │   ├── sendemail-validate.sample
+│   │   └── update.sample
+│   ├── index
+│   ├── info
+│   │   └── exclude
+│   ├── lfs
+│   │   └── tmp
+│   ├── logs
+│   │   ├── HEAD
+│   │   └── refs
+│   │       ├── heads
+│   │       │   └── main
+│   │       └── remotes
+│   │           └── origin
+│   │               └── HEAD
+│   ├── objects
+│   │   ├── info
+│   │   └── pack
+│   │       ├── pack-97f107f1ae863eee28236176f6e9d995e2ad6e84.idx
+│   │       ├── pack-97f107f1ae863eee28236176f6e9d995e2ad6e84.pack
+│   │       └── pack-97f107f1ae863eee28236176f6e9d995e2ad6e84.rev
+│   ├── packed-refs
+│   └── refs
+│       ├── heads
+│       │   └── main
+│       ├── remotes
+│       │   └── origin
+│       │       └── HEAD
+│       └── tags
+├── .github
+│   └── workflows
+│       └── ci.yml
+├── .gitignore
+├── .husky
+│   └── _
+│       ├── .gitignore
+│       └── husky.sh
+├── .prettierignore
+├── .prettierrc
+├── .turbo
+│   ├── cookies
+│   │   ├── 1.cookie
+│   │   ├── 10.cookie
+│   │   ├── 2.cookie
+│   │   ├── 3.cookie
+│   │   ├── 4.cookie
+│   │   ├── 5.cookie
+│   │   ├── 6.cookie
+│   │   ├── 7.cookie
+│   │   ├── 8.cookie
+│   │   └── 9.cookie
+│   └── daemon
+│       └── b5dca4bacde29d20-turbo.log.2025-09-30
+├── README.md
+├── apps
+├── docs
+├── extract_status.sh
+├── infrastructure
+│   ├── cloud-foundry
+│   └── scripts
+├── package.json
+├── packages
+│   ├── api
+│   │   └── src
+│   │       ├── controllers
+│   │       ├── middleware
+│   │       └── routes
+│   ├── core
+│   │   ├── .eslintrc.json
+│   │   ├── .turbo
+│   │   │   └── turbo-build.log
+│   │   ├── README.md
+│   │   ├── jest.config.js
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   ├── auth
+│   │   │   │   ├── XSUAAProvider.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── cache
+│   │   │   │   ├── MemoryCache.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── config
+│   │   │   │   ├── ConfigManager.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── connectors
+│   │   │   │   ├── base
+│   │   │   │   │   └── BaseSAPConnector.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── ips
+│   │   │   │   │   ├── IPSConnector.ts
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── types.ts
+│   │   │   │   └── s4hana
+│   │   │   │       ├── S4HANAConnector.ts
+│   │   │   │       ├── index.ts
+│   │   │   │       └── types.ts
+│   │   │   ├── errors
+│   │   │   │   ├── FrameworkError.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── events
+│   │   │   │   ├── EventBus.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── index.ts
+│   │   │   ├── middleware
+│   │   │   │   └── index.ts
+│   │   │   ├── types
+│   │   │   │   └── index.ts
+│   │   │   └── utils
+│   │   │       ├── circuitBreaker.ts
+│   │   │       ├── index.ts
+│   │   │       ├── logger.ts
+│   │   │       ├── odata.ts
+│   │   │       └── retry.ts
+│   │   ├── tests
+│   │   │   ├── integration
+│   │   │   │   └── S4HANA-IPS.integration.test.ts
+│   │   │   └── unit
+│   │   │       ├── EventBus.test.ts
+│   │   │       ├── IPSConnector.test.ts
+│   │   │       ├── S4HANAConnector.test.ts
+│   │   │       ├── circuitBreaker.test.ts
+│   │   │       └── retry.test.ts
+│   │   ├── tsconfig.json
+│   │   └── tsconfig.tsbuildinfo
+│   └── services
+│       ├── .eslintrc.json
+│       ├── .turbo
+│       │   └── turbo-build.log
+│       ├── jest.config.js
+│       ├── package.json
+│       ├── src
+│       │   ├── analytics
+│       │   ├── export
+│       │   ├── index.ts
+│       │   ├── rules
+│       │   │   └── RuleEngine.ts
+│       │   └── workflow
+│       ├── tsconfig.json
+│       └── tsconfig.tsbuildinfo
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── structure.txt
+├── tsconfig.json
+└── turbo.json
+
+62 directories, 105 files

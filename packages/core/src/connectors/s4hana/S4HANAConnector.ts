@@ -1,0 +1,325 @@
+import { BaseSAPConnector, SAPConnectorConfig } from '../base/BaseSAPConnector';
+import {
+  FrameworkError,
+  AuthenticationError,
+  ValidationError,
+  NotFoundError,
+} from '../../errors';
+import { RetryStrategy, RetryConfig } from '../../utils/retry';
+import { CircuitBreaker, CircuitBreakerConfig } from '../../utils/circuitBreaker';
+import { ODataQueryBuilder, escapeODataString } from '../../utils/odata';
+import {
+  S4HANAUser,
+  S4HANARole,
+  S4HANAUserRole,
+  S4HANAQueryOptions,
+  S4HANAODataResponse,
+  S4HANABatchRequest,
+  S4HANABatchResponse,
+} from './types';
+
+export interface S4HANAConnectorConfig extends SAPConnectorConfig {
+  odata: {
+    version: 'v2' | 'v4';
+    useBatch?: boolean;
+    batchSize?: number;
+  };
+  retry?: RetryConfig;
+  circuitBreaker?: CircuitBreakerConfig;
+}
+
+export class S4HANAConnector extends BaseSAPConnector {
+  // Shadow parent config with correct type
+  protected declare config: S4HANAConnectorConfig;
+  
+  private retryStrategy: RetryStrategy;
+  private circuitBreaker: CircuitBreaker;
+  private tokenCache: { token: string; expiry: number } | null = null;
+
+  constructor(config: S4HANAConnectorConfig) {
+    super(config);
+
+    // Initialize retry strategy
+    this.retryStrategy = new RetryStrategy();
+
+    // Initialize circuit breaker
+    this.circuitBreaker = new CircuitBreaker(
+      config.circuitBreaker || {
+        failureThreshold: 5,
+        successThreshold: 2,
+        resetTimeout: 60000, // 1 minute
+        name: 'S4HANA',
+      }
+    );
+  }
+
+  // ============================================================
+  // USER-ROLE QUERIES (for SoD Analysis)
+  // ============================================================
+
+  async getUserRoles(options: {
+    activeOnly?: boolean;
+    userIds?: string[];
+    roleIds?: string[];
+  }): Promise<S4HANAUserRole[]> {
+    const query = new ODataQueryBuilder();
+
+    // Build filter
+    const filters: string[] = [];
+
+    if (options.activeOnly) {
+      const now = new Date().toISOString();
+      filters.push(`ValidFrom le datetime'${now}'`);
+      filters.push(`ValidTo ge datetime'${now}'`);
+    }
+
+    if (options.userIds && options.userIds.length > 0) {
+      const userFilter = options.userIds
+        .map((id) => `UserID eq ${escapeODataString(id)}`)
+        .join(' or ');
+      filters.push(`(${userFilter})`);
+    }
+
+    if (options.roleIds && options.roleIds.length > 0) {
+      const roleFilter = options.roleIds
+        .map((id) => `RoleID eq ${escapeODataString(id)}`)
+        .join(' or ');
+      filters.push(`(${roleFilter})`);
+    }
+
+    filters.forEach((f) => query.filter(f));
+
+    return await this.executeQuery<S4HANAUserRole>(
+      '/sap/opu/odata/sap/API_USER_ROLE_SRV/UserRoles',
+      query
+    );
+  }
+
+  async getUsers(options: {
+    activeOnly?: boolean;
+    userIds?: string[];
+  }): Promise<S4HANAUser[]> {
+    const query = new ODataQueryBuilder();
+
+    if (options.activeOnly) {
+      query.filter("IsLocked eq false");
+    }
+
+    if (options.userIds && options.userIds.length > 0) {
+      const userFilter = options.userIds
+        .map((id) => `UserID eq ${escapeODataString(id)}`)
+        .join(' or ');
+      query.filter(`(${userFilter})`);
+    }
+
+    return await this.executeQuery<S4HANAUser>(
+      '/sap/opu/odata/sap/API_USER_SRV/Users',
+      query
+    );
+  }
+
+  async getRoles(options: {
+    roleIds?: string[];
+    roleType?: string;
+  }): Promise<S4HANARole[]> {
+    const query = new ODataQueryBuilder();
+
+    if (options.roleIds && options.roleIds.length > 0) {
+      const roleFilter = options.roleIds
+        .map((id) => `RoleID eq ${escapeODataString(id)}`)
+        .join(' or ');
+      query.filter(`(${roleFilter})`);
+    }
+
+    if (options.roleType) {
+      query.filter(`RoleType eq ${escapeODataString(options.roleType)}`);
+    }
+
+    return await this.executeQuery<S4HANARole>(
+      '/sap/opu/odata/sap/API_ROLE_SRV/Roles',
+      query
+    );
+  }
+
+  // ============================================================
+  // GENERIC ODATA QUERY
+  // ============================================================
+
+  async executeQuery<T>(
+    endpoint: string,
+    queryBuilder: ODataQueryBuilder
+  ): Promise<T[]> {
+    const queryString = queryBuilder.build();
+    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
+
+    return await this.circuitBreaker.execute(async () => {
+      return await this.retryStrategy.executeWithRetry(
+        async () => {
+          const response = await this.request<S4HANAODataResponse<T>>({
+            method: 'GET',
+            url: url,
+          });
+
+          return response.d.results;
+        },
+        this.getRetryConfig()
+      );
+    });
+  }
+
+  // ============================================================
+  // BATCH OPERATIONS
+  // ============================================================
+
+  async executeBatch(requests: S4HANABatchRequest[]): Promise<S4HANABatchResponse[]> {
+    if (!this.config.odata?.useBatch) {
+      throw new ValidationError('Batch operations not enabled in configuration');
+    }
+
+    // Implementation of OData batch protocol
+    // This is complex and requires proper multipart/mixed formatting
+    // For now, throw not implemented
+    throw new Error('Batch operations not yet implemented');
+  }
+
+  // ============================================================
+  // ABSTRACT METHOD IMPLEMENTATIONS
+  // ============================================================
+
+  protected async getAuthToken(): Promise<string> {
+    // Check cache
+    if (this.tokenCache && Date.now() < this.tokenCache.expiry) {
+      return this.tokenCache.token;
+    }
+
+    // Acquire new token
+    try {
+      const tokenResponse = await this.acquireOAuthToken();
+
+      // Cache token (with 5-minute buffer before expiry)
+      this.tokenCache = {
+        token: tokenResponse.access_token,
+        expiry: Date.now() + (tokenResponse.expires_in - 300) * 1000,
+      };
+
+      return tokenResponse.access_token;
+    } catch (error) {
+      throw new AuthenticationError('Failed to acquire OAuth token', error);
+    }
+  }
+
+  private async acquireOAuthToken(): Promise<{
+    access_token: string;
+    expires_in: number;
+  }> {
+    // OAuth token acquisition logic
+    // This depends on your auth config (client credentials, password, etc.)
+    const { type, credentials } = this.config.auth;
+
+    if (type === 'OAUTH') {
+      // Implement OAuth2 client credentials flow
+      // This is a placeholder - actual implementation depends on your setup
+      throw new Error('OAuth token acquisition not implemented');
+    }
+
+    throw new AuthenticationError(`Unsupported auth type: ${type}`);
+  }
+
+  protected mapSAPError(error: any): FrameworkError {
+    const status = error.response?.status;
+    const sapError = error.response?.data?.error;
+
+    // Map common SAP error codes
+    switch (status) {
+      case 400:
+        return new ValidationError(
+          sapError?.message?.value || 'Invalid request',
+          sapError
+        );
+
+      case 401:
+        return new AuthenticationError(
+          sapError?.message?.value || 'Authentication failed',
+          sapError
+        );
+
+      case 403:
+        return new ValidationError(
+          sapError?.message?.value || 'Insufficient permissions',
+          sapError
+        );
+
+      case 404:
+        return new NotFoundError(
+          sapError?.message?.value || 'Resource not found',
+          sapError
+        );
+
+      case 429:
+        return new FrameworkError(
+          'Rate limit exceeded',
+          'RATE_LIMIT',
+          429,
+          true,
+          sapError
+        );
+
+      case 500:
+      case 502:
+      case 503:
+      case 504:
+        return new FrameworkError(
+          sapError?.message?.value || 'SAP system error',
+          'SAP_ERROR',
+          status,
+          true,
+          sapError
+        );
+
+      default:
+        return new FrameworkError(
+          error.message || 'Unknown error',
+          'UNKNOWN',
+          status || 500,
+          false,
+          sapError
+        );
+    }
+  }
+
+  protected getHealthCheckEndpoint(): string {
+    // Use OData service document as health check
+    return '/sap/opu/odata/iwfnd/catalogservice;v=2';
+  }
+
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
+
+  private getRetryConfig(): RetryConfig {
+    // Always return complete RetryConfig by merging with defaults
+    const defaults: RetryConfig = {
+      maxRetries: 3,
+      baseDelay: 1000,
+      backoffStrategy: 'EXPONENTIAL',
+      timeout: 30000,
+    };
+
+    return {
+      ...defaults,
+      ...this.config.retry,
+    };
+  }
+
+  // ============================================================
+  // UTILITIES
+  // ============================================================
+
+  getCircuitBreakerState() {
+    return this.circuitBreaker.getMetrics();
+  }
+
+  resetCircuitBreaker() {
+    this.circuitBreaker.reset();
+  }
+}
