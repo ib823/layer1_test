@@ -1,5 +1,6 @@
 .
 ├── .git
+│   ├── COMMIT_EDITMSG
 │   ├── FETCH_HEAD
 │   ├── HEAD
 │   ├── config
@@ -35,8 +36,192 @@
 │   │       │   └── main
 │   │       └── remotes
 │   │           └── origin
-│   │               └── HEAD
+│   │               ├── HEAD
+│   │               └── main
 │   ├── objects
+│   │   ├── 02
+│   │   │   └── 341ea493e057040377a86c32b103de66ac4575
+│   │   ├── 03
+│   │   │   ├── 5d4048c89d216b4abbb28010a9e7312a126956
+│   │   │   └── 6619fecd38ba69b7d1ee90acd42000b516b4ec
+│   │   ├── 06
+│   │   │   └── c910407e63b28e3c39889d0883d45266b4d264
+│   │   ├── 0c
+│   │   │   └── 49abdc920b5580393a27192081440d3e6955a4
+│   │   ├── 11
+│   │   │   ├── 36e1c01bc813bd07f80a206cb511a947f2a4b8
+│   │   │   └── 56c55cfb8d0cbda95b0a7212904701f575c94f
+│   │   ├── 14
+│   │   │   └── 2bbe1cdfee97ecdc18f0e2c5d0af93d4468023
+│   │   ├── 18
+│   │   │   └── a9a8e5889f2660db2b7337ddf6078afef2efbb
+│   │   ├── 19
+│   │   │   └── 766f8f335121526270a58619b2b255ddc7d909
+│   │   ├── 1d
+│   │   │   ├── 568fc03fdcde3bb23de76d7251c80a20e38342
+│   │   │   └── def23147aaa73e4b10dfbba9b84946d70cfc6c
+│   │   ├── 1e
+│   │   │   ├── 649ff8fbb3c2b53c0da6089bad84e5e5f67940
+│   │   │   └── df297d5806095d3cab768a310b3c37f03fb667
+│   │   ├── 23
+│   │   │   └── 8708246047836d35582fea5aa9a675a1c8006f
+│   │   ├── 25
+│   │   │   ├── 9b5cf346495ac11f9a988c05fd58be038bb449
+│   │   │   └── ec89e608a050731c8f4ec3c206cb87eff44c84
+│   │   ├── 28
+│   │   │   └── b17e8416ca242394a87fd3ddc5b279c8982920
+│   │   ├── 2c
+│   │   │   └── 174fc6ccf014b27b6c2dc32bab1a30e9467d5a
+│   │   ├── 30
+│   │   │   ├── b0ab63f34081847dbf32b33a8e518815b4c696
+│   │   │   └── f6c3925668ffdebe5a2a6e9958c0ff9223d653
+│   │   ├── 39
+│   │   │   ├── 3bc3d266b798a64b77202499315dd458df3327
+│   │   │   ├── ca97079f220e047f2a20f2c742cb458dc92c65
+│   │   │   └── cf1d42bca193d6783b88c4e54a9d35f974f77e
+│   │   ├── 44
+│   │   │   └── 3ca3aaf747891c07d6f7ee08cf21008b5f5c78
+│   │   ├── 46
+│   │   │   ├── 4f007f4580fa67cb44e1f687a9445e50aea6f6
+│   │   │   └── 6e08cc8a2cbb7baedea0c9d9a0595ee518354f
+│   │   ├── 4b
+│   │   │   ├── 708063f52190a17bd71a0a84a43da15e7bae9d
+│   │   │   └── e2feff823661c909689a6583732614dfd8c33b
+│   │   ├── 4e
+│   │   │   └── a32267f3b38e383a56929e14e60a09cfe75098
+│   │   ├── 4f
+│   │   │   └── 1a614e211e5267111ff6e9300505e7d5e4852d
+│   │   ├── 50
+│   │   │   └── 64d5c2952848f06a719d33ce19a3f1db8203d3
+│   │   ├── 51
+│   │   │   └── c14359b0483bf49a999a6466da2f8e36c66fd3
+│   │   ├── 54
+│   │   │   ├── 9185a91c3ed57214189ef22d01e427dd7c28a0
+│   │   │   └── a5685efcd2aad4ad70460d435ec2f85eef6f78
+│   │   ├── 59
+│   │   │   └── b77a05d9dc96866574093207a8fd741fb65eb3
+│   │   ├── 5b
+│   │   │   └── 0f682a578003bed9f47afb91b359ca9392388a
+│   │   ├── 5f
+│   │   │   └── 2f03acc31522850b262b023a0dd408f4a1fc88
+│   │   ├── 62
+│   │   │   └── d4217c2274c29cfdd6de9fe11c2960f925597f
+│   │   ├── 64
+│   │   │   └── 875e2ea80d36f999f86aef8b3db3ed5b0170f6
+│   │   ├── 69
+│   │   │   └── 19fd9c2b0a74be14c95a93692921b5f991c6cf
+│   │   ├── 6c
+│   │   │   └── aba43e17bfb26eec43d14dbfafc1e70a0eff92
+│   │   ├── 70
+│   │   │   └── 388b9fc78906dd46cc910ab4a50d8ccb21fca7
+│   │   ├── 77
+│   │   │   └── 4276c1d93c7a0bcba5bd6ccf6a13237d214e3c
+│   │   ├── 79
+│   │   │   └── 469bbb17b538f7478b19ef7f340751818b5bd1
+│   │   ├── 7b
+│   │   │   └── eaba3dbc88d756bcb33b695139a9197b11fd24
+│   │   ├── 7c
+│   │   │   ├── 2e379a6fceb564b9a8f46b6e01dfcbd829d61d
+│   │   │   └── e2a9983e14543dcd3acb25b268443160e14adf
+│   │   ├── 7f
+│   │   │   ├── 98eb319d56c5c9966051b04e435225d5c91201
+│   │   │   └── d4f3cad45f9e81b1debd957537c994d8c201c2
+│   │   ├── 82
+│   │   │   └── 1513c5b3ba5c3f211b62b6e9173421eb2c4adf
+│   │   ├── 86
+│   │   │   └── 48423cb061c8d6ce8dd7df954c04bd120c1180
+│   │   ├── 87
+│   │   │   └── d9b7585efc1ba0374c7f4a875874e4d1eb5053
+│   │   ├── 8a
+│   │   │   ├── 02ab7651dfd8dcc1761607deda3770d4cedde7
+│   │   │   └── 081d33a5ade29f769c0808ea7fe999834683be
+│   │   ├── 8b
+│   │   │   └── 84b902b69204a07c034c6222a441e19c4684d9
+│   │   ├── 8c
+│   │   │   └── ec2e9ced0d3575a0f7b97c7396d5bcefe0ea5e
+│   │   ├── 8d
+│   │   │   └── 633f6bc79922745dfecbbf92dc81a79f7a3464
+│   │   ├── 91
+│   │   │   └── be387e2f041ef1e2ba583c39c835dc7d1b0b75
+│   │   ├── 96
+│   │   │   └── 7d744adedea1760a608606ceab767a77777d8a
+│   │   ├── 97
+│   │   │   └── 6959e707e5ff83e0f5e5a05ce82023db002430
+│   │   ├── 98
+│   │   │   └── 43eeae4efb9dc5b1a621b13199c952eab4957e
+│   │   ├── 9b
+│   │   │   └── 589589c95632cb00977c5346b86fc6ea72b15f
+│   │   ├── a5
+│   │   │   └── cea30d84073217a0590be6940b63b4fe9fbbc9
+│   │   ├── ac
+│   │   │   └── a1f2ff1d6a78dc58670d96cd1f851eb3b54470
+│   │   ├── ad
+│   │   │   ├── 154c265a817f6884bc9120609142c60f8c267b
+│   │   │   └── 9d5fd29af9656574c5b8ddf6919b5ef5983ce0
+│   │   ├── ae
+│   │   │   └── c4e25afac7f2c2296cd995aef03bbd6fc6888e
+│   │   ├── b1
+│   │   │   ├── 9b4e351ee2988d55ad93c674b110f49114a802
+│   │   │   └── ccb6ec02054e267fe8f9dc024152bd74b54c21
+│   │   ├── b3
+│   │   │   └── c786f7de22c8d315534590ec01a49d9900330a
+│   │   ├── b7
+│   │   │   └── 757216da59347036aaf59faa5755f3a16d8162
+│   │   ├── b8
+│   │   │   └── 15a70e704aafcd73c0208b653ca819b15cf45d
+│   │   ├── bc
+│   │   │   └── d1d2e69d4b25668868c176ff8de1ea021f2b56
+│   │   ├── bd
+│   │   │   └── d9b1988e551c7fb6e5df1261d37ffbc54d0386
+│   │   ├── be
+│   │   │   └── 4899c14682a7599c95b3de79063bc49f84e856
+│   │   ├── c1
+│   │   │   └── 10ecbf88fd8fead3e90e851165b582d5d4aba3
+│   │   ├── c5
+│   │   │   ├── 3b6cf110a0cbb6a3dc11de9f67f1bc329339b4
+│   │   │   └── f89ef7fb37c625359148cd1915d9c44cc0c39b
+│   │   ├── c6
+│   │   │   └── a081e1243a6798014eff1fe8b6a8031b50ae73
+│   │   ├── c7
+│   │   │   └── b5621c66361537e7eb258ddd0bcd8723a9f895
+│   │   ├── c8
+│   │   │   └── fc045c3a7a5a07a76a4bac7fdbfef8c97c967f
+│   │   ├── c9
+│   │   │   └── c141b234935df9a7a9ff88fd46aa10a8f1a3d2
+│   │   ├── d4
+│   │   │   ├── 28e902e56aed32d872be006943c7869abf3cc1
+│   │   │   ├── 51c5ba246199fda44ec7db1ef204b89b56a6b5
+│   │   │   └── 77db18a167ff2ad1c63fc8e8ebf5d9e99f6462
+│   │   ├── da
+│   │   │   └── 7b45665a315ec7aa83db9cf3a896801ee15990
+│   │   ├── dd
+│   │   │   └── a2e45454ea230ce8e740e1204ebfb8889aba19
+│   │   ├── e0
+│   │   │   └── c767f5fb9b5fd9bd75261a60be81e2c764d7e2
+│   │   ├── e3
+│   │   │   └── 807338f736db533a35de83ca3d689252c4dd27
+│   │   ├── e5
+│   │   │   └── 99a207186798daca6b6730b345d5b191ef0a8e
+│   │   ├── e6
+│   │   │   └── 9de29bb2d1d6434b8b29ae775ad8c2e48c5391
+│   │   ├── e7
+│   │   │   └── 07f935dd36f191bd784913f52c452e6caa98be
+│   │   ├── f2
+│   │   │   └── 32625825aab5c55359379ca13a559e20809a84
+│   │   ├── f4
+│   │   │   └── da0ca2aa08a9725ad34397e849bd9e10574b87
+│   │   ├── f5
+│   │   │   └── c921f9a57ef89ff4ca8c56568b31e7aea6fbe8
+│   │   ├── f7
+│   │   │   ├── 1e3eaaa2354f37c1e8e24fe5e79efd4401003d
+│   │   │   └── 9f8fff371b9167dc29852ffe0b38fc89bf06f9
+│   │   ├── fa
+│   │   │   ├── 0f9eed44fd2ff1e12a2c69d76064109e6e0a77
+│   │   │   └── 39b4a2a4dabdc96d48d72cd3233158ccb2f1da
+│   │   ├── fb
+│   │   │   └── 79f0312e50aac0e34c651cce3d1ddf4b59230c
+│   │   ├── fd
+│   │   │   └── c249c59e5c9e77b70ecdb65c36fbb0ef62f35f
 │   │   ├── info
 │   │   └── pack
 │   │       ├── pack-97f107f1ae863eee28236176f6e9d995e2ad6e84.idx
@@ -48,7 +233,8 @@
 │       │   └── main
 │       ├── remotes
 │       │   └── origin
-│       │       └── HEAD
+│       │       ├── HEAD
+│       │       └── main
 │       └── tags
 ├── .github
 │   └── workflows
@@ -63,15 +249,13 @@
 ├── .turbo
 │   ├── cookies
 │   │   ├── 1.cookie
-│   │   ├── 10.cookie
 │   │   ├── 2.cookie
 │   │   ├── 3.cookie
 │   │   ├── 4.cookie
 │   │   ├── 5.cookie
 │   │   ├── 6.cookie
 │   │   ├── 7.cookie
-│   │   ├── 8.cookie
-│   │   └── 9.cookie
+│   │   └── 8.cookie
 │   └── daemon
 │       └── b5dca4bacde29d20-turbo.log.2025-09-30
 ├── README.md
@@ -145,6 +329,18 @@
 │   │   │       └── retry.test.ts
 │   │   ├── tsconfig.json
 │   │   └── tsconfig.tsbuildinfo
+│   ├── modules
+│   │   └── user-access-review
+│   │       ├── package.json
+│   │       ├── src
+│   │       │   ├── UserAccessReviewer.ts
+│   │       │   ├── rules
+│   │       │   │   └── sodRules.ts
+│   │       │   ├── types
+│   │       │   ├── types.ts
+│   │       │   └── utils
+│   │       ├── tests
+│   │       └── tsconfig.json
 │   └── services
 │       ├── .eslintrc.json
 │       ├── .turbo
@@ -166,4 +362,4 @@
 ├── tsconfig.json
 └── turbo.json
 
-62 directories, 105 files
+150 directories, 213 files
