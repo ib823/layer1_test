@@ -1,3 +1,5 @@
+import { DiscoveryResult } from '../connectors/base/ServiceDiscoveryTypes';
+
 export interface TenantRecord {
   id: string;
   tenant_id: string;
