@@ -165,6 +165,8 @@ export class S4HANAConnector extends BaseSAPConnector {
     throw new Error('Batch operations not yet implemented');
   }
 
+  // Shadow parent config with correct type
+  
   protected async getAuthToken(): Promise<string> {
     if (this.tokenCache && Date.now() < this.tokenCache.expiry) {
       return this.tokenCache.token;

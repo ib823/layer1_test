@@ -87,6 +87,13 @@ export abstract class BaseSAPConnector extends EventEmitter {
     return response.data;
   }
   
+  /**
+   * Public method for external classes (like ServiceDiscovery) to make requests
+   */
+  public async executeRequest<T = any>(config: AxiosRequestConfig): Promise<T> {
+    return this.request<T>(config);
+  }
+
   protected abstract getAuthToken(): Promise<string>;
   
   protected abstract mapSAPError(error: any): FrameworkError;

@@ -23,5 +23,8 @@ export * from './config';
 // Utils
 export * from './utils';
 
-// Types (basic types only, no FrameworkError interface)
-export type { HealthCheckResult, TokenPayload, LogLevel, LoggerConfig } from './types';
+// Types
+export * from './types';
+
+// Persistence (NEW)
+export * from './persistence';
