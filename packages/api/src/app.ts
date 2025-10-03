@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import swaggerUi from 'swagger-ui-express';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { auditLog } from './middleware/auditLog';
+import { enforceDataResidency } from './middleware/dataResidency';
 import { config } from './config';
 import logger from './utils/logger';
 import { swaggerSpec } from './swagger';
@@ -42,6 +44,12 @@ export function createApp(): Application {
   // Rate limiting
   const limiter = rateLimit(config.api.rateLimit);
   app.use('/api/', limiter);
+
+  // Data residency enforcement (after auth, before routes)
+  app.use(enforceDataResidency());
+
+  // Audit logging (log all requests)
+  app.use(auditLog());
 
   // API Documentation (Swagger UI)
   app.use(

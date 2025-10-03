@@ -61,4 +61,11 @@ router.use('/monitoring', monitoringRoutes);
  */
 router.use('/modules/sod', sodRoutes);
 
+/**
+ * Compliance Routes
+ * Prefix: /api/compliance
+ */
+import gdprRoutes from './compliance/gdpr';
+router.use('/compliance/gdpr', gdprRoutes);
+
 export default router;

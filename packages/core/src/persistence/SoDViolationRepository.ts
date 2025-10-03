@@ -404,6 +404,20 @@ export class SoDViolationRepository {
   }
 
   /**
+   * Get violations for a specific user
+   */
+  async getViolationsByUser(tenantId: string, userId: string): Promise<SoDViolation[]> {
+    const query = `
+      SELECT * FROM sod_violations
+      WHERE tenant_id = $1 AND user_id = $2
+      ORDER BY detected_at DESC
+    `;
+
+    const result = await this.pool.query(query, [tenantId, userId]);
+    return result.rows.map(this.mapViolation);
+  }
+
+  /**
    * Delete old violations (data retention)
    */
   async deleteOldViolations(tenantId: string, olderThanDays: number): Promise<number> {

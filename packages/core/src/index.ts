@@ -22,9 +22,16 @@ export * from './config';
 
 // Utils
 export * from './utils';
+export * from './utils/piiMasking';
+export * from './utils/dbEncryptionValidator';
 
 // Types
 export * from './types';
 
 // Persistence (NEW)
 export * from './persistence';
+export * from './persistence/SoDViolationRepository';
+
+// Services
+export * from './services/GDPRService';
+export * from './services/DataRetentionService';
