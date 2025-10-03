@@ -12,8 +12,28 @@ export class MonitoringController {
   }
 
   /**
-   * GET /api/monitoring/health
-   * Get overall system health
+   * @swagger
+   * /monitoring/health:
+   *   get:
+   *     summary: System health check
+   *     description: Get overall system health status including database and connectors
+   *     tags: [Monitoring]
+   *     responses:
+   *       200:
+   *         description: System is healthy
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   enum: [UP, DOWN, DEGRADED]
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
+   *       503:
+   *         description: System is down
    */
   async getHealth(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

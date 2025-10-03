@@ -11,8 +11,48 @@ export class SoDController {
   constructor(private tenantRepo: TenantProfileRepository) {}
 
   /**
-   * GET /api/modules/sod/:tenantId/violations
-   * List SoD violations for tenant
+   * @swagger
+   * /modules/sod/{tenantId}/violations:
+   *   get:
+   *     summary: List SoD violations
+   *     description: Retrieve paginated list of Segregation of Duties violations for a tenant
+   *     tags: [SoD]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: tenantId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Tenant ID
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *       - in: query
+   *         name: pageSize
+   *         schema:
+   *           type: integer
+   *           default: 20
+   *       - in: query
+   *         name: riskLevel
+   *         schema:
+   *           type: string
+   *           enum: [HIGH, MEDIUM, LOW]
+   *         description: Filter by risk level
+   *     responses:
+   *       200:
+   *         description: List of violations
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/PaginatedResponse'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
    */
   async listViolations(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -154,8 +194,32 @@ export class SoDController {
   }
 
   /**
-   * POST /api/modules/sod/:tenantId/analyze
-   * Trigger new SoD analysis
+   * @swagger
+   * /modules/sod/{tenantId}/analyze:
+   *   post:
+   *     summary: Run SoD analysis
+   *     description: Trigger a new Segregation of Duties analysis for a tenant
+   *     tags: [SoD]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: tenantId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Tenant ID
+   *     responses:
+   *       200:
+   *         description: Analysis completed successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
    */
   async runAnalysis(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

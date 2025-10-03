@@ -3,10 +3,12 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
+import swaggerUi from 'swagger-ui-express';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { config } from './config';
 import logger from './utils/logger';
+import { swaggerSpec } from './swagger';
 
 export function createApp(): Application {
   const app = express();
@@ -41,6 +43,23 @@ export function createApp(): Application {
   const limiter = rateLimit(config.api.rateLimit);
   app.use('/api/', limiter);
 
+  // API Documentation (Swagger UI)
+  app.use(
+    '/api-docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'SAP MVP Framework API',
+      customfavIcon: '/favicon.ico',
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        tryItOutEnabled: true,
+      },
+    })
+  );
+
   // Mount API routes
   app.use('/api', routes);
 
@@ -49,7 +68,7 @@ export function createApp(): Application {
     res.json({
       message: 'SAP MVP Framework API',
       version: '1.0.0',
-      documentation: '/api/docs',
+      documentation: '/api-docs',
       health: '/api/health',
     });
   });

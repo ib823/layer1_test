@@ -8,8 +8,42 @@ export class TenantController {
   constructor(private tenantRepo: TenantProfileRepository) {}
 
   /**
-   * GET /api/admin/tenants
-   * List all tenants with pagination
+   * @swagger
+   * /admin/tenants:
+   *   get:
+   *     summary: List all tenants
+   *     description: Retrieve paginated list of all tenants with optional status filtering
+   *     tags: [Tenants]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *         description: Page number
+   *       - in: query
+   *         name: pageSize
+   *         schema:
+   *           type: integer
+   *           default: 20
+   *         description: Number of items per page
+   *       - in: query
+   *         name: status
+   *         schema:
+   *           type: string
+   *           enum: [ACTIVE, INACTIVE, SUSPENDED]
+   *         description: Filter by tenant status
+   *     responses:
+   *       200:
+   *         description: List of tenants
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/PaginatedResponse'
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
    */
   async listTenants(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -45,8 +79,32 @@ export class TenantController {
   }
 
   /**
-   * GET /api/admin/tenants/:tenantId
-   * Get tenant details including capability profile
+   * @swagger
+   * /admin/tenants/{tenantId}:
+   *   get:
+   *     summary: Get tenant details
+   *     description: Retrieve comprehensive tenant information including capability profile and active modules
+   *     tags: [Tenants]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: tenantId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Tenant ID
+   *     responses:
+   *       200:
+   *         description: Tenant details
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
    */
   async getTenant(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -74,8 +132,45 @@ export class TenantController {
   }
 
   /**
-   * POST /api/admin/tenants
-   * Create new tenant
+   * @swagger
+   * /admin/tenants:
+   *   post:
+   *     summary: Create new tenant
+   *     description: Create a new tenant with SAP connection details
+   *     tags: [Tenants]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - tenantId
+   *               - companyName
+   *               - sapConnection
+   *             properties:
+   *               tenantId:
+   *                 type: string
+   *                 description: Unique tenant identifier
+   *               companyName:
+   *                 type: string
+   *                 description: Company name
+   *               sapConnection:
+   *                 type: object
+   *                 description: SAP connection configuration
+   *     responses:
+   *       201:
+   *         description: Tenant created successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
    */
   async createTenant(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -185,8 +280,42 @@ export class TenantController {
   }
 
   /**
-   * POST /api/admin/tenants/:tenantId/modules/:moduleName/activate
-   * Activate module for tenant
+   * @swagger
+   * /admin/tenants/{tenantId}/modules/{moduleName}/activate:
+   *   post:
+   *     summary: Activate module for tenant
+   *     description: Enable a specific module for a tenant after verifying required capabilities
+   *     tags: [Tenants]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: tenantId
+   *         required: true
+   *         schema:
+   *           type: string
+   *       - in: path
+   *         name: moduleName
+   *         required: true
+   *         schema:
+   *           type: string
+   *           enum: [SoD_Analysis, Invoice_Matching, Anomaly_Detection]
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               reason:
+   *                 type: string
+   *                 description: Reason for activation
+   *     responses:
+   *       200:
+   *         description: Module activated successfully
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
    */
   async activateModule(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

@@ -13,8 +13,37 @@ export class OnboardingController {
   }
 
   /**
-   * POST /api/onboarding/start
-   * Start new onboarding session
+   * @swagger
+   * /onboarding/start:
+   *   post:
+   *     summary: Start tenant onboarding
+   *     description: Initiate a new onboarding session for a tenant
+   *     tags: [Onboarding]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - tenantId
+   *               - companyName
+   *             properties:
+   *               tenantId:
+   *                 type: string
+   *               companyName:
+   *                 type: string
+   *     responses:
+   *       201:
+   *         description: Onboarding session created
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApiResponse'
+   *       400:
+   *         $ref: '#/components/responses/ValidationError'
    */
   async startOnboarding(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
