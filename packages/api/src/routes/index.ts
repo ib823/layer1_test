@@ -32,9 +32,9 @@ router.get('/version', (req, res) => {
   });
 });
 
-// Apply authentication to all routes below (optional in development)
-// Uncomment when ready to enable auth
-// router.use(authenticate);
+// Apply authentication to all routes below
+// Note: Health and version endpoints remain public
+router.use(authenticate);
 
 /**
  * Admin Routes

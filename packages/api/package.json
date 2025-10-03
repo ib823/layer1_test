@@ -19,6 +19,8 @@
     "@sap-framework/core": "workspace:*",
     "@sap-framework/services": "workspace:*",
     "@sap-framework/user-access-review": "workspace:*",
+    "@sap/xsenv": "^6.0.0",
+    "@sap/xssec": "^4.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
