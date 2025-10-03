@@ -306,4 +306,192 @@ describe('TenantProfileRepository', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('getProfile', () => {
+    it('should retrieve tenant capability profile', async () => {
+      // Arrange
+      const mockProfile = {
+        tenant_id: 'tenant-123',
+        sap_version: 'S4_CLOUD',
+        discovered_at: new Date(),
+        available_services: JSON.stringify([]),
+        custom_fields: JSON.stringify([]),
+        capabilities: JSON.stringify({
+          canDoSoD: true,
+          canDoInvoiceMatching: true,
+          canDoAnomalyDetection: false,
+          canDoInventoryOptimization: false,
+          canDoForecastingML: false,
+          canDoExpenseAnalysis: false,
+          hasFinance: true,
+          customCapabilities: {},
+        }),
+        missing_services: [],
+        recommended_actions: JSON.stringify([]),
+      };
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [mockProfile],
+        command: 'SELECT',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getProfile('tenant-123');
+
+      // Assert
+      expect(result).not.toBeNull();
+      expect(result?.tenantId).toBe('tenant-123');
+      expect(result?.sapVersion).toBe('S4_CLOUD');
+    });
+
+    it('should return null for non-existent profile', async () => {
+      // Arrange
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'SELECT',
+        rowCount: 0,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getProfile('non-existent');
+
+      // Assert
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('saveDiscoveryHistory', () => {
+    it('should save discovery history', async () => {
+      // Arrange
+      const mockResult = {
+        success: true,
+        version: 'S4_CLOUD' as const,
+        services: [],
+        permissionTests: [],
+        customFields: [],
+        capabilities: {
+          canDoSoD: false,
+          canDoInvoiceMatching: false,
+          canDoAnomalyDetection: false,
+          canDoInventoryOptimization: false,
+          canDoForecastingML: false,
+          canDoExpenseAnalysis: false,
+          hasFinance: false,
+          customCapabilities: {},
+        },
+        errors: [],
+      };
+
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({
+          rows: [{ id: '123', tenant_id: 'tenant-123' }],
+          command: 'SELECT',
+          rowCount: 1,
+          oid: 0,
+          fields: [],
+        })
+        .mockResolvedValueOnce({
+          rows: [],
+          command: 'INSERT',
+          rowCount: 1,
+          oid: 0,
+          fields: [],
+        });
+
+      // Act
+      await repository.saveDiscoveryHistory('tenant-123', mockResult);
+
+      // Assert
+      expect(mockPool.query).toHaveBeenCalledTimes(2);
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO service_discovery_history'),
+        expect.arrayContaining(['tenant-123', expect.any(String), 0, true, []])
+      );
+    });
+
+    it('should throw error for non-existent tenant', async () => {
+      // Arrange
+      const mockResult = {
+        success: true,
+        version: 'S4_CLOUD' as const,
+        services: [],
+        permissionTests: [],
+        customFields: [],
+        capabilities: {
+          canDoSoD: false,
+          canDoInvoiceMatching: false,
+          canDoAnomalyDetection: false,
+          canDoInventoryOptimization: false,
+          canDoForecastingML: false,
+          canDoExpenseAnalysis: false,
+          hasFinance: false,
+          customCapabilities: {},
+        },
+        errors: [],
+      };
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'SELECT',
+        rowCount: 0,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act & Assert
+      await expect(
+        repository.saveDiscoveryHistory('non-existent', mockResult)
+      ).rejects.toThrow('Tenant non-existent not found');
+    });
+  });
+
+  describe('getSAPConnection', () => {
+    it('should retrieve SAP connection details', async () => {
+      // Arrange
+      const mockConnection = {
+        id: 'conn-123',
+        tenant_id: 'tenant-123',
+        connection_type: 'IPS',
+        base_url: 'https://api.example.com',
+        auth_credentials: { type: 'oauth' },
+      };
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [mockConnection],
+        command: 'SELECT',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getSAPConnection('tenant-123');
+
+      // Assert
+      expect(result).not.toBeNull();
+      expect(result?.connection_type).toBe('IPS');
+    });
+
+    it('should return null when no connection exists', async () => {
+      // Arrange
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'SELECT',
+        rowCount: 0,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getSAPConnection('tenant-123');
+
+      // Assert
+      expect(result).toBeNull();
+    });
+  });
 });
