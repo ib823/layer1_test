@@ -1,0 +1,93 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r packages/api/dist deploy/api
+          cp -r packages/core/dist deploy/core
+          cp package.json pnpm-lock.yaml deploy/
+          cd deploy && tar -czf ../deployment.tar.gz .
+
+      - name: Deploy to Cloud Foundry (Staging)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "Deploying to Cloud Foundry staging environment..."
+          # Uncomment when CF credentials are available
+          # cf login -a ${{ secrets.CF_API }} -u ${{ secrets.CF_USERNAME }} -p ${{ secrets.CF_PASSWORD }} -o ${{ secrets.CF_ORG }} -s staging
+          # cf push sap-framework-staging -f manifest-staging.yml
+          echo "Deployment placeholder - configure CF credentials in GitHub secrets"
+
+      - name: Health check
+        run: |
+          echo "Running post-deployment health checks..."
+          # Add health check commands here
+          # curl -f https://staging.example.com/health || exit 1
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          echo "Deployment to staging completed"
+          echo "Status: ${{ job.status }}"
+
+  smoke-tests:
+    runs-on: ubuntu-latest
+    needs: deploy
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging environment..."
+          # Add smoke test commands
+          # npm run test:smoke -- --environment=staging
+
+      - name: Test API endpoints
+        run: |
+          echo "Testing critical API endpoints..."
+          # Add endpoint tests
+          # curl -f https://staging-api.example.com/health
+          # curl -f https://staging-api.example.com/api/tenants/health

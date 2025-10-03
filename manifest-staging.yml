@@ -1,0 +1,20 @@
+---
+applications:
+  - name: sap-framework-staging
+    memory: 512M
+    instances: 1
+    buildpacks:
+      - nodejs_buildpack
+    command: node packages/api/dist/server.js
+    env:
+      NODE_ENV: staging
+      AUTH_ENABLED: true
+      LOG_LEVEL: debug
+    services:
+      - sap-framework-db-staging
+      - sap-framework-redis-staging
+    routes:
+      - route: sap-framework-staging.cfapps.io
+    health-check-type: http
+    health-check-http-endpoint: /health
+    timeout: 180
