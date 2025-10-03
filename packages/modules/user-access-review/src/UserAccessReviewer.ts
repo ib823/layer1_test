@@ -87,13 +87,13 @@ export class UserAccessReviewer {
         continue;
       }
 
-      const groups = await this.ipsConnector.getUserGroups(ipsUser.id);
+      const groups = await this.ipsConnector.getUserGroupMemberships(ipsUser.id);
 
       users.push({
         userId: ipsUser.id,
         userName: ipsUser.userName,
         email: ipsUser.emails?.[0]?.value,
-        roles: groups.map(g => g.displayName),
+        roles: groups.map((g: any) => g.displayName),
         isActive: ipsUser.active,
       });
     }

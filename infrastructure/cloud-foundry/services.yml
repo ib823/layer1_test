@@ -1,0 +1,22 @@
+# Service instance definitions for Cloud Foundry deployment
+
+# PostgreSQL Database
+- name: sapframework-db
+  type: postgresql-db
+  plan: small
+
+# XSUAA Authentication
+- name: sapframework-xsuaa
+  type: xsuaa
+  plan: application
+  config: xsuaa-config.json
+
+# Destination Service (for SAP system connections)
+- name: sapframework-destination
+  type: destination
+  plan: lite
+
+# Connectivity Service (optional - for on-premise SAP systems)
+- name: sapframework-connectivity
+  type: connectivity
+  plan: lite

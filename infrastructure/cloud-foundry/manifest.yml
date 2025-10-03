@@ -1,0 +1,17 @@
+---
+applications:
+  - name: sapframework-api
+    memory: 1G
+    instances: 2
+    buildpacks:
+      - nodejs_buildpack
+    path: ../../packages/api
+    command: node dist/server.js
+    services:
+      - sapframework-db
+      - sapframework-xsuaa
+    env:
+      NODE_ENV: production
+      PORT: 8080
+    routes:
+      - route: sapframework-api.cfapps.sap.hana.ondemand.com
