@@ -65,12 +65,64 @@ CREATE TABLE tenant_module_activations (
   UNIQUE(tenant_id, module_name)
 );
 
+-- SoD (Segregation of Duties) violations
+CREATE TABLE sod_violations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  analysis_id UUID NOT NULL, -- Links to analysis run
+  user_id VARCHAR(255) NOT NULL,
+  user_name VARCHAR(255),
+  user_email VARCHAR(255),
+  conflict_type VARCHAR(100) NOT NULL,
+  risk_level VARCHAR(20) NOT NULL, -- 'HIGH', 'MEDIUM', 'LOW'
+  conflicting_roles TEXT[] NOT NULL,
+  affected_transactions TEXT[],
+  business_process VARCHAR(255),
+  status VARCHAR(50) DEFAULT 'OPEN', -- 'OPEN', 'ACKNOWLEDGED', 'REMEDIATED', 'ACCEPTED_RISK'
+  remediation_notes TEXT,
+  remediation_plan TEXT,
+  acknowledged_by VARCHAR(255),
+  acknowledged_at TIMESTAMP,
+  resolved_by VARCHAR(255),
+  resolved_at TIMESTAMP,
+  detected_at TIMESTAMP DEFAULT NOW(),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- SoD analysis runs (metadata about analysis execution)
+CREATE TABLE sod_analysis_runs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  status VARCHAR(50) NOT NULL, -- 'RUNNING', 'COMPLETED', 'FAILED'
+  total_users_analyzed INTEGER,
+  violations_found INTEGER DEFAULT 0,
+  high_risk_count INTEGER DEFAULT 0,
+  medium_risk_count INTEGER DEFAULT 0,
+  low_risk_count INTEGER DEFAULT 0,
+  started_at TIMESTAMP DEFAULT NOW(),
+  completed_at TIMESTAMP,
+  error_message TEXT,
+  config JSONB, -- Analysis configuration used
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX idx_tenants_tenant_id ON tenants(tenant_id);
 CREATE INDEX idx_tenant_connections_tenant_id ON tenant_sap_connections(tenant_id);
 CREATE INDEX idx_tenant_profiles_tenant_id ON tenant_capability_profiles(tenant_id);
 CREATE INDEX idx_discovery_history_tenant_id ON service_discovery_history(tenant_id);
 CREATE INDEX idx_module_activations_tenant_id ON tenant_module_activations(tenant_id);
+
+-- SoD indexes
+CREATE INDEX idx_sod_violations_tenant_id ON sod_violations(tenant_id);
+CREATE INDEX idx_sod_violations_analysis_id ON sod_violations(analysis_id);
+CREATE INDEX idx_sod_violations_user_id ON sod_violations(user_id);
+CREATE INDEX idx_sod_violations_status ON sod_violations(status);
+CREATE INDEX idx_sod_violations_risk_level ON sod_violations(risk_level);
+CREATE INDEX idx_sod_violations_detected_at ON sod_violations(detected_at DESC);
+CREATE INDEX idx_sod_analysis_runs_tenant_id ON sod_analysis_runs(tenant_id);
+CREATE INDEX idx_sod_analysis_runs_status ON sod_analysis_runs(status);
 
 -- Updated_at trigger
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -85,4 +137,7 @@ CREATE TRIGGER update_tenants_updated_at BEFORE UPDATE ON tenants
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_connections_updated_at BEFORE UPDATE ON tenant_sap_connections
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_sod_violations_updated_at BEFORE UPDATE ON sod_violations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
