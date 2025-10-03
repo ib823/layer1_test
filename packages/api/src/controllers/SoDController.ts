@@ -1,14 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import { 
+import {
   TenantProfileRepository,
-  IPSConnector 
+  IPSConnector,
+  SoDViolationRepository
 } from '@sap-framework/core';
 import { UserAccessReviewer } from '@sap-framework/user-access-review';
 import { ApiResponseUtil } from '../utils/response';
+import { config } from '../config';
 import logger from '../utils/logger';
 
 export class SoDController {
-  constructor(private tenantRepo: TenantProfileRepository) {}
+  private sodRepo: SoDViolationRepository;
+
+  constructor(private tenantRepo: TenantProfileRepository) {
+    this.sodRepo = new SoDViolationRepository(config.databaseUrl);
+  }
 
   /**
    * @swagger
@@ -76,21 +82,24 @@ export class SoDController {
         return;
       }
 
-      // Get latest analysis result from cache/database
-      // TODO: Implement violation storage in database
-      // For now, return placeholder
-      const violations = await this.getStoredViolations(tenantId, riskLevel);
+      // Get violations from database
+      const filters: any = {};
+      if (riskLevel) {
+        filters.riskLevel = [riskLevel];
+      }
 
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      const paginatedViolations = violations.slice(start, end);
+      const { violations, total } = await this.sodRepo.getViolations(
+        tenantId,
+        filters,
+        { page, pageSize }
+      );
 
       ApiResponseUtil.paginated(
         res,
-        paginatedViolations,
+        violations,
         page,
         pageSize,
-        violations.length
+        total
       );
     } catch (error) {
       next(error);
@@ -113,8 +122,8 @@ export class SoDController {
         return;
       }
 
-      // TODO: Get from database
-      const violation = await this.getStoredViolation(tenantId, violationId);
+      // Get violation from database
+      const violation = await this.sodRepo.getViolation(tenantId, violationId);
 
       if (!violation) {
         ApiResponseUtil.notFound(res, 'Violation');
@@ -144,12 +153,11 @@ export class SoDController {
         return;
       }
 
-      // TODO: Update violation status in database
-      await this.updateViolationStatus(tenantId, violationId, {
+      // Update violation status in database
+      await this.sodRepo.updateViolationStatus(violationId, {
         status: 'ACKNOWLEDGED',
-        justification,
-        approvedBy,
-        approvedAt: new Date(),
+        remediationNotes: justification,
+        acknowledgedBy: approvedBy,
       });
 
       logger.info('Violation acknowledged', { tenantId, violationId });
@@ -179,8 +187,8 @@ export class SoDController {
         return;
       }
 
-      // TODO: Get from database
-      const analysis = await this.getLatestAnalysis(tenantId);
+      // Get latest analysis from database
+      const analysis = await this.sodRepo.getLatestAnalysis(tenantId);
 
       if (!analysis) {
         ApiResponseUtil.notFound(res, 'Analysis results');
@@ -254,19 +262,53 @@ export class SoDController {
         scim: { version: '2.0' },
       });
 
-      // Run analysis
-      const reviewer = new UserAccessReviewer(ipsConnector);
-      const result = await reviewer.analyze();
+      // Create analysis run
+      const analysisRun = await this.sodRepo.createAnalysisRun(tenantId, 0);
 
-      // TODO: Store result in database
-      await this.storeAnalysisResult(tenantId, result);
+      try {
+        // Run analysis
+        const reviewer = new UserAccessReviewer(ipsConnector);
+        const result = await reviewer.analyze();
 
-      logger.info('SoD analysis completed', {
-        tenantId,
-        violations: result.violations.length,
-      });
+        // Store violations in database
+        const violationData = result.violations.map((v: any) => ({
+          tenantId,
+          analysisId: analysisRun.id!,
+          userId: v.userId,
+          userName: v.userName,
+          userEmail: v.userEmail,
+          conflictType: v.conflictType,
+          riskLevel: v.riskLevel,
+          conflictingRoles: v.conflictingRoles,
+          affectedTransactions: v.affectedTransactions,
+          businessProcess: v.businessProcess,
+          status: 'OPEN' as const,
+          detectedAt: new Date(),
+        }));
 
-      ApiResponseUtil.success(res, result);
+        if (violationData.length > 0) {
+          await this.sodRepo.storeViolations(violationData);
+        }
+
+        // Complete analysis run
+        await this.sodRepo.completeAnalysisRun(analysisRun.id!, {
+          total: result.violations.length,
+          high: result.violations.filter((v: any) => v.riskLevel === 'HIGH').length,
+          medium: result.violations.filter((v: any) => v.riskLevel === 'MEDIUM').length,
+          low: result.violations.filter((v: any) => v.riskLevel === 'LOW').length,
+        });
+
+        logger.info('SoD analysis completed', {
+          tenantId,
+          violations: result.violations.length,
+        });
+
+        ApiResponseUtil.success(res, result);
+      } catch (analysisError: any) {
+        // Mark analysis as failed
+        await this.sodRepo.failAnalysisRun(analysisRun.id!, analysisError.message);
+        throw analysisError;
+      }
     } catch (error) {
       next(error);
     }
@@ -289,13 +331,14 @@ export class SoDController {
         return;
       }
 
-      const violations = await this.getStoredViolations(tenantId);
+      const { violations } = await this.sodRepo.getViolations(tenantId, {});
 
       if (format === 'csv') {
-        // TODO: Implement CSV export
+        // Generate CSV
+        const csv = this.generateCSV(violations);
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename=sod-violations-${tenantId}.csv`);
-        res.send('CSV export not yet implemented');
+        res.send(csv);
       } else {
         ApiResponseUtil.success(res, { violations });
       }
@@ -304,31 +347,52 @@ export class SoDController {
     }
   }
 
-  // Helper methods (TODO: Implement with database storage)
-  private async getStoredViolations(tenantId: string, riskLevel?: string): Promise<any[]> {
-    // Placeholder - implement database storage
-    return [];
-  }
+  // Helper methods
+  private generateCSV(violations: any[]): string {
+    if (violations.length === 0) {
+      return 'No violations found';
+    }
 
-  private async getStoredViolation(tenantId: string, violationId: string): Promise<any> {
-    // Placeholder - implement database storage
-    return null;
-  }
+    // CSV headers
+    const headers = [
+      'User ID',
+      'User Name',
+      'User Email',
+      'Conflict Type',
+      'Risk Level',
+      'Conflicting Roles',
+      'Affected Transactions',
+      'Business Process',
+      'Status',
+      'Detected At',
+    ];
 
-  private async updateViolationStatus(
-    tenantId: string,
-    violationId: string,
-    updates: any
-  ): Promise<void> {
-    // Placeholder - implement database storage
-  }
+    // CSV rows
+    const rows = violations.map(v => [
+      v.userId || '',
+      v.userName || '',
+      v.userEmail || '',
+      v.conflictType || '',
+      v.riskLevel || '',
+      Array.isArray(v.conflictingRoles) ? v.conflictingRoles.join('; ') : '',
+      Array.isArray(v.affectedTransactions) ? v.affectedTransactions.join('; ') : '',
+      v.businessProcess || '',
+      v.status || '',
+      v.detectedAt ? new Date(v.detectedAt).toISOString() : '',
+    ]);
 
-  private async getLatestAnalysis(tenantId: string): Promise<any> {
-    // Placeholder - implement database storage
-    return null;
-  }
+    // Combine headers and rows
+    const csvLines = [
+      headers.join(','),
+      ...rows.map(row =>
+        row.map(cell => {
+          // Escape quotes and wrap in quotes if contains comma
+          const escaped = String(cell).replace(/"/g, '""');
+          return escaped.includes(',') || escaped.includes('"') ? `"${escaped}"` : escaped;
+        }).join(',')
+      ),
+    ];
 
-  private async storeAnalysisResult(tenantId: string, result: any): Promise<void> {
-    // Placeholder - implement database storage
+    return csvLines.join('\n');
   }
 }
