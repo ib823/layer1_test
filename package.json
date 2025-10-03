@@ -12,6 +12,8 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
+    "test:e2e": "ts-node packages/core/tests/e2e/test-sod-e2e.ts",
+    "test:coverage": "turbo run test -- --coverage",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
