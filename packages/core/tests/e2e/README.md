@@ -40,20 +40,42 @@ Before running E2E tests, ensure you have:
 
 ## Running E2E Tests
 
-### Run All E2E Tests
+### Run All E2E Tests (Recommended)
 ```bash
-# From project root
-pnpm test:e2e
+# Using the automated test runner (validates environment)
+cd packages/core/tests/e2e
+./run-e2e-tests.sh
 
-# Or directly
-cd packages/core
-ts-node tests/e2e/test-sod-e2e.ts
+# Or from project root
+pnpm test:e2e
 ```
 
-### Run Specific Test
+### Run Directly with ts-node
 ```bash
+# From project root
+cd packages/core
 DATABASE_URL="postgresql://user:pass@host:5432/db" \
   ts-node tests/e2e/test-sod-e2e.ts
+```
+
+### Using the Test Runner Script
+
+The `run-e2e-tests.sh` script provides automated environment validation:
+
+**What it does:**
+- ✅ Checks DATABASE_URL environment variable
+- ✅ Validates database connectivity
+- ✅ Verifies required tables exist
+- ✅ Runs the E2E test suite
+- ✅ Provides clear error messages
+
+**Usage:**
+```bash
+# Default (uses local PostgreSQL)
+./run-e2e-tests.sh
+
+# Custom database
+DATABASE_URL="postgresql://user:pass@host:5432/db" ./run-e2e-tests.sh
 ```
 
 ## Available E2E Tests
