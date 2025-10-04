@@ -48,7 +48,7 @@ describe('TenantController', () => {
         id: '123',
         tenant_id: 'tenant-123',
         company_name: 'Acme Corp',
-        status: 'ACTIVE',
+        status: 'ACTIVE' as const,
         created_at: new Date(),
         updated_at: new Date(),
       };
@@ -120,7 +120,7 @@ describe('TenantController', () => {
         id: '123',
         tenant_id: 'tenant-123',
         company_name: 'Acme Corp',
-        status: 'ACTIVE',
+        status: 'ACTIVE' as const,
         created_at: new Date(),
         updated_at: new Date(),
       };
