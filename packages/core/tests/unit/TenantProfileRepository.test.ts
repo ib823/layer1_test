@@ -494,4 +494,367 @@ describe('TenantProfileRepository', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('deactivateModule', () => {
+    it('should deactivate a module for tenant', async () => {
+      // Arrange
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'UPDATE',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      await repository.deactivateModule('tenant-123', 'SoD_Analysis');
+
+      // Assert
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE tenant_module_activations'),
+        ['tenant-123', 'SoD_Analysis']
+      );
+    });
+  });
+
+  describe('getAllTenants', () => {
+    it('should retrieve all tenants', async () => {
+      // Arrange
+      const mockTenants = [
+        {
+          id: '1',
+          tenant_id: 'tenant-1',
+          company_name: 'Company 1',
+          status: 'ACTIVE',
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        {
+          id: '2',
+          tenant_id: 'tenant-2',
+          company_name: 'Company 2',
+          status: 'ACTIVE',
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ];
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: mockTenants,
+        command: 'SELECT',
+        rowCount: 2,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getAllTenants();
+
+      // Assert
+      expect(result).toHaveLength(2);
+      expect(result[0].tenant_id).toBe('tenant-1');
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM tenants')
+      );
+    });
+
+    it('should return empty array when no tenants exist', async () => {
+      // Arrange
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'SELECT',
+        rowCount: 0,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getAllTenants();
+
+      // Assert
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('getAllActiveTenants', () => {
+    it('should retrieve only active tenants', async () => {
+      // Arrange
+      const mockTenants = [
+        {
+          id: '1',
+          tenant_id: 'tenant-1',
+          company_name: 'Company 1',
+          status: 'ACTIVE',
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ];
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: mockTenants,
+        command: 'SELECT',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getAllActiveTenants();
+
+      // Assert
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe('ACTIVE');
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining("WHERE status = 'ACTIVE'")
+      );
+    });
+  });
+
+  describe('updateTenant', () => {
+    it('should update tenant company name', async () => {
+      // Arrange
+      const mockTenant = {
+        id: '1',
+        tenant_id: 'tenant-123',
+        company_name: 'Updated Corp',
+        status: 'ACTIVE' as const,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [mockTenant],
+        command: 'UPDATE',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.updateTenant('tenant-123', {
+        company_name: 'Updated Corp',
+      });
+
+      // Assert
+      expect(result.company_name).toBe('Updated Corp');
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE tenants'),
+        expect.arrayContaining(['Updated Corp', 'tenant-123'])
+      );
+    });
+
+    it('should update tenant status', async () => {
+      // Arrange
+      const mockTenant = {
+        id: '1',
+        tenant_id: 'tenant-123',
+        company_name: 'Acme Corp',
+        status: 'SUSPENDED' as const,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [mockTenant],
+        command: 'UPDATE',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.updateTenant('tenant-123', {
+        status: 'SUSPENDED',
+      });
+
+      // Assert
+      expect(result.status).toBe('SUSPENDED');
+    });
+
+    it('should update both company name and status', async () => {
+      // Arrange
+      const mockTenant = {
+        id: '1',
+        tenant_id: 'tenant-123',
+        company_name: 'New Corp',
+        status: 'INACTIVE' as const,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [mockTenant],
+        command: 'UPDATE',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.updateTenant('tenant-123', {
+        company_name: 'New Corp',
+        status: 'INACTIVE',
+      });
+
+      // Assert
+      expect(result.company_name).toBe('New Corp');
+      expect(result.status).toBe('INACTIVE');
+    });
+  });
+
+  describe('saveSAPConnection', () => {
+    it('should save SAP connection details', async () => {
+      // Arrange
+      const connection = {
+        type: 'S4HANA',
+        baseUrl: 'https://sap.example.com',
+        auth: {
+          type: 'oauth',
+          credentials: {
+            clientId: 'client-123',
+            clientSecret: 'secret',
+          },
+        },
+      };
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'INSERT',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      await repository.saveSAPConnection('tenant-123', connection);
+
+      // Assert
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO tenant_sap_connections'),
+        expect.arrayContaining([
+          'tenant-123',
+          'S4HANA',
+          'https://sap.example.com',
+          'oauth',
+          expect.any(String),
+        ])
+      );
+    });
+
+    it('should use default connection type if not provided', async () => {
+      // Arrange
+      const connection = {
+        baseUrl: 'https://sap.example.com',
+        auth: {
+          type: 'basic',
+          credentials: {
+            username: 'user',
+            password: 'pass',
+          },
+        },
+      };
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'INSERT',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      await repository.saveSAPConnection('tenant-123', connection);
+
+      // Assert
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining(['tenant-123', 'S4HANA'])
+      );
+    });
+  });
+
+  describe('getDiscoveryHistory', () => {
+    it('should retrieve discovery history with default limit', async () => {
+      // Arrange
+      const mockHistory = [
+        {
+          id: '1',
+          tenant_id: 'tenant-123',
+          discovery_result: {},
+          services_count: 5,
+          success: true,
+          errors: [],
+          discovered_at: new Date(),
+        },
+      ];
+
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: mockHistory,
+        command: 'SELECT',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getDiscoveryHistory('tenant-123');
+
+      // Assert
+      expect(result).toHaveLength(1);
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('service_discovery_history'),
+        ['tenant-123', 10]
+      );
+    });
+
+    it('should retrieve discovery history with custom limit', async () => {
+      // Arrange
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'SELECT',
+        rowCount: 0,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      await repository.getDiscoveryHistory('tenant-123', 5);
+
+      // Assert
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.any(String),
+        ['tenant-123', 5]
+      );
+    });
+
+    it('should return empty array when no history exists', async () => {
+      // Arrange
+      (mockPool.query as jest.Mock).mockResolvedValue({
+        rows: [],
+        command: 'SELECT',
+        rowCount: 0,
+        oid: 0,
+        fields: [],
+      });
+
+      // Act
+      const result = await repository.getDiscoveryHistory('tenant-123');
+
+      // Assert
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('close', () => {
+    it('should close database pool', async () => {
+      // Arrange
+      (mockPool.end as jest.Mock).mockResolvedValue(undefined);
+
+      // Act
+      await repository.close();
+
+      // Assert
+      expect(mockPool.end).toHaveBeenCalled();
+    });
+  });
 });
