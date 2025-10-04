@@ -77,6 +77,39 @@ describe('PII Masking', () => {
     });
   });
 
+  describe('maskPhone edge cases', () => {
+    it('should handle short phone numbers', () => {
+      const masked = maskPhone('1234567');
+      expect(masked).toContain('***');
+      expect(masked).toContain('4567');
+    });
+
+    it('should handle phone with country code', () => {
+      const masked = maskPhone('+12345678901');
+      expect(masked).toContain('+1-***');
+      expect(masked).toContain('8901');
+    });
+  });
+
+  describe('maskCreditCard edge cases', () => {
+    it('should handle short card numbers', () => {
+      const masked = maskCreditCard('1234');
+      expect(masked).toBe('****-****-****-****');
+    });
+  });
+
+  describe('maskEmail edge cases', () => {
+    it('should handle invalid email format', () => {
+      const masked = maskEmail('notanemail');
+      expect(masked).toBe('notanemail');
+    });
+
+    it('should handle two-character username', () => {
+      const masked = maskEmail('ab@test.com');
+      expect(masked).toBe('a***@test.com');
+    });
+  });
+
   describe('maskObject', () => {
     it('should mask PII fields in objects', () => {
       const data = {

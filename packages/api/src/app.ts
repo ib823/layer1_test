@@ -1,13 +1,13 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
 import swaggerUi from 'swagger-ui-express';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { auditLog } from './middleware/auditLog';
 import { enforceDataResidency } from './middleware/dataResidency';
+import { standardRateLimit } from './middleware/rateLimiting';
 import { config } from './config';
 import logger from './utils/logger';
 import { swaggerSpec } from './swagger';
@@ -22,6 +22,9 @@ export function createApp(): Application {
   // Request parsing
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // Apply rate limiting to all routes
+  app.use(standardRateLimit);
 
   // Request ID middleware
   app.use((req, res, next) => {
@@ -40,10 +43,6 @@ export function createApp(): Application {
     });
     next();
   });
-
-  // Rate limiting
-  const limiter = rateLimit(config.api.rateLimit);
-  app.use('/api/', limiter);
 
   // Data residency enforcement (after auth, before routes)
   app.use(enforceDataResidency());
