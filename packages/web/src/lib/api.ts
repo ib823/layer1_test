@@ -2,15 +2,9 @@
  * API Client for SAP GRC Platform
  * Connects frontend to backend API
  */
+import type { ApiResponse, FilterOptions } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
 
 class ApiClient {
   private baseUrl: string;
@@ -66,15 +60,14 @@ class ApiClient {
   }
 
   // SoD Violations API
-  async getViolations(tenantId: string, filters?: {
-    riskLevel?: string;
-    status?: string;
-    limit?: number;
-  }) {
+  async getViolations(tenantId: string, filters?: FilterOptions) {
     const params = new URLSearchParams();
     if (filters?.riskLevel) params.append('riskLevel', filters.riskLevel);
     if (filters?.status) params.append('status', filters.status);
-    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters?.userId) params.append('userId', filters.userId);
+    if (filters?.businessProcess) params.append('businessProcess', filters.businessProcess);
 
     const query = params.toString() ? `?${params.toString()}` : '';
     return this.request(`/tenants/${tenantId}/sod/violations${query}`);

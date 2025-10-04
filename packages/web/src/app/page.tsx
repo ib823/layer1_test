@@ -1,6 +1,30 @@
+'use client';
+
 import { Button, Card, CardTitle, Badge } from '@/components/ui';
+import { useViolations, useDashboardStats } from '@/hooks';
+import { useAppStore } from '@/lib/store';
+import { useEffect } from 'react';
 
 export default function DashboardPage() {
+  const { tenantId, setTenantId } = useAppStore();
+
+  // Set default tenant for demo - in production, this would come from auth
+  useEffect(() => {
+    if (!tenantId) {
+      setTenantId('tenant-123');
+    }
+  }, [tenantId, setTenantId]);
+
+  // Fetch dashboard stats
+  const { data: stats, isLoading: statsLoading } = useDashboardStats(tenantId);
+
+  // Fetch recent violations
+  const { data: violations, isLoading: violationsLoading } = useViolations(tenantId, {
+    status: 'OPEN',
+  });
+
+  const recentViolations = violations?.slice(0, 4) || [];
+
   return (
     <main style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Page Header */}
@@ -22,9 +46,15 @@ export default function DashboardPage() {
                 <p className="text-sm text-secondary" style={{ marginBottom: '0.25rem' }}>
                   Total Violations
                 </p>
-                <p className="text-3xl font-bold">247</p>
+                <p className="text-3xl font-bold">
+                  {statsLoading ? '...' : stats?.totalViolations || 0}
+                </p>
               </div>
-              <Badge variant="critical">+12%</Badge>
+              {stats?.trends && (
+                <Badge variant={stats.trends.violations > 0 ? 'critical' : 'low'}>
+                  {stats.trends.violations > 0 ? '+' : ''}{stats.trends.violations}%
+                </Badge>
+              )}
             </div>
           </Card.Body>
         </Card>
@@ -36,9 +66,15 @@ export default function DashboardPage() {
                 <p className="text-sm text-secondary" style={{ marginBottom: '0.25rem' }}>
                   Critical Issues
                 </p>
-                <p className="text-3xl font-bold text-critical">45</p>
+                <p className="text-3xl font-bold text-critical">
+                  {statsLoading ? '...' : stats?.criticalIssues || 0}
+                </p>
               </div>
-              <Badge variant="high">+5</Badge>
+              {stats?.trends && (
+                <Badge variant="high">
+                  +{stats.trends.critical}
+                </Badge>
+              )}
             </div>
           </Card.Body>
         </Card>
@@ -50,7 +86,9 @@ export default function DashboardPage() {
                 <p className="text-sm text-secondary" style={{ marginBottom: '0.25rem' }}>
                   Users Analyzed
                 </p>
-                <p className="text-3xl font-bold">1,284</p>
+                <p className="text-3xl font-bold">
+                  {statsLoading ? '...' : stats?.usersAnalyzed.toLocaleString() || 0}
+                </p>
               </div>
               <Badge variant="info">Active</Badge>
             </div>
@@ -64,9 +102,15 @@ export default function DashboardPage() {
                 <p className="text-sm text-secondary" style={{ marginBottom: '0.25rem' }}>
                   Compliance Score
                 </p>
-                <p className="text-3xl font-bold text-low">94%</p>
+                <p className="text-3xl font-bold text-low">
+                  {statsLoading ? '...' : `${stats?.complianceScore}%` || '0%'}
+                </p>
               </div>
-              <Badge variant="low">+2%</Badge>
+              {stats?.trends && (
+                <Badge variant="low">
+                  +{stats.trends.compliance}%
+                </Badge>
+              )}
             </div>
           </Card.Body>
         </Card>
@@ -83,63 +127,66 @@ export default function DashboardPage() {
           </div>
         </Card.Header>
         <Card.Body style={{ padding: 0 }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>Violation Type</th>
-                <th>Risk Level</th>
-                <th>Detected</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="font-medium">USER_1234</td>
-                <td>Create & Approve PO</td>
-                <td>
-                  <Badge variant="critical">Critical</Badge>
-                </td>
-                <td className="text-secondary">2 hours ago</td>
-                <td>
-                  <span className="text-high">Pending Review</span>
-                </td>
-              </tr>
-              <tr>
-                <td className="font-medium">USER_5678</td>
-                <td>Payment Processing</td>
-                <td>
-                  <Badge variant="high">High</Badge>
-                </td>
-                <td className="text-secondary">5 hours ago</td>
-                <td>
-                  <span className="text-high">Pending Review</span>
-                </td>
-              </tr>
-              <tr>
-                <td className="font-medium">USER_9012</td>
-                <td>Vendor Management</td>
-                <td>
-                  <Badge variant="medium">Medium</Badge>
-                </td>
-                <td className="text-secondary">1 day ago</td>
-                <td>
-                  <span className="text-secondary">In Progress</span>
-                </td>
-              </tr>
-              <tr>
-                <td className="font-medium">USER_3456</td>
-                <td>GL Account Posting</td>
-                <td>
-                  <Badge variant="low">Low</Badge>
-                </td>
-                <td className="text-secondary">2 days ago</td>
-                <td>
-                  <span className="text-low">Resolved</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          {violationsLoading ? (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <p className="text-secondary">Loading violations...</p>
+            </div>
+          ) : recentViolations.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <p className="text-secondary">No violations found</p>
+            </div>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Violation Type</th>
+                  <th>Risk Level</th>
+                  <th>Detected</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentViolations.map((violation) => (
+                  <tr key={violation.violation_id}>
+                    <td className="font-medium">{violation.user_id}</td>
+                    <td>{violation.business_process}</td>
+                    <td>
+                      <Badge
+                        variant={
+                          violation.risk_level === 'CRITICAL'
+                            ? 'critical'
+                            : violation.risk_level === 'HIGH'
+                            ? 'high'
+                            : violation.risk_level === 'MEDIUM'
+                            ? 'medium'
+                            : 'low'
+                        }
+                      >
+                        {violation.risk_level}
+                      </Badge>
+                    </td>
+                    <td className="text-secondary">
+                      {new Date(violation.detected_at).toLocaleString()}
+                    </td>
+                    <td>
+                      <span
+                        className={
+                          violation.status === 'OPEN'
+                            ? 'text-high'
+                            : violation.status === 'RESOLVED'
+                            ? 'text-low'
+                            : 'text-secondary'
+                        }
+                      >
+                        {violation.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </Card.Body>
       </Card>
 

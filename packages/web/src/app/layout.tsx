@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Providers } from "@/lib/providers";
 import "../styles/design-system.css";
 import "./globals.css";
 
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
