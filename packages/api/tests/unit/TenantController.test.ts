@@ -32,6 +32,7 @@ describe('TenantController', () => {
     mockResponse = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
+      locals: { requestId: 'test-request-id' },
     };
 
     mockNext = jest.fn();
@@ -53,8 +54,13 @@ describe('TenantController', () => {
         updated_at: new Date(),
       };
 
+      const mockProfile = { capabilities: {}, missingServices: [] };
+      const mockModules = ['SoD_Analysis'];
+
       mockRequest.params = { tenantId: 'tenant-123' };
       mockRepository.getTenant.mockResolvedValue(mockTenant);
+      mockRepository.getProfile = jest.fn().mockResolvedValue(mockProfile);
+      mockRepository.getActiveModules.mockResolvedValue(mockModules);
 
       // Act
       await controller.getTenant(
@@ -65,11 +71,17 @@ describe('TenantController', () => {
 
       // Assert
       expect(mockRepository.getTenant).toHaveBeenCalledWith('tenant-123');
+      expect(mockRepository.getProfile).toHaveBeenCalledWith('tenant-123');
+      expect(mockRepository.getActiveModules).toHaveBeenCalledWith('tenant-123');
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          data: mockTenant,
+          data: expect.objectContaining({
+            tenant: mockTenant,
+            profile: mockProfile,
+            activeModules: mockModules,
+          }),
         })
       );
     });
@@ -91,7 +103,9 @@ describe('TenantController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
-          error: expect.stringContaining('not found'),
+          error: expect.objectContaining({
+            message: expect.stringContaining('not found'),
+          }),
         })
       );
     });
@@ -128,9 +142,12 @@ describe('TenantController', () => {
       mockRequest.body = {
         tenantId: 'tenant-123',
         companyName: 'Acme Corp',
+        sapConnection: { baseUrl: 'https://sap.example.com', client: '100' },
       };
 
+      mockRepository.getTenant.mockResolvedValue(null); // Tenant doesn't exist
       mockRepository.createTenant.mockResolvedValue(mockTenant);
+      mockRepository.saveSAPConnection = jest.fn().mockResolvedValue(undefined);
 
       // Act
       await controller.createTenant(
@@ -140,6 +157,7 @@ describe('TenantController', () => {
       );
 
       // Assert
+      expect(mockRepository.getTenant).toHaveBeenCalledWith('tenant-123');
       expect(mockRepository.createTenant).toHaveBeenCalledWith('tenant-123', 'Acme Corp');
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -150,9 +168,24 @@ describe('TenantController', () => {
       );
     });
 
-    it('should validate required fields', async () => {
+    it('should return 400 when tenant already exists', async () => {
       // Arrange
-      mockRequest.body = { tenantId: 'tenant-123' }; // Missing companyName
+      const existingTenant = {
+        id: '123',
+        tenant_id: 'tenant-123',
+        company_name: 'Existing Corp',
+        status: 'ACTIVE' as const,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      mockRequest.body = {
+        tenantId: 'tenant-123',
+        companyName: 'Acme Corp',
+        sapConnection: { baseUrl: 'https://sap.example.com' },
+      };
+
+      mockRepository.getTenant.mockResolvedValue(existingTenant);
 
       // Act
       await controller.createTenant(
@@ -174,8 +207,17 @@ describe('TenantController', () => {
   describe('getActiveModules', () => {
     it('should return list of active modules', async () => {
       // Arrange
+      const mockTenant = {
+        id: '123',
+        tenant_id: 'tenant-123',
+        company_name: 'Acme Corp',
+        status: 'ACTIVE' as const,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       const mockModules = ['SoD_Analysis', 'User_Access_Review'];
       mockRequest.params = { tenantId: 'tenant-123' };
+      mockRepository.getTenant.mockResolvedValue(mockTenant);
       mockRepository.getActiveModules.mockResolvedValue(mockModules);
 
       // Act
@@ -186,19 +228,29 @@ describe('TenantController', () => {
       );
 
       // Assert
+      expect(mockRepository.getTenant).toHaveBeenCalledWith('tenant-123');
       expect(mockRepository.getActiveModules).toHaveBeenCalledWith('tenant-123');
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          data: mockModules,
+          data: { modules: mockModules },
         })
       );
     });
 
     it('should return empty array when no modules active', async () => {
       // Arrange
+      const mockTenant = {
+        id: '123',
+        tenant_id: 'tenant-123',
+        company_name: 'Acme Corp',
+        status: 'ACTIVE' as const,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
       mockRequest.params = { tenantId: 'tenant-123' };
+      mockRepository.getTenant.mockResolvedValue(mockTenant);
       mockRepository.getActiveModules.mockResolvedValue([]);
 
       // Act
@@ -213,7 +265,7 @@ describe('TenantController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          data: [],
+          data: { modules: [] },
         })
       );
     });
