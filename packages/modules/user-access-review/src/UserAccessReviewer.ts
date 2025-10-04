@@ -5,7 +5,7 @@
 
 import { IPSConnector } from '@sap-framework/core';
 import { RuleEngine, Rule } from '@sap-framework/services';
-import { STANDARD_SOD_RULES, getCriticalRules } from './rules/sodRules';
+import { STANDARD_SOD_RULES } from './rules/sodRules';
 import {
   UserAccess,
   SoDViolation,
@@ -201,7 +201,7 @@ export class UserAccessReviewer {
 
   private generateRecommendations(
     summary: AnalysisResult['summary'],
-    violations: SoDViolation[]
+    _violations: SoDViolation[]
   ): string[] {
     const recommendations: string[] = [];
 
