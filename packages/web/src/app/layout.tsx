@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Providers } from "@/lib/providers";
 import "../styles/design-system.css";
 import "./globals.css";
+import { ToastProvider } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "SAP GRC Platform",
@@ -16,9 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>
+        <ToastProvider>
           {children}
-        </Providers>
+        </ToastProvider>
       </body>
     </html>
   );

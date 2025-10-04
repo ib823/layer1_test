@@ -88,6 +88,11 @@ class ApiClient {
   async healthCheck() {
     return this.request('/health');
   }
+
+  // Connector Status API
+  async getConnectorStatus() {
+    return this.request('/monitoring/connectors');
+  }
 }
 
 export const api = new ApiClient();

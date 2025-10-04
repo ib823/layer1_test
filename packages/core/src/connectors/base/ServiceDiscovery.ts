@@ -258,7 +258,7 @@ export class ServiceDiscovery {
     return url.includes('v4') ? 'ODATA_V4' : 'ODATA_V2';
   }
 
-  private parseMetadataXML(xml: string): ServiceMetadata {
+  private parseMetadataXML(_xml: string): ServiceMetadata {
     // Simplified - in production use proper XML parser like fast-xml-parser
     return {
       entityTypes: [],

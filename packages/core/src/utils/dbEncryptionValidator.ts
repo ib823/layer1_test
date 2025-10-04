@@ -94,11 +94,11 @@ export async function validateDatabaseEncryption(
 
     // Check tablespace encryption (PostgreSQL 14+)
     try {
-      const tablespaceResult = await pool.query(`
-        SELECT spcname, spcoptions
-        FROM pg_tablespace
-        WHERE spcname NOT LIKE 'pg_%'
-      `);
+      // const tablespaceResult = await pool.query(`
+      //   SELECT spcname, spcoptions
+      //   FROM pg_tablespace
+      //   WHERE spcname NOT LIKE 'pg_%'
+      // `);
 
       // Note: PostgreSQL doesn't natively support tablespace encryption
       // This would need to be implemented at the filesystem/disk level

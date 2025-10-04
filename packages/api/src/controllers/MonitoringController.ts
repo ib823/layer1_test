@@ -58,9 +58,9 @@ export class MonitoringController {
     try {
       logger.info('Connector status check requested');
 
-      const connectors = await this.monitoringService.getConnectorStatuses();
+      const connectors = await this.monitoringService.getConnectorStatus();
 
-      ApiResponseUtil.success(res, { connectors });
+      ApiResponseUtil.success(res, connectors);
     } catch (error) {
       next(error);
     }
