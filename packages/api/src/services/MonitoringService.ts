@@ -1,7 +1,5 @@
 import { TenantProfileRepository } from '@sap-framework/core';
-import { S4HANAConnector } from '@sap-framework/core';
-import { IPSConnector } from '@sap-framework/core';
-import logger from '@sap-framework/core/dist/utils/logger';
+import logger from '../utils/logger';
 
 interface ComponentHealth {
   name: string;
@@ -114,6 +112,7 @@ export class MonitoringService {
       },
     ];
 
+    logger.info('Returning mock connector data', { count: mockConnectors.length });
     return mockConnectors;
   }
 
