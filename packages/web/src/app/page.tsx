@@ -1,206 +1,219 @@
 'use client';
 
-import { Button, Card, CardTitle, Badge } from '@/components/ui';
-import { useViolations, useDashboardStats } from '@/hooks';
-import { useAppStore } from '@/lib/store';
-import { useEffect } from 'react';
+import { Table } from '@/components/ui';
+import { Badge } from '@/components/ui';
+import { ColumnDef } from '@tanstack/react-table';
+import { useState } from 'react';
 
-export default function DashboardPage() {
-  const { tenantId, setTenantId } = useAppStore();
+interface SampleViolation {
+  id: string;
+  userId: string;
+  riskLevel: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  businessProcess: string;
+  detectedAt: string;
+  status: string;
+}
 
-  // Set default tenant for demo - in production, this would come from auth
-  useEffect(() => {
-    if (!tenantId) {
-      setTenantId('tenant-123');
-    }
-  }, [tenantId, setTenantId]);
-
-  // Fetch dashboard stats
-  const { data: stats, isLoading: statsLoading } = useDashboardStats(tenantId);
-
-  // Fetch recent violations
-  const { data: violations, isLoading: violationsLoading } = useViolations(tenantId, {
+// Sample data
+const sampleData: SampleViolation[] = [
+  {
+    id: '1',
+    userId: 'USER001',
+    riskLevel: 'CRITICAL',
+    businessProcess: 'Purchase Order & Invoice Approval',
+    detectedAt: '2025-01-15 10:30',
     status: 'OPEN',
-  });
+  },
+  {
+    id: '2',
+    userId: 'USER002',
+    riskLevel: 'HIGH',
+    businessProcess: 'Create Vendor & Process Payment',
+    detectedAt: '2025-01-14 15:20',
+    status: 'IN_REVIEW',
+  },
+  {
+    id: '3',
+    userId: 'USER003',
+    riskLevel: 'MEDIUM',
+    businessProcess: 'Goods Receipt & Invoice Verification',
+    detectedAt: '2025-01-13 09:10',
+    status: 'OPEN',
+  },
+  {
+    id: '4',
+    userId: 'USER004',
+    riskLevel: 'LOW',
+    businessProcess: 'Journal Entry & Posting',
+    detectedAt: '2025-01-12 14:45',
+    status: 'RESOLVED',
+  },
+  {
+    id: '5',
+    userId: 'USER005',
+    riskLevel: 'CRITICAL',
+    businessProcess: 'Bank Account Creation & Payment Run',
+    detectedAt: '2025-01-11 11:20',
+    status: 'OPEN',
+  },
+  {
+    id: '6',
+    userId: 'USER006',
+    riskLevel: 'HIGH',
+    businessProcess: 'User Master Maintenance & Authorization',
+    detectedAt: '2025-01-10 16:30',
+    status: 'MITIGATED',
+  },
+  {
+    id: '7',
+    userId: 'USER007',
+    riskLevel: 'MEDIUM',
+    businessProcess: 'Pricing Change & Sales Order',
+    detectedAt: '2025-01-09 10:15',
+    status: 'OPEN',
+  },
+  {
+    id: '8',
+    userId: 'USER008',
+    riskLevel: 'LOW',
+    businessProcess: 'Material Master & BOM Change',
+    detectedAt: '2025-01-08 13:50',
+    status: 'IN_REVIEW',
+  },
+  {
+    id: '9',
+    userId: 'USER009',
+    riskLevel: 'HIGH',
+    businessProcess: 'Credit Memo & Customer Master',
+    detectedAt: '2025-01-07 09:30',
+    status: 'OPEN',
+  },
+  {
+    id: '10',
+    userId: 'USER010',
+    riskLevel: 'CRITICAL',
+    businessProcess: 'Asset Creation & Depreciation Run',
+    detectedAt: '2025-01-06 15:40',
+    status: 'OPEN',
+  },
+  {
+    id: '11',
+    userId: 'USER011',
+    riskLevel: 'MEDIUM',
+    businessProcess: 'Tax Configuration & Invoice',
+    detectedAt: '2025-01-05 11:25',
+    status: 'RESOLVED',
+  },
+  {
+    id: '12',
+    userId: 'USER012',
+    riskLevel: 'LOW',
+    businessProcess: 'Delivery & Billing',
+    detectedAt: '2025-01-04 14:10',
+    status: 'OPEN',
+  },
+];
 
-  const recentViolations = violations?.slice(0, 4) || [];
+// Column definitions
+const columns: ColumnDef<SampleViolation>[] = [
+  {
+    accessorKey: 'userId',
+    header: 'User ID',
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'businessProcess',
+    header: 'Business Process',
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'riskLevel',
+    header: 'Risk Level',
+    enableSorting: true,
+    cell: ({ row }) => {
+      const level = row.original.riskLevel;
+      const variant =
+        level === 'CRITICAL'
+          ? 'critical'
+          : level === 'HIGH'
+          ? 'high'
+          : level === 'MEDIUM'
+          ? 'medium'
+          : 'low';
+      return <Badge variant={variant}>{level}</Badge>;
+    },
+  },
+  {
+    accessorKey: 'detectedAt',
+    header: 'Detected At',
+    enableSorting: true,
+    cell: ({ row }) => row.original.detectedAt,
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    enableSorting: true,
+  },
+];
+
+export default function TableTestPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [showEmpty, setShowEmpty] = useState(false);
 
   return (
     <main style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Page Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 className="text-3xl font-bold" style={{ marginBottom: '0.5rem' }}>
-          SAP GRC Dashboard
+          Table Component Test
         </h1>
         <p className="text-secondary">
-          Governance, Risk & Compliance Overview
+          Testing all features: sorting, pagination, loading states, empty states, row clicking, keyboard navigation
         </p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md" style={{ marginBottom: '2rem' }}>
-        <Card>
-          <Card.Body>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-secondary" style={{ marginBottom: '0.25rem' }}>
-                  Total Violations
-                </p>
-                <p className="text-3xl font-bold">
-                  {statsLoading ? '...' : stats?.totalViolations || 0}
-                </p>
-              </div>
-              {stats?.trends && (
-                <Badge variant={stats.trends.violations > 0 ? 'critical' : 'low'}>
-                  {stats.trends.violations > 0 ? '+' : ''}{stats.trends.violations}%
-                </Badge>
-              )}
-            </div>
-          </Card.Body>
-        </Card>
-
-        <Card>
-          <Card.Body>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-secondary" style={{ marginBottom: '0.25rem' }}>
-                  Critical Issues
-                </p>
-                <p className="text-3xl font-bold text-critical">
-                  {statsLoading ? '...' : stats?.criticalIssues || 0}
-                </p>
-              </div>
-              {stats?.trends && (
-                <Badge variant="high">
-                  +{stats.trends.critical}
-                </Badge>
-              )}
-            </div>
-          </Card.Body>
-        </Card>
-
-        <Card>
-          <Card.Body>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-secondary" style={{ marginBottom: '0.25rem' }}>
-                  Users Analyzed
-                </p>
-                <p className="text-3xl font-bold">
-                  {statsLoading ? '...' : stats?.usersAnalyzed.toLocaleString() || 0}
-                </p>
-              </div>
-              <Badge variant="info">Active</Badge>
-            </div>
-          </Card.Body>
-        </Card>
-
-        <Card>
-          <Card.Body>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm text-secondary" style={{ marginBottom: '0.25rem' }}>
-                  Compliance Score
-                </p>
-                <p className="text-3xl font-bold text-low">
-                  {statsLoading ? '...' : `${stats?.complianceScore}%` || '0%'}
-                </p>
-              </div>
-              {stats?.trends && (
-                <Badge variant="low">
-                  +{stats.trends.compliance}%
-                </Badge>
-              )}
-            </div>
-          </Card.Body>
-        </Card>
+      {/* Controls */}
+      <div className="flex gap-md" style={{ marginBottom: '2rem' }}>
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={() => {
+            setIsLoading(true);
+            setTimeout(() => setIsLoading(false), 2000);
+          }}
+        >
+          Test Loading State (2s)
+        </button>
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => setShowEmpty(!showEmpty)}
+        >
+          Toggle Empty State
+        </button>
       </div>
 
-      {/* Recent Violations Table */}
-      <Card>
-        <Card.Header>
-          <div className="flex justify-between items-center">
-            <CardTitle>Recent SoD Violations</CardTitle>
-            <Button variant="primary" size="sm">
-              View All
-            </Button>
-          </div>
-        </Card.Header>
-        <Card.Body style={{ padding: 0 }}>
-          {violationsLoading ? (
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-              <p className="text-secondary">Loading violations...</p>
-            </div>
-          ) : recentViolations.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-              <p className="text-secondary">No violations found</p>
-            </div>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>User ID</th>
-                  <th>Violation Type</th>
-                  <th>Risk Level</th>
-                  <th>Detected</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentViolations.map((violation) => (
-                  <tr key={violation.violation_id}>
-                    <td className="font-medium">{violation.user_id}</td>
-                    <td>{violation.business_process}</td>
-                    <td>
-                      <Badge
-                        variant={
-                          violation.risk_level === 'CRITICAL'
-                            ? 'critical'
-                            : violation.risk_level === 'HIGH'
-                            ? 'high'
-                            : violation.risk_level === 'MEDIUM'
-                            ? 'medium'
-                            : 'low'
-                        }
-                      >
-                        {violation.risk_level}
-                      </Badge>
-                    </td>
-                    <td className="text-secondary">
-                      {new Date(violation.detected_at).toLocaleString()}
-                    </td>
-                    <td>
-                      <span
-                        className={
-                          violation.status === 'OPEN'
-                            ? 'text-high'
-                            : violation.status === 'RESOLVED'
-                            ? 'text-low'
-                            : 'text-secondary'
-                        }
-                      >
-                        {violation.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card.Body>
-      </Card>
+      {/* Table */}
+      <Table
+        data={showEmpty ? [] : sampleData}
+        columns={columns}
+        pageSize={5}
+        isLoading={isLoading}
+        emptyMessage="No violations found. Try toggling the empty state button above."
+        onRowClick={(row) => {
+          alert(`Clicked row: ${row.userId} - ${row.businessProcess}`);
+        }}
+      />
 
-      {/* Action Buttons */}
-      <div className="flex gap-md" style={{ marginTop: '2rem' }}>
-        <Button variant="primary" size="md">
-          Run New Analysis
-        </Button>
-        <Button variant="secondary" size="md">
-          Export Report
-        </Button>
-        <Button variant="ghost" size="md">
-          View Settings
-        </Button>
+      {/* Test Checklist */}
+      <div style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: 'var(--neutral-100)', borderRadius: 'var(--radius-lg)' }}>
+        <h2 className="text-xl font-semibold" style={{ marginBottom: '1rem' }}>Test Checklist</h2>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Sorting:</strong> Click column headers (User ID, Business Process, Risk Level, Detected At, Status)</li>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Pagination:</strong> Navigate using Previous/Next buttons (5 items per page)</li>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Row Clicking:</strong> Click any row to see alert, or press Enter when focused</li>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Keyboard Navigation:</strong> Tab through sortable headers and clickable rows</li>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Loading State:</strong> Click "Test Loading State" button to see skeleton rows</li>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Empty State:</strong> Click "Toggle Empty State" to see empty state with icon</li>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Accessibility:</strong> Check ARIA labels and screen reader support</li>
+        </ul>
       </div>
     </main>
   );
