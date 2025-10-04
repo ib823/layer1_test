@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { v4 as uuidv4 } from 'uuid';
 import swaggerUi from 'swagger-ui-express';
+import { initializeEncryption } from '@sap-framework/core';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { auditLog } from './middleware/auditLog';
@@ -14,6 +15,19 @@ import { swaggerSpec } from './swagger';
 
 export function createApp(): Application {
   const app = express();
+
+  // Initialize encryption service at startup
+  try {
+    if (process.env.ENCRYPTION_MASTER_KEY) {
+      initializeEncryption(process.env.ENCRYPTION_MASTER_KEY);
+      logger.info('✅ Encryption service initialized');
+    } else {
+      logger.warn('⚠️  ENCRYPTION_MASTER_KEY not set - encryption disabled');
+    }
+  } catch (error: any) {
+    logger.error('❌ Failed to initialize encryption service:', error);
+    throw error;
+  }
 
   // Security middleware
   app.use(helmet());

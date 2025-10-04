@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: sap-framework-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sapframework
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./infrastructure/database/migrations/002_security_compliance.sql:/docker-entrypoint-initdb.d/02-security.sql
+      - ./infrastructure/database/migrations/003_performance_indexes.sql:/docker-entrypoint-initdb.d/03-indexes.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sap-framework-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: sap-framework-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redis123
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sap-framework-network
+
+  # API Server (optional - for local development)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sap-framework-api
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sapframework
+      REDIS_URL: redis://:redis123@redis:6379
+      NODE_ENV: development
+      PORT: 3000
+      AUTH_ENABLED: "true"
+      ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY}
+      LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sap-framework-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  sap-framework-network:
+    driver: bridge
