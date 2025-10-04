@@ -75,27 +75,44 @@ export class UserAccessReviewer {
   }
 
   private async fetchUserAccess(): Promise<UserAccess[]> {
+    // Fetch users with groups included to avoid N+1 queries
     const ipsUsers = await this.ipsConnector.getUsers({
-      attributes: ['id', 'userName', 'emails', 'active'],
+      attributes: ['id', 'userName', 'emails', 'active', 'groups'],
       count: 1000,
     });
 
     const users: UserAccess[] = [];
 
-    for (const ipsUser of ipsUsers) {
-      if (!this.config.analysis.includeInactiveUsers && !ipsUser.active) {
-        continue;
-      }
+    // Process in batches of 50 to avoid overwhelming the API
+    const BATCH_SIZE = 50;
+    const usersToProcess = ipsUsers.filter(
+      user => this.config.analysis.includeInactiveUsers || user.active
+    );
 
-      const groups = await this.ipsConnector.getUserGroupMemberships(ipsUser.id);
+    for (let i = 0; i < usersToProcess.length; i += BATCH_SIZE) {
+      const batch = usersToProcess.slice(i, i + BATCH_SIZE);
 
-      users.push({
-        userId: ipsUser.id,
-        userName: ipsUser.userName,
-        email: ipsUser.emails?.[0]?.value,
-        roles: groups.map((g: any) => g.displayName),
-        isActive: ipsUser.active,
-      });
+      // Process batch in parallel
+      const batchResults = await Promise.all(
+        batch.map(async (ipsUser) => {
+          // If groups are already included, use them; otherwise fetch
+          const groups = ipsUser.groups && ipsUser.groups.length > 0
+            ? ipsUser.groups
+            : await this.ipsConnector.getUserGroupMemberships(ipsUser.id);
+
+          return {
+            userId: ipsUser.id,
+            userName: ipsUser.userName,
+            email: ipsUser.emails?.[0]?.value,
+            roles: Array.isArray(groups)
+              ? groups.map((g: any) => g.displayName || g)
+              : [],
+            isActive: ipsUser.active,
+          };
+        })
+      );
+
+      users.push(...batchResults);
     }
 
     return users;

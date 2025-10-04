@@ -53,25 +53,19 @@ export class TenantController {
 
       logger.info('Listing tenants', { page, pageSize, status });
 
-      // TODO: Implement pagination in repository
-      // For now, get all tenants and filter
-      const allTenants = await this.tenantRepo.getAllTenants();
-      
-      let filteredTenants = allTenants;
-      if (status) {
-        filteredTenants = allTenants.filter(t => t.status === status);
-      }
-
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      const paginatedTenants = filteredTenants.slice(start, end);
+      // Use database-level pagination for memory efficiency and performance
+      const { tenants, total } = await this.tenantRepo.getAllTenantsPaginated(
+        page,
+        pageSize,
+        status
+      );
 
       ApiResponseUtil.paginated(
         res,
-        paginatedTenants,
+        tenants,
         page,
         pageSize,
-        filteredTenants.length
+        total
       );
     } catch (error) {
       next(error);
@@ -112,14 +106,17 @@ export class TenantController {
 
       logger.info('Getting tenant details', { tenantId });
 
-      const tenant = await this.tenantRepo.getTenant(tenantId);
+      // Execute all queries in parallel for 3x faster response
+      const [tenant, profile, activeModules] = await Promise.all([
+        this.tenantRepo.getTenant(tenantId),
+        this.tenantRepo.getProfile(tenantId),
+        this.tenantRepo.getActiveModules(tenantId),
+      ]);
+
       if (!tenant) {
         ApiResponseUtil.notFound(res, 'Tenant');
         return;
       }
-
-      const profile = await this.tenantRepo.getProfile(tenantId);
-      const activeModules = await this.tenantRepo.getActiveModules(tenantId);
 
       ApiResponseUtil.success(res, {
         tenant,

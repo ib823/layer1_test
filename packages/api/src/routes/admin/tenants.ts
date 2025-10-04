@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { TenantController } from '../../controllers/TenantController';
 import { TenantProfileRepository } from '@sap-framework/core';
 import { validateRequest, schemas } from '../../middleware/validator';
+import { cacheMiddleware } from '../../middleware/cache';
 import { config } from '../../config';
 
 const router: Router = Router();
@@ -9,20 +10,22 @@ const tenantRepo = new TenantProfileRepository(config.databaseUrl);
 const controller = new TenantController(tenantRepo);
 
 /**
- * Tenant Management Routes
+ * Tenant Management Routes (with caching for performance)
  */
 
-// List all tenants
+// List all tenants (cached for 5 minutes)
 router.get(
   '/',
   validateRequest({ query: schemas.pagination }),
+  cacheMiddleware(5 * 60 * 1000),
   (req, res, next) => controller.listTenants(req, res, next)
 );
 
-// Get tenant details
+// Get tenant details (cached for 2 minutes)
 router.get(
   '/:tenantId',
   validateRequest({ params: schemas.tenantId }),
+  cacheMiddleware(2 * 60 * 1000),
   (req, res, next) => controller.getTenant(req, res, next)
 );
 

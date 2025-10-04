@@ -26,7 +26,7 @@ export interface TableProps<TData> {
   className?: string;
 }
 
-export function Table<TData>({
+const TableComponent = <TData,>({
   data,
   columns,
   pageSize = 10,
@@ -34,7 +34,7 @@ export function Table<TData>({
   emptyMessage = 'No data available',
   onRowClick,
   className = '',
-}: TableProps<TData>) {
+}: TableProps<TData>) => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const table = useReactTable({
@@ -250,4 +250,17 @@ export function Table<TData>({
       )}
     </div>
   );
-}
+};
+
+// Memoized Table component to prevent unnecessary re-renders
+export const Table = React.memo(TableComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.data === nextProps.data &&
+    prevProps.columns === nextProps.columns &&
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.pageSize === nextProps.pageSize &&
+    prevProps.emptyMessage === nextProps.emptyMessage &&
+    prevProps.onRowClick === nextProps.onRowClick &&
+    prevProps.className === nextProps.className
+  );
+}) as <TData>(props: TableProps<TData>) => React.ReactElement;

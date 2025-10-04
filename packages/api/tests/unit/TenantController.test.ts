@@ -6,7 +6,9 @@ import { TenantProfileRepository } from '@sap-framework/core';
 jest.mock('@sap-framework/core', () => ({
   TenantProfileRepository: jest.fn().mockImplementation(() => ({
     getTenant: jest.fn(),
+    getProfile: jest.fn(),
     createTenant: jest.fn(),
+    saveSAPConnection: jest.fn(),
     getActiveModules: jest.fn(),
     activateModule: jest.fn(),
   })),
@@ -90,6 +92,8 @@ describe('TenantController', () => {
       // Arrange
       mockRequest.params = { tenantId: 'non-existent' };
       mockRepository.getTenant.mockResolvedValue(null);
+      mockRepository.getProfile.mockResolvedValue(null);
+      mockRepository.getActiveModules.mockResolvedValue([]);
 
       // Act
       await controller.getTenant(
@@ -113,7 +117,10 @@ describe('TenantController', () => {
     it('should handle errors gracefully', async () => {
       // Arrange
       mockRequest.params = { tenantId: 'tenant-123' };
-      mockRepository.getTenant.mockRejectedValue(new Error('Database error'));
+      const error = new Error('Database error');
+      mockRepository.getTenant.mockRejectedValue(error);
+      mockRepository.getProfile.mockRejectedValue(error);
+      mockRepository.getActiveModules.mockRejectedValue(error);
 
       // Act
       await controller.getTenant(

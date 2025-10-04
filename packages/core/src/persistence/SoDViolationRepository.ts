@@ -140,7 +140,7 @@ export class SoDViolationRepository {
   }
 
   /**
-   * Store violations from analysis
+   * Store violations from analysis (Optimized batch insert)
    */
   async storeViolations(
     violations: Omit<SoDViolation, 'id' | 'createdAt' | 'updatedAt'>[]
@@ -152,30 +152,35 @@ export class SoDViolationRepository {
     try {
       await client.query('BEGIN');
 
-      const query = `
-        INSERT INTO sod_violations (
-          tenant_id, analysis_id, user_id, user_name, user_email,
-          conflict_type, risk_level, conflicting_roles, affected_transactions,
-          business_process, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      `;
-
-      for (const violation of violations) {
-        await client.query(query, [
+      // Build batch insert with VALUES placeholders
+      const values: any[] = [];
+      const placeholders = violations.map((violation, idx) => {
+        const offset = idx * 11;
+        values.push(
           violation.tenantId,
           violation.analysisId,
           violation.userId,
-          violation.userName,
-          violation.userEmail,
+          violation.userName || null,
+          violation.userEmail || null,
           violation.conflictType,
           violation.riskLevel,
           violation.conflictingRoles,
           violation.affectedTransactions || null,
           violation.businessProcess || null,
-          violation.status || 'OPEN',
-        ]);
-      }
+          violation.status || 'OPEN'
+        );
+        return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11})`;
+      }).join(', ');
 
+      const query = `
+        INSERT INTO sod_violations (
+          tenant_id, analysis_id, user_id, user_name, user_email,
+          conflict_type, risk_level, conflicting_roles, affected_transactions,
+          business_process, status
+        ) VALUES ${placeholders}
+      `;
+
+      await client.query(query, values);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');

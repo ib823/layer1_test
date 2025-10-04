@@ -102,15 +102,18 @@ export class RuleEngine {
       const userRoles = user[rolesField] || [];
       const rolesArray = Array.isArray(userRoles) ? userRoles : [userRoles];
 
+      // Use Set for O(1) lookups instead of O(n) array.includes()
+      const rolesSet = new Set(rolesArray);
+
       const hasConflict = requiresAll
-        ? conflictingRoles.every(role => rolesArray.includes(role))
-        : conflictingRoles.some(role => rolesArray.includes(role));
+        ? conflictingRoles.every(role => rolesSet.has(role))
+        : conflictingRoles.some(role => rolesSet.has(role));
 
       if (hasConflict) {
         matches.push({
           userId,
           roles: rolesArray,
-          conflictingRoles: conflictingRoles.filter(r => rolesArray.includes(r)),
+          conflictingRoles: conflictingRoles.filter(r => rolesSet.has(r)),
           user,
         });
       }

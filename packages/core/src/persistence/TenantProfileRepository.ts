@@ -172,6 +172,39 @@ export class TenantProfileRepository {
     return result.rows;
   }
 
+  /**
+   * Get tenants with database-level pagination (optimized)
+   */
+  async getAllTenantsPaginated(
+    page: number = 1,
+    pageSize: number = 20,
+    status?: string
+  ): Promise<{ tenants: TenantRecord[]; total: number }> {
+    const offset = (page - 1) * pageSize;
+
+    const whereClause = status ? 'WHERE status = $3' : '';
+    const params = status ? [pageSize, offset, status] : [pageSize, offset];
+
+    // Execute count and data queries in parallel
+    const [dataResult, countResult] = await Promise.all([
+      this.pool.query<TenantRecord>(
+        `SELECT * FROM tenants ${whereClause}
+         ORDER BY created_at DESC
+         LIMIT $1 OFFSET $2`,
+        params
+      ),
+      this.pool.query(
+        `SELECT COUNT(*) FROM tenants ${whereClause}`,
+        status ? [status] : []
+      )
+    ]);
+
+    return {
+      tenants: dataResult.rows,
+      total: parseInt(countResult.rows[0].count)
+    };
+  }
+
   async getAllActiveTenants(): Promise<TenantRecord[]> {
     const result = await this.pool.query<TenantRecord>(
       "SELECT * FROM tenants WHERE status = 'ACTIVE' ORDER BY created_at DESC"
