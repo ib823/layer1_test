@@ -77,10 +77,10 @@ export default function ViolationDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['violation', params.id] });
-      showToast('Status updated successfully', 'success');
+      showToast({ title: 'Status updated successfully' });
     },
     onError: () => {
-      showToast('Failed to update status', 'error');
+      showToast({ title: 'Failed to update status', variant: 'destructive' });
     },
   });
 
@@ -101,10 +101,10 @@ export default function ViolationDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['violation', params.id] });
       setComment('');
-      showToast('Comment added', 'success');
+      showToast({ title: 'Comment added' });
     },
     onError: () => {
-      showToast('Failed to add comment', 'error');
+      showToast({ title: 'Failed to add comment', variant: 'destructive' });
     },
   });
 
@@ -124,11 +124,11 @@ export default function ViolationDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['violation', params.id] });
-      showToast('Violation resolved', 'success');
+      showToast({ title: 'Violation resolved' });
       setResolutionNotes('');
     },
     onError: () => {
-      showToast('Failed to resolve violation', 'error');
+      showToast({ title: 'Failed to resolve violation', variant: 'destructive' });
     },
   });
 
