@@ -3,9 +3,8 @@ import { AuthenticatedRequest } from '../types';
 import { ApiResponseUtil } from '../utils/response';
 import { config } from '../config';
 import logger from '../utils/logger';
-
-// NOTE: Install @sap/xssec for production XSUAA integration
-// import * as xssec from '@sap/xssec';
+import * as xssec from '@sap/xssec';
+import * as xsenv from '@sap/xsenv';
 
 /**
  * Authentication middleware with XSUAA JWT validation
@@ -43,25 +42,41 @@ export function authenticate(
   }
 
   try {
-    // PRODUCTION: Validate with XSUAA
-    // const xsuaaService = xsenv.getServices({ xsuaa: { tag: 'xsuaa' } }).xsuaa;
-    // xssec.createSecurityContext(token, xsuaaService, (error, securityContext) => {
-    //   if (error) {
-    //     logger.error('XSUAA validation failed:', error);
-    //     return ApiResponseUtil.unauthorized(res, 'Invalid token');
-    //   }
-    //
-    //   req.user = {
-    //     id: securityContext.getLogonName(),
-    //     email: securityContext.getEmail(),
-    //     roles: securityContext.getAttribute('xs.rolecollections') || [],
-    //     tenantId: securityContext.getSubaccountId(),
-    //   };
-    //
-    //   next();
-    // });
+    // PRODUCTION: Validate with XSUAA (when running in SAP BTP Cloud Foundry)
+    if (config.nodeEnv === 'production' || process.env.VCAP_SERVICES) {
+      try {
+        const xsuaaService = xsenv.getServices({ xsuaa: { tag: 'xsuaa' } }).xsuaa;
+
+        xssec.createSecurityContext(token, xsuaaService, (error, securityContext) => {
+          if (error || !securityContext) {
+            logger.error('XSUAA validation failed:', error);
+            return ApiResponseUtil.unauthorized(res, 'Invalid token');
+          }
+
+          req.user = {
+            id: securityContext.getLogonName(),
+            email: securityContext.getEmail(),
+            roles: securityContext.getAttribute('xs.rolecollections') || [],
+            tenantId: securityContext.getSubaccountId(),
+          };
+
+          logger.info('User authenticated via XSUAA', {
+            userId: req.user.id,
+            tenantId: req.user.tenantId,
+          });
+
+          next();
+        });
+        return;
+      } catch (xsuaaError: any) {
+        logger.error('XSUAA service not available:', xsuaaError.message);
+        // Fall through to development mode if XSUAA is not available
+      }
+    }
 
     // DEVELOPMENT: Simple JWT validation (for testing without XSUAA)
+    logger.warn('Using development JWT validation (not for production!)');
+
     const decodedToken = decodeJWT(token);
 
     if (!decodedToken) {
@@ -84,7 +99,7 @@ export function authenticate(
       tenantId: decodedToken.zid || decodedToken.tenant_id || 'default',
     };
 
-    logger.info('User authenticated', {
+    logger.info('User authenticated (dev mode)', {
       userId: req.user.id,
       tenantId: req.user.tenantId,
       roles: req.user.roles,

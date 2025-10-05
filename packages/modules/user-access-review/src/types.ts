@@ -2,6 +2,8 @@
  * User Access Review Module - Type Definitions
  */
 
+export type RiskLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+
 export interface UserAccess {
   userId: string;
   userName: string;
@@ -17,8 +19,9 @@ export interface SoDViolation {
   id: string;
   userId: string;
   userName: string;
+  department: string;
   conflictingRoles: string[];
-  riskLevel: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  riskLevel: RiskLevel;
   riskScore: number;
   ruleName: string;
   ruleDescription: string;
@@ -51,7 +54,7 @@ export interface SoDRuleDefinition {
   description: string;
   conflictingRoles: string[];
   requiresAll: boolean;
-  riskLevel: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  riskLevel: RiskLevel;
   riskScore: number;
   category: 'FINANCIAL' | 'PROCUREMENT' | 'HR' | 'SECURITY' | 'OPERATIONS';
   regulatoryReference?: string;

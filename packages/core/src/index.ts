@@ -35,3 +35,6 @@ export * from './persistence/SoDViolationRepository';
 // Services
 export * from './services/GDPRService';
 export * from './services/DataRetentionService';
+
+// Rules (moved from services package to break cyclic dependency)
+export * from './rules';

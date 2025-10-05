@@ -1,17 +1,36 @@
 # End-to-End Testing Guide
 
-**Last Updated**: 2025-10-04
-**Status**: Ready to Use
+**Last Updated**: 2025-10-05
+**Status**: Production Ready
 
 ---
 
 ## 📋 Overview
 
-Comprehensive E2E test suite for validating complete SoD workflow with real database operations.
+Comprehensive E2E test suite for validating critical user workflows with real database and API operations.
 
 ### Test Coverage
 
-The E2E test suite (`test-sod-e2e.ts`) validates:
+The E2E test suite includes three test suites covering all critical user flows:
+
+#### 1. **Tenant Onboarding** (`tenant-onboarding.e2e.ts`)
+- ✅ Create tenant via API
+- ✅ Configure SAP connection
+- ✅ Retrieve tenant details
+- ✅ List tenants with pagination
+- ✅ Get tenant profile
+- ✅ Module activation/deactivation
+- ✅ Data cleanup
+
+#### 2. **Service Discovery** (`service-discovery.e2e.ts`)
+- ✅ Trigger service discovery
+- ✅ Get discovery status
+- ✅ Verify capability profile generation
+- ✅ Check module recommendations
+- ✅ Identify missing services
+- ✅ Data cleanup
+
+#### 3. **SoD Analysis** (`test-sod-e2e.ts`)
 - ✅ Database connectivity
 - ✅ SoD analysis run creation
 - ✅ Violation storage (batch operations)
@@ -51,24 +70,38 @@ The E2E test suite (`test-sod-e2e.ts`) validates:
 
 ### Running E2E Tests
 
-#### Using the Test Runner (Recommended)
+#### Using the Master Test Runner (Recommended)
 
 ```bash
-cd packages/core/tests/e2e
-./run-e2e-tests.sh
+cd packages/api/tests/e2e
+./run-all-e2e-tests.sh
 ```
 
-The test runner automatically:
+The master test runner automatically:
 - ✅ Checks DATABASE_URL
 - ✅ Validates database connectivity
-- ✅ Verifies required tables exist
-- ✅ Runs the E2E test suite
-- ✅ Provides clear error messages
+- ✅ Disables authentication for testing
+- ✅ Runs all 3 E2E test suites sequentially
+- ✅ Provides detailed pass/fail summary
+- ✅ Reports failed test names
 
-#### Direct Execution
+#### Running Individual Test Suites
 
 ```bash
-# From project root
+# Tenant Onboarding E2E
+DATABASE_URL="..." AUTH_ENABLED=false tsx packages/api/tests/e2e/tenant-onboarding.e2e.ts
+
+# Service Discovery E2E
+DATABASE_URL="..." AUTH_ENABLED=false tsx packages/api/tests/e2e/service-discovery.e2e.ts
+
+# SoD Analysis E2E
+DATABASE_URL="..." tsx packages/core/tests/e2e/test-sod-e2e.ts
+```
+
+#### From Project Root
+
+```bash
+# Run all E2E tests
 pnpm test:e2e
 
 # Or with custom database
@@ -79,122 +112,119 @@ DATABASE_URL="postgresql://user:pass@host:5432/db" pnpm test:e2e
 
 ## 📊 Test Scenarios
 
-### 1. Database Connection
-Validates PostgreSQL connectivity and pool configuration.
+### Tenant Onboarding Flow (8 tests)
 
-### 2. Setup Test Data
-Creates test tenant and prepares test environment.
+1. **Health Endpoint** - Validates API is running and responsive
+2. **Create Tenant** - Tests tenant creation with SAP connection configuration
+3. **Get Tenant** - Retrieves tenant details and verifies data integrity
+4. **List Tenants** - Tests pagination and tenant listing
+5. **Get Tenant Profile** - Validates capability profile retrieval
+6. **Get Active Modules** - Lists activated modules for tenant
+7. **Activate Module** - Enables a module for tenant (e.g., SoD_Analysis)
+8. **Deactivate Module** - Disables a module for tenant
 
-### 3. Create Analysis Run
-Tests creation of new SoD analysis run with metadata.
+### Service Discovery Flow (6 tests)
 
-### 4. Store Violations
-Validates batch insertion of SoD violations:
-- User conflicts
-- Role conflicts
-- Risk levels
-- Conflict metadata
+1. **Setup Test Tenant** - Creates test tenant with SAP connection
+2. **Trigger Discovery** - Initiates service discovery for tenant
+3. **Get Discovery Status** - Checks discovery job status
+4. **Get Capability Profile** - Validates discovered capabilities and SAP version
+5. **Get Recommended Modules** - Lists modules available based on discovered services
+6. **Get Missing Services** - Identifies services needed for unavailable modules
 
-### 5. Get Violations with Filters
-Tests retrieval with:
-- Status filtering
-- Risk level filtering
-- Pagination
-- Sorting
-- Date ranges
+### SoD Analysis Flow (11 tests)
 
-### 6. Get Violation By ID
-Validates single violation retrieval.
-
-### 7. Update Violation Status
-Tests status transitions:
-- PENDING → RESOLVED
-- PENDING → ACCEPTED_RISK
-- Adding resolution notes
-
-### 8. Get Latest Analysis
-Retrieves most recent analysis run for tenant.
-
-### 9. Get Violation Statistics
-Validates statistics calculation:
-- Total violations
-- By status
-- By risk level
-- By conflict type
-
-### 10. Delete Old Violations
-Tests cleanup of violations older than retention period.
-
-### 11. CSV Export
-Validates CSV generation:
-- All fields present
-- Proper formatting
-- Correct row count
+1. **Database Connection** - Validates PostgreSQL connectivity
+2. **Setup Test Data** - Creates test tenant and analysis environment
+3. **Create Analysis Run** - Initiates new SoD analysis run with configuration
+4. **Store Violations** - Batch inserts SoD violations (user/role conflicts)
+5. **Get Violations with Filters** - Tests filtering by status, risk level, pagination
+6. **Get Violation By ID** - Retrieves single violation details
+7. **Update Violation Status** - Tests status transitions (OPEN → ACKNOWLEDGED)
+8. **Get Latest Analysis** - Retrieves most recent analysis run
+9. **Get Violation Statistics** - Calculates aggregated statistics
+10. **Delete Old Violations** - Tests retention policy enforcement
+11. **CSV Export** - Generates and validates CSV export
 
 ---
 
 ## 🎯 Expected Output
 
+### Master Test Runner Output
+
 ```
-ℹ Starting SoD End-to-End Test Suite
-ℹ Database: postgresql://postgres:****@localhost:5432/sapframework
-ℹ Test Tenant ID: test-tenant-e2e-1234567890
+╔════════════════════════════════════════════════════════════════╗
+║         SAP MVP Framework - E2E Test Suite Runner              ║
+╚════════════════════════════════════════════════════════════════╝
 
-▶ Test 1: Database Connection
-✓ Database connection established
+✓ DATABASE_URL is set
+ℹ Database: postgresql://****:****@localhost:5432/sapframework
 
-▶ Test 2: Setup Test Data
-✓ Test tenant created
+▶ Testing database connectivity...
+✓ Database is accessible
 
-▶ Test 3: Create Analysis Run
-✓ Analysis run created (ID: abc123)
+═══════════════════════════════════════════════════════════════
+▶ Running: Tenant Onboarding
+═══════════════════════════════════════════════════════════════
 
-▶ Test 4: Store Violations
-✓ Stored 3 violations
+ℹ Starting Tenant Onboarding E2E Test Suite
+ℹ Database: postgresql://****:****@localhost:5432/sapframework
+ℹ Test Tenant ID: test-onboarding-1234567890
 
-▶ Test 5: Get Violations
-  ✓ Retrieved all violations (3)
-  ✓ Filtered by status PENDING (3)
-  ✓ Filtered by risk level HIGH (2)
-  ✓ Pagination works (limit: 2)
+▶ Test 1: Health Endpoint
+✓ API health check passed
 
-▶ Test 6: Get Violation By ID
-✓ Retrieved violation by ID
+▶ Test 2: Create Tenant
+✓ Tenant created: test-onboarding-1234567890
 
-▶ Test 7: Update Violation Status
-✓ Updated violation status to RESOLVED
+▶ Test 3: Get Tenant Details
+✓ Retrieved tenant: E2E Test Corp
 
-▶ Test 8: Get Latest Analysis
-✓ Retrieved latest analysis run
-
-▶ Test 9: Get Violation Statistics
-✓ Statistics calculated correctly
-
-▶ Test 10: Delete Old Violations
-✓ Deleted 0 old violations
-
-▶ Test 11: CSV Export
-✓ Exported 3 violations to CSV
+... (remaining tests)
 
 ================================================================================
 TEST RESULTS SUMMARY
 ================================================================================
-1. [PASS] Database Connection (45ms)
-2. [PASS] Setup Test Data (23ms)
-3. [PASS] Create Analysis Run (34ms)
-4. [PASS] Store Violations (67ms)
-5. [PASS] Get Violations (89ms)
-6. [PASS] Get Violation By ID (12ms)
-7. [PASS] Update Violation Status (28ms)
-8. [PASS] Get Latest Analysis (15ms)
-9. [PASS] Get Violation Statistics (42ms)
-10. [PASS] Delete Old Violations (31ms)
-11. [PASS] CSV Export (56ms)
+1. [PASS] Health Endpoint (45ms)
+2. [PASS] Create Tenant (156ms)
+3. [PASS] Get Tenant (78ms)
+4. [PASS] List Tenants (89ms)
+5. [PASS] Get Tenant Profile (45ms)
+6. [PASS] Get Active Modules (34ms)
+7. [PASS] Activate Module (67ms)
+8. [PASS] Deactivate Module (56ms)
 ================================================================================
-Total: 11 | Passed: 11 | Failed: 0 | Duration: 442ms
+Total: 8 | Passed: 8 | Failed: 0 | Duration: 570ms
 ================================================================================
 
 ✓ All tests passed!
+✓ Tenant Onboarding PASSED
+
+═══════════════════════════════════════════════════════════════
+▶ Running: Service Discovery
+═══════════════════════════════════════════════════════════════
+
+... (Service Discovery tests)
+
+✓ Service Discovery PASSED
+
+═══════════════════════════════════════════════════════════════
+▶ Running: SoD Analysis (Core Package)
+═══════════════════════════════════════════════════════════════
+
+... (SoD Analysis tests)
+
+✓ SoD Analysis PASSED
+
+╔════════════════════════════════════════════════════════════════╗
+║                    FINAL TEST RESULTS                          ║
+╚════════════════════════════════════════════════════════════════╝
+
+Total Tests:  3
+Passed:       3
+Failed:       0
+
+✓ All E2E tests passed!
 ```
 
 ---

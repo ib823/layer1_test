@@ -179,7 +179,7 @@ export class WorkflowEngine {
     this.workflows.set(workflowId, workflow);
 
     // Emit event
-    EventBus.emit('workflow:created', { workflow });
+    EventBus.publish(EventType.WORKFLOW_CREATED, { workflow });
 
     // Trigger notifications
     this.triggerNotifications('workflow_created', workflow);
@@ -259,7 +259,7 @@ export class WorkflowEngine {
     }
 
     // Emit event
-    EventBus.emit('workflow:transitioned', { workflow, transition });
+    EventBus.publish(EventType.WORKFLOW_UPDATED, { workflow, transition });
 
     // Trigger notifications
     this.triggerNotifications(`workflow_${params.action}`, workflow);
@@ -284,7 +284,7 @@ export class WorkflowEngine {
     workflow.updatedAt = new Date();
 
     // Emit event
-    EventBus.emit('workflow:assigned', { workflow, assignedTo, assignedBy });
+    EventBus.publish(EventType.WORKFLOW_UPDATED, { workflow, assignedTo, assignedBy });
 
     // Trigger notifications
     this.triggerNotifications('workflow_assigned', workflow);
@@ -313,7 +313,7 @@ export class WorkflowEngine {
 
     workflow.updatedAt = new Date();
 
-    EventBus.emit('workflow:commented', { workflow, comment, author });
+    EventBus.publish(EventType.WORKFLOW_UPDATED, { workflow, comment, author });
   }
 
   /**
@@ -464,7 +464,7 @@ export class WorkflowEngine {
         }
 
         // Emit notification event
-        EventBus.emit('notification:send', {
+        EventBus.publish(EventType.NOTIFICATION_SENT, {
           recipients: trigger.recipients,
           channels: trigger.channels,
           template: trigger.template,

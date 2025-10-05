@@ -191,9 +191,6 @@ importers:
       '@sap-framework/core':
         specifier: workspace:*
         version: link:../../core
-      '@sap-framework/services':
-        specifier: workspace:*
-        version: link:../../services
     devDependencies:
       '@types/jest':
         specifier: ^29.5.11
@@ -225,6 +222,9 @@ importers:
       '@sap-framework/core':
         specifier: workspace:*
         version: link:../core
+      '@sap-framework/user-access-review':
+        specifier: workspace:*
+        version: link:../modules/user-access-review
     devDependencies:
       '@types/jest':
         specifier: ^29.5.11

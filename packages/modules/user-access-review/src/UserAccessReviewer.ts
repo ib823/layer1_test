@@ -3,8 +3,7 @@
  * Detects SoD violations and manages user access reviews
  */
 
-import { IPSConnector } from '@sap-framework/core';
-import { RuleEngine, Rule } from '@sap-framework/services';
+import { IPSConnector, RuleEngine, Rule } from '@sap-framework/core';
 import { STANDARD_SOD_RULES } from './rules/sodRules';
 import {
   UserAccess,
@@ -156,11 +155,12 @@ export class UserAccessReviewer {
   private convertToSoDViolations(frameworkViolations: any[]): SoDViolation[] {
     return frameworkViolations.map(violation => {
       const sodRule = this.getSoDRuleById(violation.rule.id);
-      
+
       return {
         id: violation.id,
         userId: violation.data.userId,
         userName: violation.data.user?.userName || violation.data.userId,
+        department: violation.data.user?.department || 'Unknown',
         conflictingRoles: violation.data.conflictingRoles,
         riskLevel: violation.risk.level,
         riskScore: violation.risk.score,

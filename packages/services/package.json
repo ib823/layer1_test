@@ -15,7 +15,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@sap-framework/core": "workspace:*"
+    "@sap-framework/core": "workspace:*",
+    "@sap-framework/user-access-review": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
