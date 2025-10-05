@@ -53,7 +53,7 @@ export async function validateDatabaseEncryption(
 
     // Check if running on cloud provider with automatic encryption
     const versionResult = await pool.query('SHOW server_version');
-    const version = versionResult.rows[0].server_version;
+    const _version = versionResult.rows[0].server_version; // Reserved for future version checks
 
     // Check for cloud providers (they typically have encryption at rest by default)
     const cloudIndicators = [

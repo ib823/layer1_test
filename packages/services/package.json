@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@sap-framework/core": "workspace:*",
-    "@sap-framework/user-access-review": "workspace:*"
+    "@sap-framework/user-access-review": "workspace:*",
+    "@sap/xsenv": "^6.0.0",
+    "@sap/xssec": "^4.10.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",

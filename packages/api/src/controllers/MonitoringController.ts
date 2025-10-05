@@ -74,9 +74,16 @@ export class MonitoringController {
     try {
       logger.info('Metrics requested');
 
-      const metrics = await this.monitoringService.getMetrics();
+      const serviceMetrics = await this.monitoringService.getMetrics();
 
-      ApiResponseUtil.success(res, metrics);
+      // Import metrics from middleware
+      const { getMetrics: getMiddlewareMetrics } = await import('../middleware/metrics');
+      const middlewareMetrics = getMiddlewareMetrics();
+
+      ApiResponseUtil.success(res, {
+        ...serviceMetrics,
+        http: middlewareMetrics,
+      });
     } catch (error) {
       next(error);
     }

@@ -7,12 +7,14 @@ import { BaseSAPConnector, SAPConnectorConfig } from '../base/BaseSAPConnector';
 import {
   SFEmployee,
   SFOrgUnit,
-  SFCompensation,
-  SFPerformanceReview,
   SFODataResponse,
 } from './types';
 import { ODataQueryBuilder, escapeODataString } from '../../utils/odata';
 import { FrameworkError, AuthenticationError } from '../../errors';
+
+// Future types (not yet implemented)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { SFCompensation, SFPerformanceReview } from './types';
 
 export interface SuccessFactorsConnectorConfig extends SAPConnectorConfig {
   successfactors: {

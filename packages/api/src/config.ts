@@ -8,7 +8,7 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL || 'postgresql://localhost/sapframework',
 
   auth: {
-    enabled: process.env.AUTH_ENABLED === 'true',
+    enabled: true, // Changed: Always enabled (uses dev mode when XSUAA unavailable)
     xsuaaUrl: process.env.XSUAA_URL,
     xsuaaClientId: process.env.XSUAA_CLIENT_ID,
     xsuaaClientSecret: process.env.XSUAA_CLIENT_SECRET,
@@ -16,8 +16,8 @@ export const config = {
 
   api: {
     rateLimit: {
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100, // limit each IP to 100 requests per windowMs
+      windowMs: 15 * 60 * 1000,
+      max: 100,
     },
   },
 
@@ -39,7 +39,7 @@ export const config = {
       ],
     },
     auditLog: {
-      enabled: process.env.AUDIT_LOG_ENABLED !== 'false', // Default enabled
+      enabled: process.env.AUDIT_LOG_ENABLED !== 'false',
       retentionDays: parseInt(process.env.AUDIT_LOG_RETENTION_DAYS || '365', 10),
     },
     dataResidency: {
@@ -53,7 +53,7 @@ export const config = {
   },
 
   gdpr: {
-    piiMasking: process.env.GDPR_PII_MASKING_ENABLED !== 'false', // Default enabled
-    dataRetentionDays: parseInt(process.env.GDPR_DATA_RETENTION_DAYS || '2555', 10), // 7 years
+    piiMasking: process.env.GDPR_PII_MASKING_ENABLED !== 'false',
+    dataRetentionDays: parseInt(process.env.GDPR_DATA_RETENTION_DAYS || '2555', 10),
   },
 };

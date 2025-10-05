@@ -225,6 +225,12 @@ importers:
       '@sap-framework/user-access-review':
         specifier: workspace:*
         version: link:../modules/user-access-review
+      '@sap/xsenv':
+        specifier: ^6.0.0
+        version: 6.0.0
+      '@sap/xssec':
+        specifier: ^4.10.0
+        version: 4.10.0
     devDependencies:
       '@types/jest':
         specifier: ^29.5.11

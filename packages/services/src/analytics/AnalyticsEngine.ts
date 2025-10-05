@@ -1,4 +1,6 @@
-import { SoDViolation, RiskLevel } from '@sap-framework/user-access-review';
+import type { SoDViolation, RiskLevel } from '@sap-framework/user-access-review';
+
+// ... rest of file stays the same
 
 /**
  * Analytics Engine - Generate insights from SoD violations and access patterns

@@ -2,7 +2,7 @@
  * RuleEngine tests
  */
 
-import { RuleEngine, Rule } from '../src/rules/RuleEngine';
+import { RuleEngine, Rule } from '@sap-framework/core';
 
 describe('RuleEngine', () => {
   let engine: RuleEngine;

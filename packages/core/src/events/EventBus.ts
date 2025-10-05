@@ -1,84 +1,57 @@
-import { EventEmitter } from 'events';
-
 /**
- * Event types for the framework event bus
+ * Event Bus - Centralized event management for decoupled communication
  */
-export enum EventType {
-  // Tenant events
-  TENANT_CREATED = 'tenant.created',
-  TENANT_UPDATED = 'tenant.updated',
-  TENANT_DELETED = 'tenant.deleted',
-  TENANT_ONBOARDED = 'tenant.onboarded',
 
-  // Discovery events
+export enum EventType {
+  TENANT_ONBOARDED = 'tenant.onboarded',
   DISCOVERY_STARTED = 'discovery.started',
   DISCOVERY_COMPLETED = 'discovery.completed',
   DISCOVERY_FAILED = 'discovery.failed',
-
-  // Module events
   MODULE_ACTIVATED = 'module.activated',
   MODULE_DEACTIVATED = 'module.deactivated',
-
-  // SoD events
-  SOD_ANALYSIS_STARTED = 'sod.analysis.started',
-  SOD_ANALYSIS_COMPLETED = 'sod.analysis.completed',
   SOD_VIOLATION_DETECTED = 'sod.violation.detected',
-
-  // Workflow events
-  WORKFLOW_CREATED = 'workflow.created',
-  WORKFLOW_UPDATED = 'workflow.updated',
+  SOD_ANALYSIS_COMPLETED = 'sod.analysis.completed',
+  WORKFLOW_STARTED = 'workflow.started',
   WORKFLOW_COMPLETED = 'workflow.completed',
-  WORKFLOW_ESCALATED = 'workflow.escalated',
-
-  // Notification events
-  NOTIFICATION_SENT = 'notification.sent',
-  NOTIFICATION_FAILED = 'notification.failed',
-
-  // System events
-  SYSTEM_ERROR = 'system.error',
-  SYSTEM_WARNING = 'system.warning',
+  WORKFLOW_FAILED = 'workflow.failed',
 }
 
-/**
- * EventBus - Singleton event emitter for framework-wide events
- *
- * Usage:
- * - Instance pattern: EventBus.getInstance().publish(EventType.TENANT_CREATED, data)
- * - Static pattern: EventBus.emit(EventType.TENANT_CREATED, data)
- */
-export class EventBus extends EventEmitter {
-  private static instance: EventBus;
+export type EventListener = (data: any) => void | Promise<void>;
 
-  static getInstance(): EventBus {
-    if (!EventBus.instance) {
-      EventBus.instance = new EventBus();
+class EventBusClass {
+  private listeners: Map<EventType, EventListener[]> = new Map();
+
+  on(event: EventType, listener: EventListener): void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
     }
-    return EventBus.instance;
+    this.listeners.get(event)!.push(listener);
   }
 
-  // Instance methods
-  publish(event: string | EventType, data: any): void {
-    this.emit(event, data);
+  off(event: EventType, listener: EventListener): void {
+    const eventListeners = this.listeners.get(event);
+    if (eventListeners) {
+      const index = eventListeners.indexOf(listener);
+      if (index > -1) {
+        eventListeners.splice(index, 1);
+      }
+    }
   }
 
-  subscribe(event: string | EventType, handler: (data: any) => void): void {
-    this.on(event, handler);
+  async emit(event: EventType, data?: any): Promise<void> {
+    const eventListeners = this.listeners.get(event);
+    if (eventListeners) {
+      await Promise.all(eventListeners.map(listener => listener(data)));
+    }
   }
 
-  unsubscribe(event: string | EventType, handler: (data: any) => void): void {
-    this.off(event, handler);
-  }
-
-  // Static convenience methods
-  static publish(event: string | EventType, data: any): void {
-    EventBus.getInstance().emit(event, data);
-  }
-
-  static subscribe(event: string | EventType, handler: (data: any) => void): void {
-    EventBus.getInstance().on(event, handler);
-  }
-
-  static unsubscribe(event: string | EventType, handler: (data: any) => void): void {
-    EventBus.getInstance().off(event, handler);
+  removeAllListeners(event?: EventType): void {
+    if (event) {
+      this.listeners.delete(event);
+    } else {
+      this.listeners.clear();
+    }
   }
 }
+
+export const EventBus = new EventBusClass();

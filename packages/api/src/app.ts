@@ -9,6 +9,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { auditLog } from './middleware/auditLog';
 import { enforceDataResidency } from './middleware/dataResidency';
 import { standardRateLimit } from './middleware/rateLimiting';
+import { metricsMiddleware } from './middleware/metrics';
 import { config } from './config';
 import logger from './utils/logger';
 import { swaggerSpec } from './swagger';
@@ -39,6 +40,9 @@ export function createApp(): Application {
 
   // Apply rate limiting to all routes
   app.use(standardRateLimit);
+
+  // Metrics tracking middleware
+  app.use(metricsMiddleware);
 
   // Request ID middleware
   app.use((req, res, next) => {
