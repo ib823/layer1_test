@@ -49,7 +49,7 @@ COPY packages/modules/user-access-review/package.json ./packages/modules/user-ac
 COPY packages/api/package.json ./packages/api/
 
 # Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Copy built files from builder
 COPY --from=builder /app/packages/core/dist ./packages/core/dist
