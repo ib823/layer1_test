@@ -11,7 +11,7 @@ RUN npm install -g pnpm@8.15.1
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/core/package.json ./packages/core/
 COPY packages/services/package.json ./packages/services/
-COPY packages/user-access-review/package.json ./packages/user-access-review/
+COPY packages/modules/user-access-review/package.json ./packages/modules/user-access-review/
 COPY packages/api/package.json ./packages/api/
 
 # Install dependencies
@@ -45,7 +45,7 @@ RUN npm install -g pnpm@8.15.1
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/core/package.json ./packages/core/
 COPY packages/services/package.json ./packages/services/
-COPY packages/user-access-review/package.json ./packages/user-access-review/
+COPY packages/modules/user-access-review/package.json ./packages/modules/user-access-review/
 COPY packages/api/package.json ./packages/api/
 
 # Install production dependencies only
@@ -54,7 +54,7 @@ RUN pnpm install --prod --frozen-lockfile
 # Copy built files from builder
 COPY --from=builder /app/packages/core/dist ./packages/core/dist
 COPY --from=builder /app/packages/services/dist ./packages/services/dist
-COPY --from=builder /app/packages/user-access-review/dist ./packages/user-access-review/dist
+COPY --from=builder /app/packages/modules/user-access-review/dist ./packages/modules/user-access-review/dist
 COPY --from=builder /app/packages/api/dist ./packages/api/dist
 
 # Create non-root user
