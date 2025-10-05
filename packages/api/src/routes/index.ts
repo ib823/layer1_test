@@ -77,4 +77,18 @@ router.use('/modules/sod', sodRoutes);
 import gdprRoutes from './compliance/gdpr';
 router.use('/compliance/gdpr', gdprRoutes);
 
+/**
+ * Analytics Routes
+ * Prefix: /api/analytics
+ */
+import analyticsRoutes from './analytics';
+router.use('/analytics', analyticsRoutes);
+
+/**
+ * Dashboard Routes
+ * Prefix: /api/dashboard
+ */
+import dashboardRoutes from './dashboard';
+router.use('/dashboard', dashboardRoutes);
+
 export default router;

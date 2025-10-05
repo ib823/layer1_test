@@ -8,7 +8,7 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL || 'postgresql://localhost/sapframework',
 
   auth: {
-    enabled: true, // Changed: Always enabled (uses dev mode when XSUAA unavailable)
+    enabled: process.env.AUTH_ENABLED !== 'false', // Check AUTH_ENABLED env var
     xsuaaUrl: process.env.XSUAA_URL,
     xsuaaClientId: process.env.XSUAA_CLIENT_ID,
     xsuaaClientSecret: process.env.XSUAA_CLIENT_SECRET,

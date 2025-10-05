@@ -8,6 +8,7 @@ import { Table } from '@/components/ui/Table';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import Link from 'next/link';
 
 interface Violation {
@@ -152,6 +153,8 @@ export default function ViolationsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <Breadcrumbs items={[{ label: 'Violations' }]} />
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-semibold text-text-primary mb-2">
