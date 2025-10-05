@@ -210,8 +210,8 @@ export default function TableTestPage() {
           <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Pagination:</strong> Navigate using Previous/Next buttons (5 items per page)</li>
           <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Row Clicking:</strong> Click any row to see alert, or press Enter when focused</li>
           <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Keyboard Navigation:</strong> Tab through sortable headers and clickable rows</li>
-          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Loading State:</strong> Click "Test Loading State" button to see skeleton rows</li>
-          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Empty State:</strong> Click "Toggle Empty State" to see empty state with icon</li>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Loading State:</strong> Click &quot;Test Loading State&quot; button to see skeleton rows</li>
+          <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Empty State:</strong> Click &quot;Toggle Empty State&quot; to see empty state with icon</li>
           <li style={{ marginBottom: '0.5rem' }}>✅ <strong>Accessibility:</strong> Check ARIA labels and screen reader support</li>
         </ul>
       </div>

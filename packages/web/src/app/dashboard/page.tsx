@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useDashboardKPIs } from '@/hooks/useDashboard';
@@ -53,10 +54,10 @@ export default function DashboardPage() {
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <a href="/violations" className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+              <Link href="/violations" className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
                 <div className="font-medium text-blue-900">View Violations</div>
                 <div className="text-sm text-blue-700">Review and manage SoD violations</div>
-              </a>
+              </Link>
               <a href="/analytics" className="block p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
                 <div className="font-medium text-purple-900">Analytics</div>
                 <div className="text-sm text-purple-700">Explore trends and insights</div>

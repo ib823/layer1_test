@@ -84,8 +84,9 @@ export class UserAccessReviewer {
 
     // Process in batches of 50 to avoid overwhelming the API
     const BATCH_SIZE = 50;
+
     const usersToProcess = ipsUsers.filter(
-      (user: any) => this.config.analysis.includeInactiveUsers || user.active
+      (user) => this.config.analysis.includeInactiveUsers || user.active
     );
 
     for (let i = 0; i < usersToProcess.length; i += BATCH_SIZE) {
@@ -93,7 +94,7 @@ export class UserAccessReviewer {
 
       // Process batch in parallel
       const batchResults = await Promise.all(
-        batch.map(async (ipsUser: any) => {
+        batch.map(async (ipsUser) => {
           // If groups are already included, use them; otherwise fetch
           const groups = ipsUser.groups && ipsUser.groups.length > 0
             ? ipsUser.groups
@@ -104,7 +105,9 @@ export class UserAccessReviewer {
             userName: ipsUser.userName,
             email: ipsUser.emails?.[0]?.value,
             roles: Array.isArray(groups)
-              ? groups.map((g: any) => g.displayName || g)
+              ? groups.map((g) =>
+                  typeof g === 'string' ? g : (g.displayName || '')
+                )
               : [],
             isActive: ipsUser.active,
           };
@@ -145,10 +148,10 @@ export class UserAccessReviewer {
         score: sodRule.riskScore,
       },
       metadata: {
-        category: sodRule.category,
-        regulatoryReference: sodRule.regulatoryReference,
-        mitigationStrategies: sodRule.mitigationStrategies,
-      } as any
+        version: '1.0',
+        lastUpdated: new Date(),
+        effectiveness: sodRule.riskScore ? (100 - sodRule.riskScore) / 100 : 0.5,
+      }
     }));
   }
 

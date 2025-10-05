@@ -30,11 +30,15 @@ export default function AnalyticsPage() {
       <Breadcrumbs items={[{ label: 'Analytics' }]} />
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1></div>
-        <Select value={timeRange.toString()} onChange={(e) => setTimeRange(parseInt(e.target.value))}>
-          <option value="3">Last 3 months</option>
-          <option value="6">Last 6 months</option>
-          <option value="12">Last 12 months</option>
-        </Select>
+        <Select
+          options={[
+            { value: '3', label: 'Last 3 months' },
+            { value: '6', label: 'Last 6 months' },
+            { value: '12', label: 'Last 12 months' }
+          ]}
+          value={timeRange.toString()}
+          onChange={(value) => setTimeRange(parseInt(value))}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

@@ -44,11 +44,11 @@ export interface S4HANABatchRequest {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   url: string;
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
 }
 
 export interface S4HANABatchResponse {
   status: number;
   headers: Record<string, string>;
-  body: any;
+  body: unknown;
 }

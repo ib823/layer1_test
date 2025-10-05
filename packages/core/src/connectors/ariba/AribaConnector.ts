@@ -16,7 +16,7 @@ export class AribaConnector extends BaseSAPConnector {
     return this.config.ariba.apiKey;
   }
 
-  protected mapSAPError(error: any): FrameworkError {
+  protected mapSAPError(error: unknown): FrameworkError {
     return new FrameworkError('Ariba error', 'ARIBA', 500, false, error);
   }
 

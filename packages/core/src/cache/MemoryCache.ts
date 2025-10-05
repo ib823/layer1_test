@@ -1,22 +1,22 @@
 export class MemoryCache {
-  private store: Map<string, { value: any; expiry: number }> = new Map();
-  
+  private store: Map<string, { value: unknown; expiry: number }> = new Map();
+
   async get<T>(key: string): Promise<T | null> {
     const item = this.store.get(key);
-    
+
     if (!item) {
       return null;
     }
-    
+
     if (Date.now() > item.expiry) {
       this.store.delete(key);
       return null;
     }
-    
-    return item.value;
+
+    return item.value as T;
   }
-  
-  async set(key: string, value: any, ttlMs: number = 300000): Promise<void> {
+
+  async set(key: string, value: unknown, ttlMs: number = 300000): Promise<void> {
     this.store.set(key, {
       value,
       expiry: Date.now() + ttlMs,

@@ -75,12 +75,14 @@ export default function UserDetailPage() {
   }
 
   // Roles table columns
+  type RoleRow = { id: string; name: string; description?: string; assignedAt: string };
+
   const roleColumns = [
     {
       id: 'name',
       header: 'Role Name',
-      accessorFn: (row: any) => row.name,
-      cell: ({ row }: any) => (
+      accessorFn: (row: RoleRow) => row.name,
+      cell: ({ row }: { row: { original: RoleRow } }) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.original.name}</span>
           <span className="text-xs text-text-secondary">{row.original.id}</span>
@@ -90,29 +92,31 @@ export default function UserDetailPage() {
     {
       id: 'description',
       header: 'Description',
-      accessorFn: (row: any) => row.description,
+      accessorFn: (row: RoleRow) => row.description,
     },
     {
       id: 'assignedAt',
       header: 'Assigned Date',
-      accessorFn: (row: any) => new Date(row.assignedAt),
-      cell: ({ row }: any) => new Date(row.original.assignedAt).toLocaleDateString(),
+      accessorFn: (row: RoleRow) => new Date(row.assignedAt),
+      cell: ({ row }: { row: { original: RoleRow } }) => new Date(row.original.assignedAt).toLocaleDateString(),
     },
   ];
 
   // Violations table columns
+  type ViolationRow = { id: string; violationType: string; riskLevel: string; status: string; detectedAt: string };
+
   const violationColumns = [
     {
       id: 'violationType',
       header: 'Violation Type',
-      accessorFn: (row: any) => row.violationType,
+      accessorFn: (row: ViolationRow) => row.violationType,
     },
     {
       id: 'riskLevel',
       header: 'Risk',
-      accessorFn: (row: any) => row.riskLevel,
-      cell: ({ row }: any) => (
-        <Badge variant={row.original.riskLevel.toLowerCase()}>
+      accessorFn: (row: ViolationRow) => row.riskLevel,
+      cell: ({ row }: { row: { original: ViolationRow } }) => (
+        <Badge variant={row.original.riskLevel.toLowerCase() as 'high' | 'medium' | 'low'}>
           {row.original.riskLevel}
         </Badge>
       ),
@@ -120,18 +124,18 @@ export default function UserDetailPage() {
     {
       id: 'status',
       header: 'Status',
-      accessorFn: (row: any) => row.status,
+      accessorFn: (row: ViolationRow) => row.status,
     },
     {
       id: 'detectedAt',
       header: 'Detected',
-      accessorFn: (row: any) => new Date(row.detectedAt),
-      cell: ({ row }: any) => new Date(row.original.detectedAt).toLocaleDateString(),
+      accessorFn: (row: ViolationRow) => new Date(row.detectedAt),
+      cell: ({ row }: { row: { original: ViolationRow } }) => new Date(row.original.detectedAt).toLocaleDateString(),
     },
     {
       id: 'actions',
       header: '',
-      cell: ({ row }: any) => (
+      cell: ({ row }: { row: { original: ViolationRow } }) => (
         <Link href={`/violations/${row.original.id}`} className="text-brand-primary hover:underline text-sm">
           View Details
         </Link>
@@ -140,25 +144,27 @@ export default function UserDetailPage() {
   ];
 
   // Permissions table columns
+  type PermissionRow = { name: string; type: string; source: string };
+
   const permissionColumns = [
     {
       id: 'name',
       header: 'Permission',
-      accessorFn: (row: any) => row.name,
+      accessorFn: (row: PermissionRow) => row.name,
     },
     {
       id: 'type',
       header: 'Type',
-      accessorFn: (row: any) => row.type,
-      cell: ({ row }: any) => (
+      accessorFn: (row: PermissionRow) => row.type,
+      cell: ({ row }: { row: { original: PermissionRow } }) => (
         <Badge variant="info">{row.original.type}</Badge>
       ),
     },
     {
       id: 'source',
       header: 'Granted By',
-      accessorFn: (row: any) => row.source,
-      cell: ({ row }: any) => (
+      accessorFn: (row: PermissionRow) => row.source,
+      cell: ({ row }: { row: { original: PermissionRow } }) => (
         <span className="text-sm text-text-secondary">{row.original.source}</span>
       ),
     },

@@ -57,8 +57,8 @@ export default function TimelinePage() {
         </h2>
         <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', lineHeight: '1.8' }}>
           <li>View timeline with different event types (violation, resolution, review, system, update)</li>
-          <li>Click "Test Loading State" to see skeleton loaders</li>
-          <li>Click "Toggle Empty State" to see empty state message</li>
+          <li>Click &quot;Test Loading State&quot; to see skeleton loaders</li>
+          <li>Click &quot;Toggle Empty State&quot; to see empty state message</li>
           <li>Each event shows timestamp, title, description, and user</li>
           <li>Color-coded markers indicate event type</li>
         </ul>

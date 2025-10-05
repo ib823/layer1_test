@@ -9,6 +9,7 @@ import { devLogin, extractBearer, verifyAccessToken, issueAccessToken } from './
 import { runDiscovery } from './discovery';
 import { requestMagicLink, consumeMagicLink } from './magic';
 import { registerConnectorRoutes } from './routes/connectors';
+import { Actor, CustomRequest } from './types';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: { level: config.logLevel, redact: ['headers.authorization'] } });
@@ -17,7 +18,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   app.addHook('onRequest', async (req, reply) => {
     const client = await pool.connect();
-    (req as any).pg = client;
+    (req as CustomRequest).pg = client;
 
     if (rl && config.featureRateLimit) {
       const { allowed } = await rl.allow(req, 'global');
@@ -31,19 +32,19 @@ export async function buildApp(): Promise<FastifyInstance> {
     if (token && config.featureAuth) {
       try {
         const claims = await verifyAccessToken(token);
-        (req as any).actor = { userId: claims.sub, tenantId: claims.tenantId, role: claims.role };
+        (req as CustomRequest).actor = { userId: claims.sub, tenantId: claims.tenantId, role: claims.role };
       } catch {}
     }
   });
 
   app.addHook('onResponse', async (req) => {
-    const client: PoolClient | undefined = (req as any).pg;
+    const client: PoolClient | undefined = (req as CustomRequest).pg;
     if (client) client.release();
   });
 
   // Health
   app.get('/health', async (req) => {
-    const client: PoolClient = (req as any).pg;
+    const client: PoolClient = (req as CustomRequest).pg;
     const { rows } = await client.query('SELECT now() as ts');
     return { ok: true, ts: rows[0].ts };
   });
@@ -51,7 +52,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Tenants
   const CreateTenant = z.object({ name: z.string().min(1) });
   app.post('/tenants', async (req, reply) => {
-    const client: PoolClient = (req as any).pg;
+    const client: PoolClient = (req as CustomRequest).pg;
     const parsed = CreateTenant.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: parsed.error.format() });
     // Use existing schema: tenant_id, company_name
@@ -63,16 +64,60 @@ export async function buildApp(): Promise<FastifyInstance> {
     return rows[0];
   });
   app.get('/tenants', async (req) => {
-    const client: PoolClient = (req as any).pg;
+    const client: PoolClient = (req as CustomRequest).pg;
     const { rows } = await client.query(`SELECT id, company_name as name, created_at FROM tenants ORDER BY created_at DESC`);
     return rows;
+  });
+
+  app.get('/tenants/:id', async (req, reply) => {
+    const client: PoolClient = (req as CustomRequest).pg;
+    const { id } = req.params as { id: string };
+    const { rows } = await client.query(`SELECT id, company_name as name, created_at FROM tenants WHERE id = $1`,
+    [id]
+    );
+    if (rows.length === 0) return reply.status(404).send({ error: 'Tenant not found' });
+    return rows[0];
+  });
+
+  const UpdateTenant = z.object({ name: z.string().min(1) });
+  app.put('/tenants/:id', async (req, reply) => {
+    const client: PoolClient = (req as CustomRequest).pg;
+    const { id } = req.params as { id: string };
+    const parsed = UpdateTenant.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: parsed.error.format() });
+
+    const { rows } = await client.query(
+      `UPDATE tenants SET company_name = $1 WHERE id = $2 RETURNING id, company_name as name, created_at`,
+      [parsed.data.name, id]
+    );
+    if (rows.length === 0) return reply.status(404).send({ error: 'Tenant not found' });
+    return rows[0];
+  });
+
+  app.post('/tenants/:id/discover', async (req, reply) => {
+    const client: PoolClient = (req as CustomRequest).pg;
+    const actor = requireAuth(req as CustomRequest, reply); if (!actor) return;
+    const { id } = req.params as { id: string };
+
+    if (rl && config.featureRateLimit) {
+      const { allowed } = await rl.allow(req, 'discovery');
+      if (!allowed) return reply.code(429).send({ error: 'Rate limit exceeded' });
+    }
+
+    const result = await runDiscovery(id);
+
+    if (config.featureAudit) {
+      await audit(client, actor.tenantId, actor.userId, 'tenants.discover', req.routerPath || req.url, req.ip);
+    }
+
+    return result;
   });
 
   // DEV login -> JWT (email + tenantId)
   if (config.featureAuth && config.featureAuthDev) {
     const DevLogin = z.object({ email: z.string().email(), tenantId: z.string().uuid() });
     app.post('/auth/dev-token', async (req, reply) => {
-      const client: PoolClient = (req as any).pg;
+      const client: PoolClient = (req as CustomRequest).pg;
       const parsed = DevLogin.safeParse(req.body);
       if (!parsed.success) return reply.status(400).send({ error: parsed.error.format() });
       const tok = await devLogin(client, parsed.data.email, parsed.data.tenantId);
@@ -88,7 +133,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       redirect: z.string().url().optional()
     });
     app.post('/auth/magic/request', async (req, reply) => {
-      const client: PoolClient = (req as any).pg;
+      const client: PoolClient = (req as CustomRequest).pg;
       const parsed = MagicReq.safeParse(req.body);
       if (!parsed.success) return reply.status(400).send({ error: parsed.error.format() });
 
@@ -106,9 +151,9 @@ export async function buildApp(): Promise<FastifyInstance> {
 
     // Magic link verify (returns JWT)
     app.get('/auth/magic/verify', async (req, reply) => {
-      const client: PoolClient = (req as any).pg;
-      const token = (req.query as any).token as string | undefined;
-      const tenantId = (req.query as any).tenantId as string | undefined;
+      const client: PoolClient = (req as CustomRequest).pg;
+      const token = (req.query as { token: string }).token as string | undefined;
+      const tenantId = (req.query as { tenantId: string }).tenantId as string | undefined;
       if (!token || !tenantId) return reply.code(400).send({ error: 'token and tenantId required' });
 
       const consumed = await consumeMagicLink(client, token, tenantId);
@@ -159,9 +204,9 @@ export async function buildApp(): Promise<FastifyInstance> {
   }
 
   // Helper: auth gate
-  function requireAuth(req: any, reply: any) {
+  function requireAuth(req: CustomRequest, reply: any) {
     if (!config.featureAuth) return { userId: 'dev', tenantId: (req.headers['x-tenant'] as string) || '', role: 'admin' };
-    const actor = (req as any).actor;
+    const actor = req.actor;
     if (!actor) { reply.code(401).send({ error: 'Unauthorized' }); return null; }
     if (!actor.tenantId) { reply.code(400).send({ error: 'X-Tenant header required' }); return null; }
     return actor;
@@ -170,8 +215,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Users (RLS)
   const CreateUser = z.object({ email: z.string().email(), role: z.enum(['user', 'admin']).optional() });
   app.post('/users', async (req, reply) => {
-    const client: PoolClient = (req as any).pg;
-    const actor = requireAuth(req, reply); if (!actor) return;
+    const client: PoolClient = (req as CustomRequest).pg;
+    const actor = requireAuth(req as CustomRequest, reply); if (!actor) return;
 
     if (rl && config.featureRateLimit) {
       const { allowed } = await rl.allow(req, 'mutating');
@@ -199,8 +244,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   app.get('/users', async (req, reply) => {
-    const client: PoolClient = (req as any).pg;
-    const actor = requireAuth(req, reply); if (!actor) return;
+    const client: PoolClient = (req as CustomRequest).pg;
+    const actor = requireAuth(req as CustomRequest, reply); if (!actor) return;
     const { rows } = await client.query(
       `SELECT id, tenant_id, email, role, created_at FROM users ORDER BY created_at DESC`
     );
@@ -210,8 +255,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   // Discovery
   if (config.featureDiscovery) {
     app.post('/discovery/run', async (req, reply) => {
-      const client: PoolClient = (req as any).pg;
-      const actor = requireAuth(req, reply); if (!actor) return;
+      const client: PoolClient = (req as CustomRequest).pg;
+      const actor = requireAuth(req as CustomRequest, reply); if (!actor) return;
       if (rl && config.featureRateLimit) {
         const { allowed } = await rl.allow(req, 'discovery');
         if (!allowed) return reply.code(429).send({ error: 'Rate limit exceeded' });

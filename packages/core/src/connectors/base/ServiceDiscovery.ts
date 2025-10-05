@@ -31,7 +31,19 @@ export class ServiceDiscovery {
 
     try {
       // Query SAP Gateway Service Catalog
-      const catalogResponse = await this.connector.executeRequest<any>({
+      interface CatalogResponse {
+        d?: {
+          results?: Array<{
+            Title?: string;
+            TechnicalServiceName: string;
+            TechnicalServiceVersion?: string;
+            ServiceUrl: string;
+            Status?: string;
+          }>;
+        };
+      }
+
+      const catalogResponse = await this.connector.executeRequest<CatalogResponse>({
         method: 'GET',
         url: '/sap/opu/odata/iwfnd/catalogservice;v=2/ServiceCollection',
       });
@@ -44,13 +56,14 @@ export class ServiceDiscovery {
             technicalName: service.TechnicalServiceName,
             version: service.TechnicalServiceVersion || 'v1',
             endpoint: service.ServiceUrl,
-            status: this.mapServiceStatus(service.Status),
+            status: this.mapServiceStatus(service.Status || 'ACTIVE'),
             type: this.detectODataVersion(service.ServiceUrl),
           });
         }
       }
-    } catch (error: any) {
-      errors.push(`Failed to discover services: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      errors.push(`Failed to discover services: ${errorMessage}`);
     }
 
     // Test permissions for each service
@@ -115,12 +128,13 @@ export class ServiceDiscovery {
           service: service.technicalName,
           accessible: true,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as { response?: { status?: number }; message?: string };
         results.push({
           service: service.technicalName,
           accessible: false,
-          errorCode: error.response?.status?.toString() || 'UNKNOWN',
-          errorMessage: error.message,
+          errorCode: err.response?.status?.toString() || 'UNKNOWN',
+          errorMessage: err.message || 'Unknown error',
           requiredAuthorizations: this.inferRequiredAuths(service.technicalName),
         });
       }
@@ -172,7 +186,16 @@ export class ServiceDiscovery {
   private async detectSAPVersion(): Promise<string> {
     try {
       // Query system information
-      const response = await this.connector.executeRequest<any>({
+      interface VersionResponse {
+        d?: {
+          results?: Array<{
+            SoftwareComponent?: string;
+            Version?: string;
+            Release?: string;
+          }>;
+        };
+      }
+      const response = await this.connector.executeRequest<VersionResponse>({
         method: 'GET',
         url: '/sap/opu/odata/iwfnd/catalogservice;v=2/SystemInfoSet',
       });

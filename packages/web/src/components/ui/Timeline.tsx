@@ -10,7 +10,7 @@ export interface TimelineItem {
   description?: string;
   user?: string;
   type?: 'violation' | 'resolution' | 'review' | 'system' | 'update';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface TimelineProps {
@@ -85,7 +85,7 @@ export const Timeline: React.FC<TimelineProps> = ({
 
   return (
     <div className="timeline">
-      {items.map((item, index) => (
+      {items.map((item) => (
         <div key={item.id} className="timeline-item">
           <div className={clsx('timeline-marker', getTypeColor(item.type))}>
             <span className="timeline-marker-icon">{getTypeIcon(item.type)}</span>

@@ -10,12 +10,12 @@ export interface SAPConnectorConfig {
   baseUrl: string;
   timeout?: number;
   headers?: Record<string, string>;
-  
+
   auth: {
     type: 'OAUTH' | 'BASIC' | 'CERTIFICATE';
-    credentials: any;
+    credentials: Record<string, unknown>;
   };
-  
+
   retry?: {
     maxRetries: number;
     baseDelay: number;
@@ -90,13 +90,13 @@ export abstract class BaseSAPConnector extends EventEmitter {
   /**
    * Public method for external classes (like ServiceDiscovery) to make requests
    */
-  public async executeRequest<T = any>(config: AxiosRequestConfig): Promise<T> {
+  public async executeRequest<T = unknown>(config: AxiosRequestConfig): Promise<T> {
     return this.request<T>(config);
   }
 
   protected abstract getAuthToken(): Promise<string>;
-  
-  protected abstract mapSAPError(error: any): FrameworkError;
+
+  protected abstract mapSAPError(error: unknown): FrameworkError;
   
   protected abstract getHealthCheckEndpoint(): string;
   

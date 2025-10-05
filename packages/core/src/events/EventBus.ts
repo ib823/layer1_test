@@ -16,7 +16,7 @@ export enum EventType {
   WORKFLOW_FAILED = 'workflow.failed',
 }
 
-export type EventListener = (data: any) => void | Promise<void>;
+export type EventListener = (data: unknown) => void | Promise<void>;
 
 class EventBusClass {
   private listeners: Map<EventType, EventListener[]> = new Map();
@@ -38,7 +38,7 @@ class EventBusClass {
     }
   }
 
-  async emit(event: EventType, data?: any): Promise<void> {
+  async emit(event: EventType, data?: unknown): Promise<void> {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
       await Promise.all(eventListeners.map(listener => listener(data)));

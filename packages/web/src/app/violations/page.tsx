@@ -56,7 +56,7 @@ export default function ViolationsPage() {
       id: 'userName',
       header: 'User',
       accessorFn: (row: Violation) => row.userName,
-      cell: ({ row }: any) => (
+      cell: ({ row }: { row: { original: Violation } }) => (
         <div className="flex flex-col">
           <Link
             href={`/users/${row.original.userId}`}
@@ -77,7 +77,7 @@ export default function ViolationsPage() {
       id: 'violationType',
       header: 'Violation Type',
       accessorFn: (row: Violation) => row.violationType,
-      cell: ({ row }: any) => (
+      cell: ({ row }: { row: { original: Violation } }) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.original.violationType}</span>
           <span className="text-xs text-text-secondary">
@@ -90,8 +90,8 @@ export default function ViolationsPage() {
       id: 'riskLevel',
       header: 'Risk',
       accessorFn: (row: Violation) => row.riskLevel,
-      cell: ({ row }: any) => (
-        <Badge variant={row.original.riskLevel.toLowerCase()}>
+      cell: ({ row }: { row: { original: Violation } }) => (
+        <Badge variant={row.original.riskLevel.toLowerCase() as 'high' | 'medium' | 'low'}>
           {row.original.riskLevel}
         </Badge>
       ),
@@ -100,7 +100,7 @@ export default function ViolationsPage() {
       id: 'status',
       header: 'Status',
       accessorFn: (row: Violation) => row.status,
-      cell: ({ row }: any) => {
+      cell: ({ row }: { row: { original: Violation } }) => {
         const statusColors: Record<string, string> = {
           open: 'bg-status-high/10 text-status-high',
           in_review: 'bg-status-medium/10 text-status-medium',
@@ -118,7 +118,7 @@ export default function ViolationsPage() {
       id: 'detectedAt',
       header: 'Detected',
       accessorFn: (row: Violation) => new Date(row.detectedAt),
-      cell: ({ row }: any) => {
+      cell: ({ row }: { row: { original: Violation } }) => {
         const date = new Date(row.original.detectedAt);
         return (
           <div className="flex flex-col">
@@ -133,7 +133,7 @@ export default function ViolationsPage() {
     {
       id: 'actions',
       header: '',
-      cell: ({ row }: any) => (
+      cell: ({ row }: { row: { original: Violation } }) => (
         <Link href={`/violations/${row.original.id}`}>
           <Button variant="secondary" size="sm">
             View Details

@@ -203,9 +203,19 @@ export class IPSConnector extends BaseSAPConnector {
     throw new Error('OAuth token acquisition not implemented');
   }
 
-  protected mapSAPError(error: any): FrameworkError {
-    const status = error.response?.status;
-    const scimError = error.response?.data;
+  protected mapSAPError(error: unknown): FrameworkError {
+    const err = error as {
+      response?: {
+        status?: number;
+        data?: {
+          detail?: string;
+          scimType?: string;
+        };
+      };
+      message?: string;
+    };
+    const status = err.response?.status;
+    const scimError = err.response?.data;
 
     switch (status) {
       case 401:
@@ -222,10 +232,10 @@ export class IPSConnector extends BaseSAPConnector {
 
       default:
         return new FrameworkError(
-          scimError?.detail || error.message || 'Unknown error',
+          scimError?.detail || err.message || 'Unknown error',
           scimError?.scimType || 'UNKNOWN',
           status || 500,
-          [500, 502, 503, 504].includes(status),
+          [500, 502, 503, 504].includes(status || 0),
           scimError
         );
     }
@@ -239,8 +249,8 @@ export class IPSConnector extends BaseSAPConnector {
   // UTILITIES
   // ============================================================
 
-  private buildQueryParams(options: IPSQueryOptions): Record<string, any> {
-    const params: Record<string, any> = {};
+  private buildQueryParams(options: IPSQueryOptions): Record<string, string> {
+    const params: Record<string, string> = {};
 
     if (options.filter) {
       params.filter = options.filter;
@@ -251,11 +261,11 @@ export class IPSConnector extends BaseSAPConnector {
     }
 
     if (options.startIndex) {
-      params.startIndex = options.startIndex;
+      params.startIndex = options.startIndex.toString();
     }
 
     if (options.count) {
-      params.count = options.count;
+      params.count = options.count.toString();
     }
 
     return params;

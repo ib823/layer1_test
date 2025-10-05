@@ -283,10 +283,15 @@ export class AnalyticsEngine {
       type: 'spike' | 'new_department' | 'new_pattern';
       description: string;
       severity: 'high' | 'medium' | 'low';
-      data: any;
+      data: unknown;
     }>;
   } {
-    const anomalies: any[] = [];
+    const anomalies: Array<{
+      type: 'spike' | 'new_department' | 'new_pattern';
+      description: string;
+      severity: 'high' | 'medium' | 'low';
+      data: unknown;
+    }> = [];
 
     // Check for violation count spike
     const currentCount = currentViolations.length;

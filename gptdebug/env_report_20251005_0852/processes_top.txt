@@ -1,0 +1,51 @@
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+codespa+     415  1.6  9.8 55165472 804304 ?     Sl   07:11   1:38 /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/node --dns-result-order=ipv4first /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/out/bootstrap-fork --type=extensionHost --transformURIs --useHostProxy=false
+codespa+   24074  4.5  3.8 32955980 314528 pts/1 Sl+  08:02   2:17 claude
+codespa+     394  0.1  1.6 11847972 133280 ?     Sl   07:11   0:11 /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/node /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/out/server-main.js --log trace --force-disable-user-env --server-data-dir /home/codespace/.vscode-remote --accept-server-license-terms --host 127.0.0.1 --port 0 --connection-token-file /home/codespace/.vscode-remote/data/Machine/.connection-token-e3a5acfb517a443235981655413d566533107e92 --extensions-download-dir /home/codespace/.vscode-remote/extensionsCache --start-server  --enable-remote-auto-shutdown --skip-requirements-check
+codespa+   53807  0.6  1.5 43886828 125512 ?     Sl   08:47   0:02 /usr/local/share/nvm/versions/node/v22.17.0/bin/node --require /workspaces/layer1_test/node_modules/.pnpm/tsx@4.20.6/node_modules/tsx/dist/preflight.cjs --import file:///workspaces/layer1_test/node_modules/.pnpm/tsx@4.20.6/node_modules/tsx/dist/loader.mjs src/server.ts
+codespa+   49910  0.1  1.2 1215004 98716 ?       Sl   08:44   0:00 node /home/codespace/nvm/current/bin/pnpm dev
+codespa+     428  0.1  1.1 1266144 89656 ?       Sl   07:11   0:06 /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/node /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/out/bootstrap-fork --type=fileWatcher
+root          64  0.1  1.0 2435528 88780 ?       Sl   07:11   0:11 dockerd --dns 168.63.129.16
+codespa+    1047  0.1  1.0 1148472 86256 ?       Sl   07:11   0:09 /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/node /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/out/bootstrap-fork --type=ptyHost --logsPath /home/codespace/.vscode-remote/data/logs/20251005T071120
+codespa+   49923  0.4  1.0 1057940 85808 ?       Sl   08:44   0:01 node /workspaces/layer1_test/apps/api/node_modules/.bin/../tsx/dist/cli.mjs watch src/server.ts
+codespa+    1887  0.0  0.7 1016252 60836 ?       Sl   07:11   0:00 /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/node /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/extensions/json-language-features/server/dist/node/jsonServerMain --node-ipc --clientProcessId=415
+root          96  0.0  0.6 1949640 53912 ?       Ssl  07:11   0:01 containerd --config /var/run/docker/containerd/containerd.toml
+70         47267  0.0  0.3 174484 27008 ?        Ss   08:43   0:00 postgres
+codespa+   45359  0.0  0.2 714464 20016 ?        Ssl  08:42   0:00 MailHog
+root       45290  0.0  0.2 1238220 17544 ?       Sl   08:42   0:00 /usr/bin/containerd-shim-runc-v2 -namespace moby -id 4384f82d2e6cab3173dd7fe3a4b88f82fb4ded81e50635db1ddd76fb0bdb5808 -address /var/run/docker/containerd/containerd.sock
+root       47247  0.0  0.2 1238220 17132 ?       Sl   08:43   0:00 /usr/bin/containerd-shim-runc-v2 -namespace moby -id f5567dead0edefcc8be4663e68b12477c8c8f5995721cef2c11a170bc8fc3263 -address /var/run/docker/containerd/containerd.sock
+root       45288  0.0  0.1 1238220 16212 ?       Sl   08:42   0:00 /usr/bin/containerd-shim-runc-v2 -namespace moby -id 6436915bf6431885a0e81be81683df4ea6b6c0104f943b50e563b775689770fa -address /var/run/docker/containerd/containerd.sock
+70         47333  0.0  0.1 174744 15860 ?        Ss   08:43   0:00 postgres: checkpointer 
+999        45364  0.4  0.1  39364 13752 ?        Rsl  08:42   0:02 redis-server *:6379
+codespa+   53836  0.0  0.1 1235576 12612 ?       Sl   08:47   0:00 /workspaces/layer1_test/node_modules/.pnpm/@esbuild+linux-x64@0.25.10/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.25.10 --ping
+codespa+   61041  0.3  0.1  16084 12288 pts/2    Ss   08:52   0:00 /bin/bash --init-file /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-bash.sh
+codespa+    1508  0.0  0.1  16064 12160 pts/1    Ss   07:11   0:00 /bin/bash --init-file /vscode/bin/linux-x64/e3a5acfb517a443235981655413d566533107e92/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-bash.sh
+70         47336  0.0  0.1 174548  9076 ?        Ss   08:43   0:00 postgres: walwriter 
+codespa+   49657  0.0  0.0  12040  7680 ?        Ss   08:44   0:00 /bin/bash -c -l source /home/codespace/.claude/shell-snapshots/snapshot-bash-1759651352345-zor76e.sh && eval 'cd /workspaces/layer1_test/apps/api && PORT=3001 REDIS_URL=redis://:redis123@localhost:6379 pnpm dev' \< /dev/null && pwd -P >| /tmp/claude-eb16-cwd
+70         47337  0.0  0.0 176164  7540 ?        Ss   08:43   0:00 postgres: autovacuum launcher 
+70         47338  0.0  0.0 176084  6644 ?        Ss   08:43   0:00 postgres: logical replication launcher 
+70         47334  0.0  0.0 174580  6132 ?        Ss   08:43   0:00 postgres: background writer 
+root       45431  0.0  0.0 1671116 5860 ?        Sl   08:42   0:00 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 1025 -container-ip 172.18.0.3 -container-port 1025 -use-listen-fd
+root       45443  0.0  0.0 1671116 5860 ?        Sl   08:42   0:00 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8025 -container-ip 172.18.0.3 -container-port 8025 -use-listen-fd
+root       45466  0.0  0.0 1671116 5860 ?        Sl   08:42   0:00 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 6379 -container-ip 172.18.0.2 -container-port 6379 -use-listen-fd
+root       45472  0.0  0.0 1671116 5860 ?        Sl   08:42   0:00 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 6379 -container-ip 172.18.0.2 -container-port 6379 -use-listen-fd
+root       47298  0.0  0.0 1671116 5860 ?        Sl   08:43   0:00 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 5432 -container-ip 172.18.0.4 -container-port 5432 -use-listen-fd
+root       47292  0.0  0.0 1597384 5732 ?        Sl   08:43   0:00 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 5432 -container-ip 172.18.0.4 -container-port 5432 -use-listen-fd
+root       45438  0.0  0.0 1671116 5604 ?        Sl   08:42   0:00 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8025 -container-ip 172.18.0.3 -container-port 8025 -use-listen-fd
+root       45425  0.0  0.0 1597384 5572 ?        Sl   08:42   0:00 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 1025 -container-ip 172.18.0.3 -container-port 1025 -use-listen-fd
+codespa+   61980  0.0  0.0  11456  4480 pts/2    R+   08:52   0:00 ps aux --sort=-%mem
+codespa+   61650  0.0  0.0   7876  3456 pts/2    S+   08:52   0:00 bash scripts/pack_for_gpt.sh
+root          35  0.0  0.0  12016  2708 ?        Ss   07:11   0:00 sshd: /usr/sbin/sshd [listener] 0 of 10-100 startups
+codespa+   49922  0.0  0.0   2812  1920 ?        S    08:44   0:00 sh -c tsx watch src/server.ts
+codespa+   61953  0.0  0.0   6112  1920 ?        S    08:52   0:00 sleep 1
+codespa+   61979  0.0  0.0   7876  1884 pts/2    S+   08:52   0:00 bash scripts/pack_for_gpt.sh
+codespa+     159  0.0  0.0   2800  1792 ?        Ss   07:11   0:00 /bin/sh
+codespa+     386  0.0  0.0   2808  1792 ?        Ss   07:11   0:00 sh /home/codespace/.vscode-remote/bin/e3a5acfb517a443235981655413d566533107e92/bin/code-server --log trace --force-disable-user-env --server-data-dir /home/codespace/.vscode-remote --accept-server-license-terms --host 127.0.0.1 --port 0 --connection-token-file /home/codespace/.vscode-remote/data/Machine/.connection-token-e3a5acfb517a443235981655413d566533107e92 --extensions-download-dir /home/codespace/.vscode-remote/extensionsCache --start-server  --enable-remote-auto-shutdown --skip-requirements-check
+codespa+   39754  0.0  0.0   2800  1792 ?        Ss   08:33   0:00 /bin/sh
+root       39788  0.0  0.0   2800  1792 ?        Ss   08:33   0:00 /bin/sh
+root       41932  0.0  0.0   2800  1792 ?        Ss   08:38   0:00 /bin/sh
+codespa+   61981  0.0  0.0   6128  1792 pts/2    S+   08:52   0:00 head -n 60
+root         196  0.0  0.0   2800  1664 ?        Ss   07:11   0:00 /bin/sh
+codespa+   41877  0.0  0.0   2800  1664 ?        Ss   08:38   0:00 /bin/sh
+codespa+       7  0.0  0.0   2800  1536 ?        S    07:11   0:01 /bin/sh -c echo Container started trap "exit 0" 15 /usr/local/share/ssh-init.sh /usr/local/share/docker-init.sh exec "$@" while sleep 1 & wait $!; do :; done -
+codespa+       1  0.0  0.0   1136   640 ?        Ss   07:11   0:00 /sbin/docker-init -- /bin/sh -c echo Container started trap "exit 0" 15 /usr/local/share/ssh-init.sh /usr/local/share/docker-init.sh exec "$@" while sleep 1 & wait $!; do :; done -

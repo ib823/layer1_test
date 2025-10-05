@@ -1,0 +1,21 @@
+/home/codespace/nvm/current/bin/node
+v22.17.0
+/home/codespace/nvm/current/bin/npm
+9.8.1
+/home/codespace/nvm/current/bin/pnpm
+8.15.0
+/usr/bin/yarn
+1.22.22
+Version 5.9.2
+prisma                  : 6.16.3
+@prisma/client          : Not found
+Computed binaryTarget   : debian-openssl-1.1.x
+Operating System        : linux
+Architecture            : x64
+Node.js                 : v22.17.0
+TypeScript              : unknown
+Query Engine (Node-API) : libquery-engine bb420e667c1820a8c05a38023385f6cc7ef8e83a (at ../../home/codespace/.npm/_npx/2778af9cee32ff87/node_modules/@prisma/engines/libquery_engine-debian-openssl-1.1.x.so.node)
+PSL                     : @prisma/prisma-schema-wasm 6.16.1-1.bb420e667c1820a8c05a38023385f6cc7ef8e83a
+Schema Engine           : schema-engine-cli bb420e667c1820a8c05a38023385f6cc7ef8e83a (at ../../home/codespace/.npm/_npx/2778af9cee32ff87/node_modules/@prisma/engines/schema-engine-debian-openssl-1.1.x)
+Default Engines Hash    : bb420e667c1820a8c05a38023385f6cc7ef8e83a
+Studio                  : 0.511.0

@@ -18,7 +18,7 @@ import clsx from 'clsx';
 
 export interface TableProps<TData> {
   data: TData[];
-  columns: ColumnDef<TData, any>[];
+  columns: ColumnDef<TData, unknown>[];
   pageSize?: number;
   isLoading?: boolean;
   emptyMessage?: string;
@@ -64,7 +64,7 @@ const TableComponent = <TData,>({
               {columns.map((column, index) => (
                 <th key={index}>
                   {typeof column.header === 'function'
-                    ? column.header({} as any)
+                    ? column.header({} as Record<string, unknown>)
                     : column.header}
                 </th>
               ))}
@@ -150,7 +150,7 @@ const TableComponent = <TData,>({
                     onKeyDown={(e) => {
                       if (canSort && (e.key === 'Enter' || e.key === ' ')) {
                         e.preventDefault();
-                        header.column.getToggleSortingHandler()?.(e as any);
+                        header.column.getToggleSortingHandler()?.(e as React.KeyboardEvent);
                       }
                     }}
                     tabIndex={canSort ? 0 : undefined}

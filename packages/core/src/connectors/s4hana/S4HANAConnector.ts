@@ -199,9 +199,21 @@ export class S4HANAConnector extends BaseSAPConnector {
     throw new AuthenticationError(`Unsupported auth type: ${type}`);
   }
 
-  protected mapSAPError(error: any): FrameworkError {
-    const status = error.response?.status;
-    const sapError = error.response?.data?.error;
+  protected mapSAPError(error: unknown): FrameworkError {
+    const err = error as {
+      response?: {
+        status?: number;
+        data?: {
+          error?: {
+            message?: { value?: string };
+            code?: string;
+          };
+        };
+      };
+      message?: string;
+    };
+    const status = err.response?.status;
+    const sapError = err.response?.data?.error;
 
     switch (status) {
       case 400:
@@ -251,7 +263,7 @@ export class S4HANAConnector extends BaseSAPConnector {
 
       default:
         return new FrameworkError(
-          error.message || 'Unknown error',
+          err.message || 'Unknown error',
           'UNKNOWN',
           status || 500,
           false,

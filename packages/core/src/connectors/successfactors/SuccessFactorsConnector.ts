@@ -62,7 +62,7 @@ export class SuccessFactorsConnector extends BaseSAPConnector {
       });
 
       return response.d.results;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.mapSFError(error);
     }
   }
@@ -78,7 +78,7 @@ export class SuccessFactorsConnector extends BaseSAPConnector {
       });
 
       return response.d.results;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.mapSFError(error);
     }
   }
@@ -92,24 +92,35 @@ export class SuccessFactorsConnector extends BaseSAPConnector {
     return Buffer.from(credentials).toString('base64');
   }
 
-  private mapSFError(error: any): FrameworkError {
-    const status = error.response?.status;
-    const sfError = error.response?.data?.error;
+  private mapSFError(error: unknown): FrameworkError {
+    const err = error as {
+      response?: {
+        status?: number;
+        data?: {
+          error?: {
+            message?: { value?: string };
+          };
+        };
+      };
+      message?: string;
+    };
+    const status = err.response?.status;
+    const sfError = err.response?.data?.error;
 
     if (status === 401) {
       return new AuthenticationError('Invalid SuccessFactors credentials', sfError);
     }
 
     return new FrameworkError(
-      sfError?.message?.value || error.message || 'SuccessFactors API error',
+      sfError?.message?.value || err.message || 'SuccessFactors API error',
       'SF_ERROR',
       status || 500,
-      [500, 502, 503].includes(status),
+      [500, 502, 503].includes(status || 0),
       sfError
     );
   }
 
-  protected mapSAPError(error: any): FrameworkError {
+  protected mapSAPError(error: unknown): FrameworkError {
     return this.mapSFError(error);
   }
 

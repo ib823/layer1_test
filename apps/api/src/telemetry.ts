@@ -1,6 +1,6 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { ConsoleMetricExporter, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+import { ConsoleMetricExporter, PeriodicExportingMetricReader, MetricReader } from '@opentelemetry/sdk-metrics';
 import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
@@ -11,16 +11,18 @@ let sdk: NodeSDK | null = null;
 
 export async function startTelemetry(serviceName = 'sapmvp-api') {
   if (sdk) return;
+  const metricReader = new PeriodicExportingMetricReader({
+    exporter: new ConsoleMetricExporter(),
+    exportIntervalMillis: 30000
+  }) as unknown as MetricReader;
+
   sdk = new NodeSDK({
     resource: new Resource({
       [ATTR_SERVICE_NAME]: serviceName
     }),
     traceExporter: new ConsoleSpanExporter(),
     instrumentations: [new HttpInstrumentation(), new FastifyInstrumentation(), new PgInstrumentation()],
-    metricReader: new PeriodicExportingMetricReader({
-      exporter: new ConsoleMetricExporter(),
-      exportIntervalMillis: 30000
-    })
+    metricReader
   });
 
   // Add a SimpleSpanProcessor if you want immediate flushes (optional)

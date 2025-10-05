@@ -49,7 +49,6 @@ export default function ViolationDetailPage() {
   const { toast: showToast } = useToast();
   const [comment, setComment] = useState('');
   const [resolutionNotes, setResolutionNotes] = useState('');
-  const [assignee, setAssignee] = useState('');
 
   // Fetch violation details
   const { data: violation, isLoading } = useQuery<ViolationDetail>({
@@ -313,7 +312,7 @@ export default function ViolationDetailPage() {
                   <div className="p-4 border border-border rounded-lg hover:border-brand-primary transition-colors cursor-pointer">
                     <h3 className="font-medium text-text-primary mb-1">Remove Role</h3>
                     <p className="text-sm text-text-secondary">
-                      Remove one of the conflicting roles from the user's access
+                      Remove one of the conflicting roles from the user&apos;s access
                     </p>
                   </div>
 
