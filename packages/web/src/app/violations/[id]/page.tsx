@@ -202,7 +202,7 @@ export default function ViolationDetailPage() {
             <h1 className="text-3xl font-semibold text-text-primary">
               {violation.violationType}
             </h1>
-            <Badge variant={violation.riskLevel.toLowerCase()}>
+            <Badge variant={violation.riskLevel.toLowerCase() as "critical" | "high" | "medium" | "low" | "info"}>
               {violation.riskLevel}
             </Badge>
           </div>
