@@ -46,7 +46,7 @@ export default function ViolationDetailPage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
+  const { toast: showToast } = useToast();
   const [comment, setComment] = useState('');
   const [resolutionNotes, setResolutionNotes] = useState('');
   const [assignee, setAssignee] = useState('');
