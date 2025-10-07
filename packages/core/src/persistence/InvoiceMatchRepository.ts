@@ -3,7 +3,7 @@
  * Handles database persistence for invoice matching results
  */
 
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 
 // Type definitions (would normally import from @sap-framework/invoice-matching)
 interface ThreeWayMatchResult {
