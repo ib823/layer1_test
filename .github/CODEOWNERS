@@ -1,0 +1,30 @@
+# CODEOWNERS - SAP MVP Framework
+#
+# This file defines code ownership for automatic review requests.
+# Learn more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @ib823
+
+# Core infrastructure and connectors (require senior review)
+/packages/core/ @ib823
+/infrastructure/ @ib823
+
+# Security-sensitive code (require security review)
+/packages/api/src/middleware/auth.ts @ib823
+/packages/core/src/utils/encryption.ts @ib823
+/packages/api/src/middleware/rateLimiting.ts @ib823
+/.github/workflows/ @ib823
+
+# Database schema changes (require DBA review)
+/infrastructure/database/ @ib823
+
+# CI/CD configuration (require DevOps review)
+/.github/workflows/ @ib823
+/infrastructure/cloud-foundry/ @ib823
+/Dockerfile @ib823
+/docker-compose.yml @ib823
+
+# Documentation (anyone can contribute, but owner reviews)
+/docs/ @ib823
+*.md @ib823
