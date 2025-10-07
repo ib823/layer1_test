@@ -5,9 +5,9 @@
  * Authentication page with Ant Design components
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Form, Input, Button, Card, Typography, Alert, Space, Divider, Select } from 'antd';
+import { Form, Input, Button, Card, Typography, Alert, Space, Divider, Select, Spin } from 'antd';
 import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { Role } from '@/types/auth';
@@ -17,7 +17,7 @@ import './login.css';
 const { Title, Text, Link } = Typography;
 const { Option } = Select;
 
-export default function LoginPage() {
+function LoginForm() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -236,5 +236,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
