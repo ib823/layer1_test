@@ -115,10 +115,15 @@ All connectors extend `BaseSAPConnector` which provides:
 **Implemented:**
 - `S4HANAConnector` - Complete OData v2 support (users, roles, authorizations)
 - `IPSConnector` - Identity Provisioning (SCIM protocol)
+- `AribaConnector` - Procurement data (suppliers, POs, contracts, invoices, users/roles)
+- `SuccessFactorsConnector` - HR data (employees, org units, compensation, performance reviews, roles)
 
-**Stubs (future):**
-- `AribaConnector` - Procurement data
-- `SuccessFactorsConnector` - HR data
+**Offline Development Mode:**
+Both Ariba and SuccessFactors connectors support stub mode for offline development:
+- Enable via: `ARIBA_STUB_MODE=true` or `SF_STUB_MODE=true`
+- Provides realistic mock data with network delay simulation (100-400ms)
+- Useful for frontend development, demos, testing without SAP connections
+- Factory functions: `createAribaConnector()`, `createSuccessFactorsConnector()`
 
 **Adding New Connectors:**
 1. Create `packages/core/src/connectors/yourproduct/`
@@ -280,6 +285,19 @@ SAP_CLIENT_SECRET=your_client_secret
 IPS_BASE_URL=https://your-ips-instance.accounts.ondemand.com
 IPS_CLIENT_ID=your_ips_client
 IPS_CLIENT_SECRET=your_ips_secret
+
+# SAP Ariba (Procurement)
+ARIBA_BASE_URL=https://your-ariba-instance.com
+ARIBA_API_KEY=your_ariba_api_key
+ARIBA_REALM=your_realm_name
+ARIBA_STUB_MODE=false  # Set to 'true' for offline development with mock data
+
+# SAP SuccessFactors (HR)
+SF_BASE_URL=https://your-sf-instance.successfactors.com
+SF_COMPANY_ID=your_company_id
+SF_CLIENT_ID=your_sf_client_id
+SF_CLIENT_SECRET=your_sf_client_secret
+SF_STUB_MODE=false  # Set to 'true' for offline development with mock data
 
 # Encryption (production)
 ENCRYPTION_KEY=base64-encoded-32-byte-key  # Stored in BTP credential store

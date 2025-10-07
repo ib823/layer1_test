@@ -39,3 +39,16 @@ export class ValidationError extends FrameworkError {
     this.name = 'ValidationError';
   }
 }
+
+export class ConnectorError extends FrameworkError {
+  constructor(
+    message: string,
+    code: string,
+    statusCode: number,
+    retryable: boolean,
+    cause?: unknown
+  ) {
+    super(message, code, statusCode, retryable, cause);
+    this.name = 'ConnectorError';
+  }
+}

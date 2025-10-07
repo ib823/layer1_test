@@ -34,3 +34,20 @@ export interface AribaInvoice {
   Currency: string;
   Status: string;
 }
+
+export interface AribaUser {
+  UserID: string;
+  UserName: string;
+  Email: string;
+  Department?: string;
+  Status: 'ACTIVE' | 'INACTIVE';
+  Roles?: string[];
+}
+
+export interface AribaODataResponse<T> {
+  d?: {
+    results: T[];
+    __next?: string;
+  };
+  Records?: T[];
+}
