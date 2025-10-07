@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../../middleware/auth';
-import { validateRequest, schemas } from '../../middleware/validator';
+import { validateRequest } from '../../middleware/validator';
 import { GDPRService } from '@sap-framework/core';
 import { ApiResponseUtil } from '../../utils/response';
 import { AuthenticatedRequest } from '../../types';

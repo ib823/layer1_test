@@ -1,5 +1,10 @@
 import request from 'supertest';
 import express from 'express';
+
+// Enable auth for these tests BEFORE importing router
+process.env.AUTH_ENABLED = 'true';
+
+// Import router AFTER setting env var
 import router from '../../src/routes';
 
 const app = express();

@@ -123,6 +123,9 @@ importers:
       '@sap-framework/core':
         specifier: workspace:*
         version: link:../core
+      '@sap-framework/invoice-matching':
+        specifier: workspace:^
+        version: link:../modules/invoice-matching
       '@sap-framework/services':
         specifier: workspace:*
         version: link:../services
@@ -276,7 +279,109 @@ importers:
         specifier: ^5.3.3
         version: 5.9.2
 
+  packages/modules/gl-anomaly-detection:
+    dependencies:
+      '@sap-framework/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/jest':
+        specifier: ^29.5.11
+        version: 29.5.14
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.18
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.19.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0)(eslint@8.57.1)(typescript@5.9.2)
+      '@typescript-eslint/parser':
+        specifier: ^6.19.0
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.2)
+      eslint:
+        specifier: ^8.56.0
+        version: 8.57.1
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@20.19.18)(ts-node@10.9.2)
+      ts-jest:
+        specifier: ^29.1.1
+        version: 29.4.4(@babel/core@7.28.4)(jest@29.7.0)(typescript@5.9.2)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.2
+
+  packages/modules/invoice-matching:
+    dependencies:
+      '@sap-framework/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@sap-framework/services':
+        specifier: workspace:*
+        version: link:../../services
+      uuid:
+        specifier: ^9.0.1
+        version: 9.0.1
+    devDependencies:
+      '@types/jest':
+        specifier: ^29.5.11
+        version: 29.5.14
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.18
+      '@types/uuid':
+        specifier: ^9.0.7
+        version: 9.0.8
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.19.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0)(eslint@8.57.1)(typescript@5.9.2)
+      '@typescript-eslint/parser':
+        specifier: ^6.19.0
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.2)
+      eslint:
+        specifier: ^8.56.0
+        version: 8.57.1
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@20.19.18)(ts-node@10.9.2)
+      ts-jest:
+        specifier: ^29.1.1
+        version: 29.4.4(@babel/core@7.28.4)(jest@29.7.0)(typescript@5.9.2)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.2
+
   packages/modules/user-access-review:
+    dependencies:
+      '@sap-framework/core':
+        specifier: workspace:*
+        version: link:../../core
+    devDependencies:
+      '@types/jest':
+        specifier: ^29.5.11
+        version: 29.5.14
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.18
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.19.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0)(eslint@8.57.1)(typescript@5.9.2)
+      '@typescript-eslint/parser':
+        specifier: ^6.19.0
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.2)
+      eslint:
+        specifier: ^8.56.0
+        version: 8.57.1
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@20.19.18)(ts-node@10.9.2)
+      ts-jest:
+        specifier: ^29.1.1
+        version: 29.4.4(@babel/core@7.28.4)(jest@29.7.0)(typescript@5.9.2)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.2
+
+  packages/modules/vendor-data-quality:
     dependencies:
       '@sap-framework/core':
         specifier: workspace:*

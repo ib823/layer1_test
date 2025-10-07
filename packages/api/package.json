@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@sap-framework/core": "workspace:*",
+    "@sap-framework/invoice-matching": "workspace:^",
     "@sap-framework/services": "workspace:*",
     "@sap-framework/user-access-review": "workspace:*",
     "@sap/xsenv": "^6.0.0",

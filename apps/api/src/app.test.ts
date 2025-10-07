@@ -7,6 +7,8 @@ let pool: Pool;
 
 describe('API smoke', () => {
   beforeAll(async () => {
+    // Disable rate limiting in tests to avoid Redis dependency
+    process.env.FEATURE_RATE_LIMIT = 'false';
     app = await buildApp();
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
   });

@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import { SoDController } from '../../controllers/SoDController';
 import { TenantProfileRepository } from '@sap-framework/core';
 import { validateRequest, schemas } from '../../middleware/validator';

@@ -7,7 +7,7 @@ export function errorHandler(
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   logger.error('Error occurred:', {
     error: error.message,
@@ -38,7 +38,7 @@ export function errorHandler(
 export function notFoundHandler(
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   ApiResponseUtil.notFound(res, 'Endpoint');
 }
