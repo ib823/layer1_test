@@ -6,6 +6,7 @@
  */
 
 import { Request, Response } from 'express';
+import xsenv from '@sap/xsenv';
 import {
   createS4HANAClient,
   createAribaClient,
@@ -247,7 +248,6 @@ export class CapabilitiesController {
   static async getEventMeshStatus(req: Request, res: Response): Promise<void> {
     try {
       // Check if Event Mesh service is bound
-      const xsenv = require('@sap/xsenv');
       let eventMeshService: any = null;
 
       try {
@@ -361,7 +361,6 @@ export class CapabilitiesController {
         await client.getDestinationInfo();
         return true;
       } else if (system === 'eventmesh') {
-        const xsenv = require('@sap/xsenv');
         const eventMeshService = xsenv.getServices({ eventmesh: { tag: 'enterprise-messaging' } });
         return !!eventMeshService.eventmesh;
       }

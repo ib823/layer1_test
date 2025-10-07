@@ -359,7 +359,7 @@ export class VendorDataQualityController {
           }));
         },
 
-        async getVendor(id: string) {
+        async getVendor(_id: string) {
           return null; // Not needed for deduplication
         },
       };

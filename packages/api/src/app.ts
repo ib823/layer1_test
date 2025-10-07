@@ -8,7 +8,6 @@ import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { auditLog } from './middleware/auditLog';
 import { enforceDataResidency } from './middleware/dataResidency';
-import { apiLimiter } from './middleware/rateLimiting';
 import { metricsMiddleware } from './middleware/metrics';
 import { config } from './config';
 import logger from './utils/logger';
