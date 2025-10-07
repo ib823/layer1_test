@@ -10,3 +10,12 @@ export { ToastProvider, useToast } from './ToastContainer';
 export { Select, type SelectProps, type SelectOption } from './Select';
 export { Tabs, type TabsProps, type Tab } from './Tabs';
 export { Timeline, type TimelineProps, type TimelineItem } from './Timeline';
+export {
+  ConnectionBanner,
+  MockDataBanner,
+  DisconnectedBanner,
+  FeatureDisabledBanner,
+  type ConnectionBannerProps,
+  type BannerVariant,
+  type BannerSize,
+} from './ConnectionBanner';
