@@ -6,7 +6,6 @@
  */
 
 import { Request, Response } from 'express';
-import xsenv from '@sap/xsenv';
 import {
   createS4HANAClient,
   createAribaClient,
@@ -15,6 +14,9 @@ import {
 } from '../lib/destinationClient';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const xsenv = require('@sap/xsenv');
 
 export class CapabilitiesController {
   /**
