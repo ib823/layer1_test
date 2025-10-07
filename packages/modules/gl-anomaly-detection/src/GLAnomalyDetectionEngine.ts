@@ -297,7 +297,7 @@ export class GLAnomalyDetectionEngine {
     const summary = this.calculateSummary(allAnomalies);
 
     // Estimate fraud risk
-    const estimatedFraudRisk = this.estimateFraudRisk(allAnomalies, lineItems.length);
+    const _estimatedFraudRisk = this.estimateFraudRisk(allAnomalies, lineItems.length);
 
     return {
       analysisId: this.generateAnalysisId(),

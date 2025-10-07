@@ -116,7 +116,7 @@ export function calculateChiSquare(
  *
  * This is a simplified approximation. For production, use a proper statistical library.
  */
-export function calculatePValue(chiSquare: number, degreesOfFreedom: number = 8): number {
+export function calculatePValue(chiSquare: number, _degreesOfFreedom: number = 8): number {
   // Simplified lookup table for Chi-Square critical values (df=8)
   // These represent significance levels
   const criticalValues: Array<{ pValue: number; chiSquare: number }> = [
