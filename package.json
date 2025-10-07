@@ -4,7 +4,7 @@
   "private": true,
   "description": "SAP MVP Framework - Layer 1 Core",
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=18 <23",
     "pnpm": ">=8.0.0"
   },
   "scripts": {

@@ -32,8 +32,17 @@ const router: Router = Router();
 // PUBLIC ENDPOINTS (no auth, no rate limiting)
 // ==============================================================================
 
-// Health check
+// Health check (BTP standard: /healthz)
 router.get('/health', (req, res) => {
+  ApiResponseUtil.success(res, {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
+// Healthz alias for Cloud Foundry / K8s compatibility
+router.get('/healthz', (req, res) => {
   ApiResponseUtil.success(res, {
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -119,6 +128,12 @@ router.use('/modules/sod/analyze', sodAnalysisLimiter);
  */
 router.use('/modules/sod', sodRoutes);
 
+import glAnomalyRoutes from './modules/gl-anomaly';
+router.use('/modules/gl-anomaly', glAnomalyRoutes);
+
+import vendorQualityRoutes from './modules/vendor-quality';
+router.use('/modules/vendor-quality', vendorQualityRoutes);
+
 /**
  * Compliance Routes
  * Prefix: /api/compliance
@@ -146,5 +161,13 @@ router.use('/dashboard', dashboardRoutes);
  */
 import matchingRoutes from './matching';
 router.use('/matching', matchingRoutes);
+
+/**
+ * Capabilities Routes (BTP Destination connectivity checks)
+ * Prefix: /api/capabilities
+ * Requires: Admin role (configured in App Router xs-app.json)
+ */
+import capabilitiesRoutes from './capabilities';
+router.use('/capabilities', capabilitiesRoutes);
 
 export default router;

@@ -1,0 +1,16 @@
+---
+applications:
+  - name: sapframework-api
+    memory: 256M
+    instances: 1
+    buildpacks:
+      - nodejs_buildpack
+    path: ../../packages/api
+    command: node dist/server.js
+    services:
+      - sapframework-xsuaa
+      - sapframework-destination
+    env:
+      NODE_ENV: production
+      AUTH_ENABLED: "false"
+    random-route: true

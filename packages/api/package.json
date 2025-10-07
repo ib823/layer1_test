@@ -16,8 +16,15 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@sap-cloud-sdk/connectivity": "^4.1.2",
+    "@sap-cloud-sdk/http-client": "^4.1.2",
+    "@sap-cloud-sdk/odata-v2": "^4.1.2",
+    "@sap-cloud-sdk/odata-v4": "^4.1.2",
+    "@sap-cloud-sdk/util": "^4.1.2",
     "@sap-framework/core": "workspace:*",
     "@sap-framework/invoice-matching": "workspace:^",
+    "@sap-framework/gl-anomaly-detection": "workspace:*",
+    "@sap-framework/vendor-data-quality": "workspace:*",
     "@sap-framework/services": "workspace:*",
     "@sap-framework/user-access-review": "workspace:*",
     "@sap/xsenv": "^6.0.0",
