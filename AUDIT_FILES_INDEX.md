@@ -87,8 +87,8 @@ Auto-assigns reviewers for:
 #### `README.md`
 Project overview and quick start
 
-#### `CLAUDE.md`
-Instructions for Claude Code (architecture, commands, conventions)
+#### `ABIDBN.md`
+Instructions for abidbn (architecture, commands, conventions)
 
 #### `IMPLEMENTATION_ROADMAP.md`
 12-week production roadmap
@@ -154,7 +154,7 @@ sap-framework-audit-20251007.zip
 │   ├── CODEOWNERS                   # Auto-assign reviewers
 │   └── PULL_REQUEST_TEMPLATE.md     # Standardized PR format
 ├── README.md                        # Project overview
-├── CLAUDE.md                        # Development guide
+├── ABIDBN.md                        # Development guide
 ├── IMPLEMENTATION_ROADMAP.md        # 12-week plan
 └── REMAINING_WORK.md                # Current status (70%)
 ```

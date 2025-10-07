@@ -173,7 +173,7 @@ cat packages/api/.env
 ## 📚 Next Steps
 
 1. Read **USER_FLOWS.md** for detailed workflows
-2. See **CLAUDE.md** for architecture details
+2. See **ABIDBN.md** for architecture details
 3. Check **IMPLEMENTATION_ROADMAP.md** for features
 
 ## 🆘 Support

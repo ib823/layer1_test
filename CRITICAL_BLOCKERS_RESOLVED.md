@@ -330,7 +330,7 @@ node -e "const {isFeatureEnabled, FeatureFlag} = require('./packages/web/src/lib
 
 ---
 
-**Completed By:** Claude Code
+**Completed By:** abidbn
 **Duration:** ~2 hours
 **Status:** ✅ **ALL IMMEDIATE PRIORITIES COMPLETE**
 

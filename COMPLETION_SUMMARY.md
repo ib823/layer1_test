@@ -716,7 +716,7 @@ cd packages/web && pnpm dev
 For questions or support:
 - **Email**: ikmal.baharudin@gmail.com
 - **Repository**: https://github.com/ib823/layer1_test
-- **Documentation**: See `CLAUDE.md` for detailed project instructions
+- **Documentation**: See `ABIDBN.md` for detailed project instructions
 
 ---
 
@@ -725,4 +725,4 @@ For questions or support:
 **Completion Rate**: 85%
 **Production Ready**: In 2-3 weeks with testing + documentation
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+🤖 Generated with abidbn

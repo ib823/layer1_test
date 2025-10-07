@@ -555,7 +555,7 @@ packages/api/src/routes/index.ts  # Added /healthz + capabilities routes
 
 **Documentation:**
 - Full deployment guide: `docs/BTP_PRODUCTION_DEPLOYMENT.md`
-- Original project docs: `CLAUDE.md`, `README.md`
+- Original project docs: `ABIDBN.md`, `README.md`
 
 **Common Issues:**
 - "Destination not found" → Check BTP Cockpit → Destinations
@@ -580,5 +580,5 @@ Your application is now ready for SAP BTP Cloud Foundry deployment with enterpri
 ---
 
 **Implementation Date**: 2025-10-07
-**Engineer**: Claude Code (Senior BTP Engineer mode)
+**Engineer**: abidbn (Senior BTP Engineer mode)
 **Repository**: https://github.com/ib823/layer1_test

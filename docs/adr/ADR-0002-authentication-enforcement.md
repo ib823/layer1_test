@@ -404,7 +404,7 @@ if (decodedToken.exp && Date.now() >= decodedToken.exp * 1000) {
 
 | Date | Author | Change |
 |------|--------|--------|
-| 2025-10-07 | Claude Code | Initial version |
+| 2025-10-07 | abidbn | Initial version |
 
 ---
 
