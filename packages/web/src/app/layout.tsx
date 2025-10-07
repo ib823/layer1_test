@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { AntdRegistry } from '@ant-design/nextjs-registry';
+import { ConfigProvider } from 'antd';
 import "../styles/design-system.css";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui";
+import { AuthProvider } from "@/lib/auth/AuthContext";
 
 export const metadata: Metadata = {
   title: "SAP GRC Platform",
@@ -16,9 +19,33 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <AntdRegistry>
+          <ConfigProvider
+            theme={{
+              token: {
+                colorPrimary: '#1890ff',
+                borderRadius: 8,
+                fontSize: 14,
+              },
+              components: {
+                Button: {
+                  controlHeight: 40,
+                  controlHeightLG: 48,
+                },
+                Input: {
+                  controlHeight: 40,
+                  controlHeightLG: 48,
+                },
+              },
+            }}
+          >
+            <AuthProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </AuthProvider>
+          </ConfigProvider>
+        </AntdRegistry>
       </body>
     </html>
   );
