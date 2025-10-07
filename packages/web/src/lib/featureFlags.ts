@@ -63,7 +63,7 @@ export function isFeatureEnabled(flag: FeatureFlag): boolean {
   // Check localStorage override first (highest priority)
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
-      const key = \`featureFlag:\${flag}\`;
+      const key = `featureFlag:${flag}`;
       const value = localStorage.getItem(key);
       if (value === 'true') return true;
       if (value === 'false') return false;
@@ -74,7 +74,7 @@ export function isFeatureEnabled(flag: FeatureFlag): boolean {
 
   // Check environment variable
   if (typeof process !== 'undefined' && process.env) {
-    const envVar = \`NEXT_PUBLIC_FEATURE_\${flag}\`;
+    const envVar = `NEXT_PUBLIC_FEATURE_${flag}`;
     const value = process.env[envVar];
     if (value === 'true' || value === '1') return true;
     if (value === 'false' || value === '0') return false;
