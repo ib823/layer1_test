@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types';
 import {
   apiLimiter,
   discoveryLimiter,
@@ -62,7 +63,7 @@ if (config.auth.enabled) {
   router.use(authenticate);
 } else {
   // Development mode: Log warning that auth is disabled
-  router.use((req, res, next) => {
+  router.use((req: AuthenticatedRequest, res, next) => {
     console.warn('⚠️  WARNING: Authentication is DISABLED. Set AUTH_ENABLED=true in production!');
     // In dev mode with auth disabled, set a fake user for testing
     req.user = {
