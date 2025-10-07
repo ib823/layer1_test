@@ -1,5 +1,12 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { authenticate } from '../middleware/auth';
+import { Router } from 'express';
+import { authenticate, requireRole } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types';
+import {
+  apiLimiter,
+  discoveryLimiter,
+  sodAnalysisLimiter,
+  adminLimiter
+} from '../middleware/rateLimiting';
 import tenantsRoutes from './admin/tenants';
 import discoveryRoutes from './admin/discovery';
 import onboardingRoutes from './onboarding';
@@ -13,9 +20,19 @@ const router: Router = Router();
 /**
  * API Routes
  * Base: /api
+ *
+ * Security Model:
+ * - Health/version endpoints: PUBLIC (no auth, no rate limit)
+ * - All other endpoints: AUTHENTICATED + RATE LIMITED
+ * - Admin endpoints: AUTHENTICATED + ADMIN ROLE + RATE LIMITED
+ * - Expensive operations (discovery, SoD): STRICTER RATE LIMITS
  */
 
-// Health check (no auth required)
+// ==============================================================================
+// PUBLIC ENDPOINTS (no auth, no rate limiting)
+// ==============================================================================
+
+// Health check
 router.get('/health', (req, res) => {
   ApiResponseUtil.success(res, {
     status: 'healthy',
@@ -24,7 +41,7 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Version info (no auth required)
+// Version info
 router.get('/version', (req, res) => {
   ApiResponseUtil.success(res, {
     version: '1.0.0',
@@ -33,17 +50,42 @@ router.get('/version', (req, res) => {
   });
 });
 
-// Apply authentication to all routes below (configurable via AUTH_ENABLED env var)
-// Note: Health and version endpoints remain public
+// ==============================================================================
+// GLOBAL MIDDLEWARE: Apply to all routes below
+// ==============================================================================
+
+// Apply rate limiting FIRST (before auth, to prevent auth bypass attacks)
+router.use(apiLimiter);
+
+// Apply authentication
+// IMPORTANT: Always enabled in production. Dev mode requires AUTH_ENABLED=true
 if (config.auth.enabled) {
   router.use(authenticate);
 } else {
   // Development mode: Log warning that auth is disabled
-  router.use((req, res, next) => {
+  router.use((req: AuthenticatedRequest, res, next) => {
     console.warn('⚠️  WARNING: Authentication is DISABLED. Set AUTH_ENABLED=true in production!');
+    // In dev mode with auth disabled, set a fake user for testing
+    req.user = {
+      id: 'dev-user',
+      email: 'dev@example.com',
+      roles: ['admin'],
+      tenantId: 'dev-tenant',
+    };
     next();
   });
 }
+
+// ==============================================================================
+// ADMIN ROUTES: Require admin role + stricter rate limiting
+// ==============================================================================
+
+// Apply admin-specific middleware
+router.use('/admin', adminLimiter);
+router.use('/admin', requireRole('admin'));
+
+// Discovery endpoint needs even stricter limiting
+router.use('/admin/tenants/:id/discover', discoveryLimiter);
 
 /**
  * Admin Routes
@@ -63,6 +105,13 @@ router.use('/onboarding', onboardingRoutes);
  * Prefix: /api/monitoring
  */
 router.use('/monitoring', monitoringRoutes);
+
+// ==============================================================================
+// MODULE ROUTES: Expensive operations need stricter rate limiting
+// ==============================================================================
+
+// SoD analysis is expensive - apply stricter limiting
+router.use('/modules/sod/analyze', sodAnalysisLimiter);
 
 /**
  * Module Routes
@@ -90,5 +139,12 @@ router.use('/analytics', analyticsRoutes);
  */
 import dashboardRoutes from './dashboard';
 router.use('/dashboard', dashboardRoutes);
+
+/**
+ * Invoice Matching Routes
+ * Prefix: /api/matching
+ */
+import matchingRoutes from './matching';
+router.use('/matching', matchingRoutes);
 
 export default router;

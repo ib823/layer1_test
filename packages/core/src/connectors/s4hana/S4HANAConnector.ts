@@ -135,6 +135,164 @@ export class S4HANAConnector extends BaseSAPConnector {
     );
   }
 
+  /**
+   * Get Purchase Orders
+   */
+  async getPurchaseOrders(options: {
+    poNumbers?: string[];
+    suppliers?: string[];
+    fromDate?: Date;
+    toDate?: Date;
+    status?: string;
+  }): Promise<import('./types').S4HANAPurchaseOrder[]> {
+    const query = new ODataQueryBuilder();
+
+    const filters: string[] = [];
+
+    if (options.poNumbers && options.poNumbers.length > 0) {
+      const poFilter = options.poNumbers
+        .map((po) => `PurchaseOrder eq ${escapeODataString(po)}`)
+        .join(' or ');
+      filters.push(`(${poFilter})`);
+    }
+
+    if (options.suppliers && options.suppliers.length > 0) {
+      const supplierFilter = options.suppliers
+        .map((sup) => `Supplier eq ${escapeODataString(sup)}`)
+        .join(' or ');
+      filters.push(`(${supplierFilter})`);
+    }
+
+    if (options.fromDate) {
+      const dateStr = options.fromDate.toISOString().split('T')[0];
+      filters.push(`PurchaseOrderDate ge datetime'${dateStr}'`);
+    }
+
+    if (options.toDate) {
+      const dateStr = options.toDate.toISOString().split('T')[0];
+      filters.push(`PurchaseOrderDate le datetime'${dateStr}'`);
+    }
+
+    if (options.status) {
+      filters.push(`PurchasingDocumentStatus eq ${escapeODataString(options.status)}`);
+    }
+
+    filters.forEach((f) => query.filter(f));
+
+    return await this.executeQuery<import('./types').S4HANAPurchaseOrder>(
+      '/sap/opu/odata/sap/API_PURCHASEORDER_PROCESS_SRV/A_PurchaseOrder',
+      query
+    );
+  }
+
+  /**
+   * Get Goods Receipts (Material Documents)
+   */
+  async getGoodsReceipts(options: {
+    grNumbers?: string[];
+    poNumbers?: string[];
+    fromDate?: Date;
+    toDate?: Date;
+    movementType?: string;
+  }): Promise<import('./types').S4HANAGoodsReceipt[]> {
+    const query = new ODataQueryBuilder();
+
+    const filters: string[] = [];
+
+    if (options.grNumbers && options.grNumbers.length > 0) {
+      const grFilter = options.grNumbers
+        .map((gr) => `MaterialDocument eq ${escapeODataString(gr)}`)
+        .join(' or ');
+      filters.push(`(${grFilter})`);
+    }
+
+    if (options.poNumbers && options.poNumbers.length > 0) {
+      const poFilter = options.poNumbers
+        .map((po) => `PurchaseOrder eq ${escapeODataString(po)}`)
+        .join(' or ');
+      filters.push(`(${poFilter})`);
+    }
+
+    if (options.fromDate) {
+      const dateStr = options.fromDate.toISOString().split('T')[0];
+      filters.push(`PostingDate ge datetime'${dateStr}'`);
+    }
+
+    if (options.toDate) {
+      const dateStr = options.toDate.toISOString().split('T')[0];
+      filters.push(`PostingDate le datetime'${dateStr}'`);
+    }
+
+    if (options.movementType) {
+      filters.push(`GoodsMovementType eq ${escapeODataString(options.movementType)}`);
+    }
+
+    filters.forEach((f) => query.filter(f));
+
+    return await this.executeQuery<import('./types').S4HANAGoodsReceipt>(
+      '/sap/opu/odata/sap/API_MATERIAL_DOCUMENT_SRV/A_MaterialDocumentItem',
+      query
+    );
+  }
+
+  /**
+   * Get Supplier Invoices
+   */
+  async getSupplierInvoices(options: {
+    invoiceNumbers?: string[];
+    suppliers?: string[];
+    poNumbers?: string[];
+    fromDate?: Date;
+    toDate?: Date;
+    status?: string;
+  }): Promise<import('./types').S4HANASupplierInvoice[]> {
+    const query = new ODataQueryBuilder();
+
+    const filters: string[] = [];
+
+    if (options.invoiceNumbers && options.invoiceNumbers.length > 0) {
+      const invFilter = options.invoiceNumbers
+        .map((inv) => `SupplierInvoice eq ${escapeODataString(inv)}`)
+        .join(' or ');
+      filters.push(`(${invFilter})`);
+    }
+
+    if (options.suppliers && options.suppliers.length > 0) {
+      const supplierFilter = options.suppliers
+        .map((sup) => `Supplier eq ${escapeODataString(sup)}`)
+        .join(' or ');
+      filters.push(`(${supplierFilter})`);
+    }
+
+    if (options.poNumbers && options.poNumbers.length > 0) {
+      const poFilter = options.poNumbers
+        .map((po) => `PurchaseOrder eq ${escapeODataString(po)}`)
+        .join(' or ');
+      filters.push(`(${poFilter})`);
+    }
+
+    if (options.fromDate) {
+      const dateStr = options.fromDate.toISOString().split('T')[0];
+      filters.push(`InvoicingDate ge datetime'${dateStr}'`);
+    }
+
+    if (options.toDate) {
+      const dateStr = options.toDate.toISOString().split('T')[0];
+      filters.push(`InvoicingDate le datetime'${dateStr}'`);
+    }
+
+    if (options.status) {
+      filters.push(`SupplierInvoiceStatus eq ${escapeODataString(options.status)}`);
+    }
+
+    filters.forEach((f) => query.filter(f));
+
+    return await this.executeQuery<import('./types').S4HANASupplierInvoice>(
+      '/sap/opu/odata/sap/API_SUPPLIERINVOICE_PROCESS_SRV/A_SupplierInvoice',
+      query
+    );
+  }
+
   async executeQuery<T>(
     endpoint: string,
     queryBuilder: ODataQueryBuilder

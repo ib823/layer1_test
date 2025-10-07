@@ -172,7 +172,9 @@ export class ServiceDiscovery {
     return {
       canDoSoD: hasService('API_USER_SRV') && hasService('API_ROLE_SRV'),
       canDoInvoiceMatching:
-        hasService('API_PURCHASEORDER_SRV') && hasService('API_INVOICE_SRV'),
+        hasService('API_PURCHASEORDER_PROCESS_SRV') &&
+        hasService('API_SUPPLIERINVOICE_PROCESS_SRV') &&
+        hasService('API_MATERIAL_DOCUMENT_SRV'),
       canDoAnomalyDetection: hasService('API_GLACCOUNTLINEITEM_SRV'),
       canDoInventoryOptimization: hasService('API_MATERIAL_SRV'),
       canDoExpenseAnalysis: hasService('API_GLACCOUNTLINEITEM_SRV'),
@@ -236,8 +238,9 @@ export class ServiceDiscovery {
     const commonServices = [
       'API_USER_SRV',
       'API_ROLE_SRV',
-      'API_PURCHASEORDER_SRV',
-      'API_INVOICE_SRV',
+      'API_PURCHASEORDER_PROCESS_SRV',
+      'API_SUPPLIERINVOICE_PROCESS_SRV',
+      'API_MATERIAL_DOCUMENT_SRV',
       'API_MATERIAL_SRV',
       'API_GLACCOUNTLINEITEM_SRV',
     ];
@@ -318,7 +321,9 @@ export class ServiceDiscovery {
     const reasons: { [key: string]: string } = {
       API_USER_SRV: 'Required for SoD Analysis module',
       API_ROLE_SRV: 'Required for SoD Analysis module',
-      API_PURCHASEORDER_SRV: 'Required for Invoice Matching module',
+      API_PURCHASEORDER_PROCESS_SRV: 'Required for Three-Way Match & Invoice Compliance module',
+      API_SUPPLIERINVOICE_PROCESS_SRV: 'Required for Three-Way Match & Invoice Compliance module',
+      API_MATERIAL_DOCUMENT_SRV: 'Required for Three-Way Match & Invoice Compliance module (Goods Receipts)',
       API_GLACCOUNTLINEITEM_SRV: 'Required for Anomaly Detection module',
     };
 

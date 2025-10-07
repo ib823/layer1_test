@@ -3,10 +3,9 @@ import {
   S4HANAConnector,
   ServiceDiscovery 
 } from '@sap-framework/core';
-import { 
-  OnboardingSession, 
-  OnboardingStep,
-  ConnectionTestRequest 
+import {
+  OnboardingSession,
+  ConnectionTestRequest
 } from '../types';
 import logger from '../utils/logger';
 
@@ -18,7 +17,7 @@ export class OnboardingService {
   /**
    * Start new onboarding session
    */
-  async startOnboarding(tenantId: string, companyName: string): Promise<OnboardingSession> {
+  async startOnboarding(tenantId: string, _companyName: string): Promise<OnboardingSession> {
     const sessionId = `onboarding-${tenantId}-${Date.now()}`;
 
     const session: OnboardingSession = {

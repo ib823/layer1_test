@@ -8,7 +8,7 @@ import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { auditLog } from './middleware/auditLog';
 import { enforceDataResidency } from './middleware/dataResidency';
-import { standardRateLimit } from './middleware/rateLimiting';
+import { apiLimiter } from './middleware/rateLimiting';
 import { metricsMiddleware } from './middleware/metrics';
 import { config } from './config';
 import logger from './utils/logger';
@@ -38,8 +38,7 @@ export function createApp(): Application {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-  // Apply rate limiting to all routes
-  app.use(standardRateLimit);
+  // Note: Rate limiting is now applied in routes/index.ts after public endpoints
 
   // Metrics tracking middleware
   app.use(metricsMiddleware);

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { Pool } from 'pg';
 import { AuthenticatedRequest } from '../types';
 import { config } from '../config';
@@ -30,23 +30,23 @@ export interface AuditLogEntry {
 }
 
 /**
- * Actions that should be audited
+ * Actions that should be audited (for reference)
  */
-const AUDITED_ACTIONS = [
-  'CREATE',
-  'UPDATE',
-  'DELETE',
-  'READ',
-  'LOGIN',
-  'LOGOUT',
-  'ACCESS_DENIED',
-  'ROLE_ASSIGNMENT',
-  'PERMISSION_CHANGE',
-  'DATA_EXPORT',
-  'SENSITIVE_DATA_ACCESS',
-  'CONFIGURATION_CHANGE',
-  'USER_IMPERSONATION',
-];
+// const AUDITED_ACTIONS = [
+//   'CREATE',
+//   'UPDATE',
+//   'DELETE',
+//   'READ',
+//   'LOGIN',
+//   'LOGOUT',
+//   'ACCESS_DENIED',
+//   'ROLE_ASSIGNMENT',
+//   'PERMISSION_CHANGE',
+//   'DATA_EXPORT',
+//   'SENSITIVE_DATA_ACCESS',
+//   'CONFIGURATION_CHANGE',
+//   'USER_IMPERSONATION',
+// ];
 
 /**
  * Sensitive endpoints that should always be audited
