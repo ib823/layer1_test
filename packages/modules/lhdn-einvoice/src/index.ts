@@ -20,19 +20,18 @@
 export * from './types';
 export * from './types/sap-mapping';
 
+// Services
+export { ValidationService } from './services/ValidationService';
+export { SubmissionService } from './services/SubmissionService';
+export { QRCodeService } from './services/QRCodeService';
+export { MappingService } from './services/MappingService';
+export { NotificationService } from './services/NotificationService';
+
+// Rules
+export * from './rules/validationRules';
+
 // Engine (to be implemented)
 // export { LHDNInvoiceEngine } from './engine/LHDNInvoiceEngine';
-
-// Services (to be implemented)
-// export { ValidationService } from './services/ValidationService';
-// export { SubmissionService } from './services/SubmissionService';
-// export { QRCodeService } from './services/QRCodeService';
-// export { MappingService } from './services/MappingService';
-// export { NotificationService } from './services/NotificationService';
-
-// Rules (to be implemented)
-// export { validationRules } from './rules/validationRules';
-// export { taxCalculationRules } from './rules/taxCalculationRules';
 
 /**
  * Module metadata for service discovery
