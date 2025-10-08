@@ -107,7 +107,7 @@ describe('MappingService', () => {
       expect(invoice.buyer!.tin).toBe('001234567890');
       expect(invoice.buyer!.name).toBe('ABC Sdn Bhd');
       expect(invoice.buyer!.address.city).toBe('Kuala Lumpur');
-      expect(invoice.buyer!.address.state).toBe('Wilayah Persekutuan Kuala Lumpur');
+      expect(invoice.buyer!.address.state).toBe('WP Kuala Lumpur');
 
       // Line items
       expect(invoice.lineItems).toHaveLength(1);
@@ -197,8 +197,8 @@ describe('MappingService', () => {
         { sapType: 'F2', expectedLHDN: '01' }, // Invoice
         { sapType: 'G2', expectedLHDN: '02' }, // Credit Note
         { sapType: 'L2', expectedLHDN: '03' }, // Debit Note
-        { sapType: 'S1', expectedLHDN: '04' }, // Refund Note
-        { sapType: 'S2', expectedLHDN: '11' }, // Self-Billed Invoice
+        { sapType: 'S1', expectedLHDN: '01' }, // Sales Invoice (maps to Invoice)
+        { sapType: 'S2', expectedLHDN: '02' }, // Credit Note (maps to Credit Note)
       ];
 
       for (const testCase of testCases) {

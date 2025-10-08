@@ -192,6 +192,46 @@ export const ERROR_RULES: ValidationRule[] = [
       return /^\d{12,14}$/.test(tin.replace(/[-\s]/g, ''));
     },
   },
+  {
+    code: 'LHDN-108',
+    field: 'lineItems',
+    description: 'Maximum line items limit',
+    severity: 'ERROR',
+    message: 'Invoice cannot have more than 999 line items',
+    validate: (invoice) =>
+      Array.isArray(invoice.lineItems) && invoice.lineItems.length <= 999,
+  },
+  {
+    code: 'LHDN-109',
+    field: 'subtotalAmount',
+    description: 'Subtotal must be non-negative',
+    severity: 'ERROR',
+    message: 'Subtotal amount cannot be negative',
+    validate: (invoice) => invoice.subtotalAmount >= 0,
+  },
+  {
+    code: 'LHDN-110',
+    field: 'invoiceNumber',
+    description: 'Invoice number format and length',
+    severity: 'ERROR',
+    message: 'Invoice number must be alphanumeric and max 20 characters',
+    validate: (invoice) =>
+      !!invoice.invoiceNumber &&
+      invoice.invoiceNumber.length <= 20 &&
+      /^[A-Za-z0-9\-/]+$/.test(invoice.invoiceNumber),
+  },
+  {
+    code: 'LHDN-TAX-CALC',
+    field: 'lineItems',
+    description: 'Tax calculation must be accurate',
+    severity: 'ERROR',
+    message: 'Tax calculation error: tax amount does not match rate × subtotal',
+    validate: (invoice) =>
+      invoice.lineItems.every((item) => {
+        const expectedTax = (item.subtotal * item.taxRate) / 100;
+        return Math.abs(item.taxAmount - expectedTax) < 0.01; // Allow 1 cent rounding
+      }),
+  },
 ];
 
 /**
