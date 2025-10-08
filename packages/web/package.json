@@ -7,11 +7,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "jest"
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
     "@ant-design/nextjs-registry": "^1.1.0",
+    "@sap-framework/tokens": "workspace:^",
+    "@sap-framework/ui": "workspace:^",
     "@tanstack/react-query": "^5.90.2",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-table": "^8.21.3",
@@ -30,11 +37,12 @@
   "devDependencies": {
     "@axe-core/react": "^4.10.2",
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.56.0",
     "@storybook/react": "^9.1.10",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
-    "@types/node": "^20",
+    "@types/node": "^20.19.18",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "chromatic": "^13.3.0",

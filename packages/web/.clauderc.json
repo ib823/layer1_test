@@ -1,0 +1,212 @@
+{
+  "$schema": "https://docs.claude.com/schemas/clauderc.json",
+  "description": "Claude Code configuration for ABeam DataBridge GRC Platform - Enforces design system usage",
+  "version": "1.0.0",
+
+  "designSystem": {
+    "enabled": true,
+    "tokensPackage": "@sap-framework/tokens",
+    "uiPackage": "@sap-framework/ui",
+    "tokensPath": "../../tokens/src/tokens.css",
+
+    "rules": {
+      "useAntDWrappers": {
+        "enabled": true,
+        "description": "Always import from @sap-framework/ui, never directly from 'antd'",
+        "enforcement": "error",
+        "examples": {
+          "good": "import { Button } from '@sap-framework/ui';",
+          "bad": "import { Button } from 'antd';"
+        }
+      },
+
+      "forbidHardcodedColors": {
+        "enabled": true,
+        "description": "Never use hardcoded hex, rgb, or hsl colors",
+        "enforcement": "error",
+        "exceptions": ["transparent", "currentColor", "inherit"],
+        "examples": {
+          "good": "className=\"bg-brand-primary text-white\"",
+          "bad": "style={{ background: '#2563EB', color: '#fff' }}"
+        }
+      },
+
+      "forbidInlineStyles": {
+        "enabled": true,
+        "description": "No inline style prop; use className with Tailwind or CSS modules",
+        "enforcement": "error",
+        "exceptions": ["Canvas", "svg", "path", "CSS variables (--var)"],
+        "examples": {
+          "good": "className=\"p-4 bg-surface\"",
+          "bad": "style={{ padding: '16px', background: '#fff' }}"
+        }
+      },
+
+      "preferTokenClasses": {
+        "enabled": true,
+        "description": "Use design token utilities over arbitrary values",
+        "enforcement": "warning",
+        "examples": {
+          "good": "className=\"bg-brand-500 p-4 rounded-md\"",
+          "bad": "className=\"bg-[#2563EB] p-[16px] rounded-[6px]\""
+        }
+      }
+    },
+
+    "components": {
+      "available": [
+        "Button", "Input", "Select", "DatePicker", "Modal", "Drawer",
+        "Tag", "Badge", "Tabs", "Tooltip", "Form", "TableShell",
+        "Card", "Alert", "Spin", "Empty", "Breadcrumb", "Menu"
+      ],
+      "location": "@sap-framework/ui",
+      "documentation": "../../ui/README.md"
+    },
+
+    "tokens": {
+      "colors": {
+        "brand": ["brand-50", "brand-100", "brand-200", "brand-300", "brand-400", "brand-500", "brand-600", "brand-700", "brand-800", "brand-900", "brand-primary"],
+        "risk": ["risk-critical", "risk-high", "risk-medium", "risk-low"],
+        "status": ["status-success", "status-warning", "status-danger", "status-info"],
+        "surface": ["surface-base", "surface-secondary", "surface-tertiary"],
+        "text": ["text-primary", "text-secondary", "text-tertiary"],
+        "border": ["border-default", "border-strong", "border-subtle"]
+      },
+      "spacing": ["space-0", "space-1", "space-2", "space-3", "space-4", "space-5", "space-6", "space-7", "space-8", "space-9", "space-10", "space-11", "space-12"],
+      "radius": ["radius-sm", "radius-md", "radius-lg", "radius-xl", "radius-full"],
+      "shadows": ["shadow-sm", "shadow-md", "shadow-lg", "shadow-xl"]
+    }
+  },
+
+  "codeGeneration": {
+    "typescript": {
+      "strict": true,
+      "noImplicitAny": true,
+      "noUnusedLocals": false,
+      "noUnusedParameters": false
+    },
+
+    "react": {
+      "version": "19",
+      "mode": "nextjs-app-router",
+      "hooks": {
+        "preferServerComponents": false,
+        "clientComponentDirective": "auto"
+      }
+    },
+
+    "styling": {
+      "approach": "tailwind-css-variables",
+      "cssVarPrefix": "--",
+      "forbiddenPatterns": [
+        "style={{",
+        "#[0-9a-f]{3,6}",
+        "rgb\\(",
+        "hsl\\("
+      ]
+    },
+
+    "imports": {
+      "preferredAliases": {
+        "@/components": "./src/components",
+        "@/lib": "./src/lib",
+        "@/hooks": "./src/hooks",
+        "@/styles": "./src/styles"
+      },
+      "forbidden": [
+        {
+          "module": "antd",
+          "message": "Import from @sap-framework/ui instead",
+          "suggestion": "import { Component } from '@sap-framework/ui';"
+        }
+      ]
+    }
+  },
+
+  "accessibility": {
+    "enforceAriaLabels": true,
+    "minimumTouchTarget": "44px",
+    "colorContrastRatio": "4.5:1",
+    "keyboardNavigation": "required",
+    "focusVisible": "required"
+  },
+
+  "patterns": {
+    "stateManagement": {
+      "serverState": "react-query",
+      "clientState": "zustand",
+      "urlState": "next-searchParams",
+      "formState": "react-hook-form"
+    },
+
+    "dataFetching": {
+      "library": "react-query",
+      "errorHandling": "throw-error-boundary",
+      "caching": "aggressive"
+    },
+
+    "forms": {
+      "library": "react-hook-form",
+      "validation": "zod",
+      "submitBehavior": "disable-while-submitting"
+    }
+  },
+
+  "fileOrganization": {
+    "components": {
+      "colocation": true,
+      "structure": {
+        "component": "ComponentName.tsx",
+        "styles": "ComponentName.module.css (if needed)",
+        "tests": "ComponentName.test.tsx",
+        "stories": "ComponentName.stories.tsx"
+      }
+    },
+
+    "pages": {
+      "location": "src/app/",
+      "routing": "nextjs-app-router",
+      "layout": "layout.tsx per segment"
+    }
+  },
+
+  "documentation": {
+    "componentDocs": {
+      "required": true,
+      "format": "jsdoc-with-examples",
+      "includeProps": true,
+      "includeUsageExamples": true
+    },
+
+    "commitMessages": {
+      "format": "conventional-commits",
+      "prefix": true
+    }
+  },
+
+  "testing": {
+    "unitTests": {
+      "framework": "jest",
+      "library": "testing-library",
+      "coverage": "70%"
+    },
+
+    "e2eTests": {
+      "framework": "playwright",
+      "required": ["critical-paths"]
+    },
+
+    "a11yTests": {
+      "tool": "axe-core",
+      "failOn": "violations"
+    }
+  },
+
+  "commands": {
+    "dev": "pnpm dev",
+    "build": "pnpm build",
+    "test": "pnpm test",
+    "lint": "pnpm lint",
+    "storybook": "pnpm storybook"
+  }
+}
