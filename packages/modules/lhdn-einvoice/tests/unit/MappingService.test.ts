@@ -68,39 +68,15 @@ describe('MappingService', () => {
           ],
         },
         tenantConfig: {
-          tenantId: 'tenant-123',
-          clientId: 'client-123',
-          clientSecret: 'secret-123',
-          apiBaseUrl: 'https://api-sandbox.myinvois.hasil.gov.my',
-          environment: 'SANDBOX',
           companyTin: '009876543210',
           companyName: 'XYZ Sdn Bhd',
-          companyAddress: {
-            line1: 'Jalan Sultan Ismail',
-            city: 'Kuala Lumpur',
-            state: 'WP Kuala Lumpur',
-            postalCode: '50250',
-            country: 'MY',
-          },
-          companyContact: {
-            phone: '+60387654321',
-            email: 'billing@xyz.com.my',
-          },
           invoicePrefix: 'INV-',
-          autoSubmit: false,
-          validateBeforePost: true,
-          generateQrCode: true,
-          notificationEmails: ['finance@xyz.com.my'],
-          webhookUrl: 'https://api.xyz.com.my/webhooks/lhdn',
           taxCodeMapping: {
             'V6': 'SR',
             'V0': 'SR',
             'VE': 'E',
             'VZ': 'ZP',
           },
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         },
       };
 
@@ -123,22 +99,22 @@ describe('MappingService', () => {
 
       // Supplier
       expect(invoice.supplier).toBeDefined();
-      expect(invoice.supplier.tin).toBe('009876543210');
-      expect(invoice.supplier.name).toBe('XYZ Sdn Bhd');
+      expect(invoice.supplier!.tin).toBe('009876543210');
+      expect(invoice.supplier!.name).toBe('XYZ Sdn Bhd');
 
       // Buyer
       expect(invoice.buyer).toBeDefined();
-      expect(invoice.buyer.tin).toBe('001234567890');
-      expect(invoice.buyer.name).toBe('ABC Sdn Bhd');
-      expect(invoice.buyer.address.city).toBe('Kuala Lumpur');
-      expect(invoice.buyer.address.state).toBe('Wilayah Persekutuan Kuala Lumpur');
+      expect(invoice.buyer!.tin).toBe('001234567890');
+      expect(invoice.buyer!.name).toBe('ABC Sdn Bhd');
+      expect(invoice.buyer!.address.city).toBe('Kuala Lumpur');
+      expect(invoice.buyer!.address.state).toBe('Wilayah Persekutuan Kuala Lumpur');
 
       // Line items
       expect(invoice.lineItems).toHaveLength(1);
-      expect(invoice.lineItems[0].description).toBe('Test Product');
-      expect(invoice.lineItems[0].quantity).toBe(10);
-      expect(invoice.lineItems[0].taxType).toBe('SR');
-      expect(invoice.lineItems[0].taxRate).toBe(6);
+      expect(invoice.lineItems![0].description).toBe('Test Product');
+      expect(invoice.lineItems![0].quantity).toBe(10);
+      expect(invoice.lineItems![0].taxType).toBe('SR');
+      expect(invoice.lineItems![0].taxRate).toBe(6);
     });
 
     it('should handle missing buyer business partner with error', async () => {
@@ -158,29 +134,10 @@ describe('MappingService', () => {
         sapItems: [],
         buyerBusinessPartner: undefined,
         tenantConfig: {
-          tenantId: 'tenant-123',
-          clientId: 'client-123',
-          clientSecret: 'secret-123',
-          apiBaseUrl: 'https://api-sandbox.myinvois.hasil.gov.my',
-          environment: 'SANDBOX',
           companyTin: '009876543210',
           companyName: 'XYZ Sdn Bhd',
-          companyAddress: {
-            line1: 'Jalan Sultan Ismail',
-            city: 'Kuala Lumpur',
-            state: 'WP Kuala Lumpur',
-            postalCode: '50250',
-            country: 'MY',
-          },
           invoicePrefix: 'INV-',
-          autoSubmit: false,
-          validateBeforePost: true,
-          generateQrCode: true,
-          notificationEmails: [],
           taxCodeMapping: { 'V6': 'SR' },
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         },
       };
 
@@ -222,29 +179,10 @@ describe('MappingService', () => {
           ],
         },
         tenantConfig: {
-          tenantId: 'tenant-123',
-          clientId: 'client-123',
-          clientSecret: 'secret-123',
-          apiBaseUrl: 'https://api-sandbox.myinvois.hasil.gov.my',
-          environment: 'SANDBOX',
           companyTin: '009876543210',
           companyName: 'XYZ Sdn Bhd',
-          companyAddress: {
-            line1: 'Jalan Sultan Ismail',
-            city: 'Kuala Lumpur',
-            state: 'WP Kuala Lumpur',
-            postalCode: '50250',
-            country: 'MY',
-          },
           invoicePrefix: 'INV-',
-          autoSubmit: false,
-          validateBeforePost: true,
-          generateQrCode: true,
-          notificationEmails: [],
           taxCodeMapping: {},
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         },
       };
 
@@ -294,29 +232,10 @@ describe('MappingService', () => {
             ],
           },
           tenantConfig: {
-            tenantId: 'tenant-123',
-            clientId: 'client-123',
-            clientSecret: 'secret-123',
-            apiBaseUrl: 'https://api-sandbox.myinvois.hasil.gov.my',
-            environment: 'SANDBOX',
             companyTin: '009876543210',
             companyName: 'XYZ Sdn Bhd',
-            companyAddress: {
-              line1: 'Jalan Sultan Ismail',
-              city: 'Kuala Lumpur',
-              state: 'WP Kuala Lumpur',
-              postalCode: '50250',
-              country: 'MY',
-            },
             invoicePrefix: '',
-            autoSubmit: false,
-            validateBeforePost: true,
-            generateQrCode: true,
-            notificationEmails: [],
             taxCodeMapping: {},
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
           },
         };
 
@@ -357,35 +276,16 @@ describe('MappingService', () => {
           ],
         },
         tenantConfig: {
-          tenantId: 'tenant-123',
-          clientId: 'client-123',
-          clientSecret: 'secret-123',
-          apiBaseUrl: 'https://api-sandbox.myinvois.hasil.gov.my',
-          environment: 'SANDBOX',
           companyTin: '009876543210',
           companyName: 'XYZ Sdn Bhd',
-          companyAddress: {
-            line1: 'Jalan Sultan Ismail',
-            city: 'Kuala Lumpur',
-            state: 'WP Kuala Lumpur',
-            postalCode: '50250',
-            country: 'MY',
-          },
           invoicePrefix: '',
-          autoSubmit: false,
-          validateBeforePost: true,
-          generateQrCode: true,
-          notificationEmails: [],
           taxCodeMapping: {},
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         },
       };
 
       const result = await mappingService.mapBillingDocumentToInvoice(context);
 
-      expect(result.invoice?.buyer.address.state).toBe('Johor');
+      expect(result.invoice?.buyer?.address.state).toBe('Johor');
     });
 
     it('should map tax codes correctly', async () => {
@@ -433,40 +333,21 @@ describe('MappingService', () => {
           ],
         },
         tenantConfig: {
-          tenantId: 'tenant-123',
-          clientId: 'client-123',
-          clientSecret: 'secret-123',
-          apiBaseUrl: 'https://api-sandbox.myinvois.hasil.gov.my',
-          environment: 'SANDBOX',
           companyTin: '009876543210',
           companyName: 'XYZ Sdn Bhd',
-          companyAddress: {
-            line1: 'Jalan Sultan Ismail',
-            city: 'Kuala Lumpur',
-            state: 'WP Kuala Lumpur',
-            postalCode: '50250',
-            country: 'MY',
-          },
           invoicePrefix: '',
-          autoSubmit: false,
-          validateBeforePost: true,
-          generateQrCode: true,
-          notificationEmails: [],
           taxCodeMapping: {
             'VE': 'E',
             'V6': 'SR',
             'VZ': 'ZP',
           },
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         },
       };
 
       const result = await mappingService.mapBillingDocumentToInvoice(context);
 
-      expect(result.invoice?.lineItems[0].taxType).toBe('E');
-      expect(result.invoice?.lineItems[0].taxRate).toBe(0);
+      expect(result.invoice?.lineItems?.[0].taxType).toBe('E');
+      expect(result.invoice?.lineItems?.[0].taxRate).toBe(0);
     });
   });
 });

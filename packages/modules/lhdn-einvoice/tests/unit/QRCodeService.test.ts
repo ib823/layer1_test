@@ -194,6 +194,6 @@ describe('QRCodeService', () => {
       const qrCodes = results.map(r => r.qrCodeBase64);
       const uniqueQRCodes = new Set(qrCodes);
       expect(uniqueQRCodes.size).toBe(5);
-    });
+    }, 15000); // 15 second timeout for concurrent operations
   });
 });

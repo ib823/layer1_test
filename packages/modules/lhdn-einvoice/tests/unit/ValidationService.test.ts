@@ -15,7 +15,7 @@ describe('ValidationService', () => {
     tenantId: 'tenant-123',
     invoiceNumber: 'INV-2024-001',
     documentType: '01',
-    status: 'DRAFT',
+    status: 'VALIDATED',
     invoiceDate: new Date('2024-01-15'),
     currency: 'MYR',
     supplier: {

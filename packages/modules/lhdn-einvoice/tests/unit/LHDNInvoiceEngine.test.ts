@@ -46,6 +46,10 @@ describe('LHDNInvoiceEngine', () => {
       postalCode: '50250',
       country: 'MY',
     },
+    companyContact: {
+      phone: '+60387654321',
+      email: 'billing@xyz.com.my',
+    },
     invoicePrefix: 'INV-',
     autoSubmit: false,
     validateBeforePost: true,
