@@ -30,8 +30,14 @@ export { NotificationService } from './services/NotificationService';
 // Rules
 export * from './rules/validationRules';
 
-// Engine (to be implemented)
-// export { LHDNInvoiceEngine } from './engine/LHDNInvoiceEngine';
+// Engine
+export { LHDNInvoiceEngine } from './engine/LHDNInvoiceEngine';
+
+// Repository
+export { LHDNInvoiceRepository } from './repository/LHDNInvoiceRepository';
+
+// API Controller
+export { LHDNInvoiceController } from './api/LHDNInvoiceController';
 
 /**
  * Module metadata for service discovery
