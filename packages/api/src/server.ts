@@ -1,6 +1,11 @@
 import { createApp } from './app';
 import { config } from './config';
 import logger from './utils/logger';
+import { enforceSecurityConfig } from '@sap-framework/core';
+
+// Validate security configuration before starting server
+logger.info('🔒 Validating security configuration...');
+enforceSecurityConfig(process.env);
 
 const app = createApp();
 

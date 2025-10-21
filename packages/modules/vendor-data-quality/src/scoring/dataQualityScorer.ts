@@ -278,7 +278,7 @@ export function calculateFreshnessScore(
     issues.push({
       issueId: `FRESH-critical-${vendor.vendorId}`,
       category: 'STALE_DATA',
-      severity: 'CRITICAL',
+      severity,
       field: 'lastModifiedAt',
       description: `Vendor data not updated for ${daysSinceUpdate} days`,
       actualValue: lastUpdate.toString(),
@@ -291,7 +291,7 @@ export function calculateFreshnessScore(
     issues.push({
       issueId: `FRESH-warning-${vendor.vendorId}`,
       category: 'STALE_DATA',
-      severity: 'MEDIUM',
+      severity,
       field: 'lastModifiedAt',
       description: `Vendor data not updated for ${daysSinceUpdate} days`,
       actualValue: lastUpdate.toString(),

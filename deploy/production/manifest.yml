@@ -1,0 +1,59 @@
+---
+# SAP BTP Cloud Foundry Production Deployment Manifest
+# For SAP MVP Framework v1.0
+
+applications:
+  - name: sapmvp-api
+    memory: 1024M
+    disk_quota: 512M
+    instances: 2
+    buildpacks:
+      - nodejs_buildpack
+    command: npm run start:prod
+    health-check-type: http
+    health-check-http-endpoint: /api/health/ready
+    timeout: 180
+    env:
+      NODE_ENV: production
+      AUTH_ENABLED: true
+      API_PORT: 8080
+      LOG_LEVEL: info
+      # Database connection managed via service binding
+      # Redis connection managed via service binding
+    services:
+      - sapmvp-postgres
+      - sapmvp-redis
+      - sapmvp-xsuaa
+      - sapmvp-destination
+    routes:
+      - route: sapmvp-api.cfapps.eu10.hana.ondemand.com
+
+  - name: sapmvp-web
+    memory: 512M
+    disk_quota: 256M
+    instances: 2
+    buildpacks:
+      - staticfile_buildpack
+    command: null
+    health-check-type: http
+    health-check-http-endpoint: /
+    env:
+      NODE_ENV: production
+      FORCE_HTTPS: true
+    routes:
+      - route: sapmvp.cfapps.eu10.hana.ondemand.com
+
+---
+# Service Configurations
+
+# PostgreSQL Database Service
+# cf create-service postgresql-db v9.6-m sapmvp-postgres -c '{"engine":"postgres","version":"16"}'
+
+# Redis Cache Service
+# cf create-service redis-cache cache-small sapmvp-redis
+
+# XSUAA Authentication Service
+# cf create-service xsuaa application sapmvp-xsuaa -c xs-security.json
+
+# SAP Destination Service
+# cf create-service destination lite sapmvp-destination

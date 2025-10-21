@@ -1,0 +1,97 @@
+{
+  "xsappname": "sap-mvp-framework",
+  "tenant-mode": "shared",
+  "description": "SAP MVP Framework XSUAA Security Configuration",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.TenantAdmin",
+      "description": "Full tenant administration access - manage tenants, users, and all modules"
+    },
+    {
+      "name": "$XSAPPNAME.ModuleManager",
+      "description": "Module activation, configuration, and execution"
+    },
+    {
+      "name": "$XSAPPNAME.Auditor",
+      "description": "Read-only access to audit logs, reports, and compliance data"
+    },
+    {
+      "name": "$XSAPPNAME.User",
+      "description": "Standard user access to assigned modules"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "TenantAdministrator",
+      "description": "Tenant Administrator - Full access to all features",
+      "scope-references": [
+        "$XSAPPNAME.TenantAdmin",
+        "$XSAPPNAME.ModuleManager",
+        "$XSAPPNAME.Auditor",
+        "$XSAPPNAME.User"
+      ]
+    },
+    {
+      "name": "ModuleManager",
+      "description": "Module Manager - Configure and manage modules",
+      "scope-references": [
+        "$XSAPPNAME.ModuleManager",
+        "$XSAPPNAME.User"
+      ]
+    },
+    {
+      "name": "Auditor",
+      "description": "Auditor - Read-only access for compliance",
+      "scope-references": [
+        "$XSAPPNAME.Auditor",
+        "$XSAPPNAME.User"
+      ]
+    },
+    {
+      "name": "User",
+      "description": "Basic User - Standard module access",
+      "scope-references": [
+        "$XSAPPNAME.User"
+      ]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "SAP_MVP_Framework_Admin",
+      "description": "Administrator role collection for SAP MVP Framework",
+      "role-template-references": [
+        "$XSAPPNAME.TenantAdministrator"
+      ]
+    },
+    {
+      "name": "SAP_MVP_Framework_Module_Manager",
+      "description": "Module manager role collection - configure modules",
+      "role-template-references": [
+        "$XSAPPNAME.ModuleManager"
+      ]
+    },
+    {
+      "name": "SAP_MVP_Framework_Auditor",
+      "description": "Auditor role collection - read-only compliance access",
+      "role-template-references": [
+        "$XSAPPNAME.Auditor"
+      ]
+    }
+  ],
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "https://*.cfapps.eu10.hana.ondemand.com/**",
+      "https://*.cfapps.us10.hana.ondemand.com/**",
+      "https://*.cfapps.ap10.hana.ondemand.com/**",
+      "http://localhost:3000/**",
+      "http://localhost:3001/**"
+    ],
+    "grant-types": [
+      "authorization_code",
+      "client_credentials",
+      "refresh_token"
+    ],
+    "token-validity": 3600,
+    "refresh-token-validity": 86400
+  }
+}

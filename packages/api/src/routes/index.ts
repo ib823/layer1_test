@@ -32,8 +32,12 @@ const router: Router = Router();
 // PUBLIC ENDPOINTS (no auth, no rate limiting)
 // ==============================================================================
 
-// Health check
-router.get('/health', (req, res) => {
+// Health check routes with comprehensive monitoring
+import healthRoutes from './health';
+router.use('/health', healthRoutes);
+
+// Healthz alias for Cloud Foundry / K8s compatibility
+router.get('/healthz', (req, res) => {
   ApiResponseUtil.success(res, {
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -49,6 +53,10 @@ router.get('/version', (req, res) => {
     framework: 'SAP MVP Framework',
   });
 });
+
+// Authentication routes (login, refresh are public; me, logout require auth)
+import authRoutes from './auth';
+router.use('/auth', authRoutes);
 
 // ==============================================================================
 // GLOBAL MIDDLEWARE: Apply to all routes below
@@ -119,6 +127,12 @@ router.use('/modules/sod/analyze', sodAnalysisLimiter);
  */
 router.use('/modules/sod', sodRoutes);
 
+import glAnomalyRoutes from './modules/gl-anomaly';
+router.use('/modules/gl-anomaly', glAnomalyRoutes);
+
+import vendorQualityRoutes from './modules/vendor-quality';
+router.use('/modules/vendor-quality', vendorQualityRoutes);
+
 /**
  * Compliance Routes
  * Prefix: /api/compliance
@@ -146,5 +160,13 @@ router.use('/dashboard', dashboardRoutes);
  */
 import matchingRoutes from './matching';
 router.use('/matching', matchingRoutes);
+
+/**
+ * Capabilities Routes (BTP Destination connectivity checks)
+ * Prefix: /api/capabilities
+ * Requires: Admin role (configured in App Router xs-app.json)
+ */
+import capabilitiesRoutes from './capabilities';
+router.use('/capabilities', capabilitiesRoutes);
 
 export default router;

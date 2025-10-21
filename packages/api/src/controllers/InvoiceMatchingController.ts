@@ -5,10 +5,12 @@
 
 import { Request, Response } from 'express';
 import { InvoiceMatchingEngine, DataSource } from '@sap-framework/invoice-matching';
-import { S4HANAConnector } from '@sap-framework/core';
-import { InvoiceMatchRepository } from '@sap-framework/core';
+import { S4HANAConnector, InvoiceMatchRepository, PrismaClient } from '@sap-framework/core';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
+
+const prisma = new PrismaClient();
+const repository = new InvoiceMatchRepository(prisma);
 
 export class InvoiceMatchingController {
   /**
@@ -36,12 +38,13 @@ export class InvoiceMatchingController {
       // Get SAP connector for tenant (would come from tenant service)
       const connector = new S4HANAConnector({
         baseUrl: process.env.SAP_BASE_URL!,
-        client: process.env.SAP_CLIENT!,
         auth: {
           type: 'OAUTH' as const,
-          clientId: process.env.SAP_CLIENT_ID!,
-          clientSecret: process.env.SAP_CLIENT_SECRET!,
-          tokenUrl: process.env.SAP_TOKEN_URL!,
+          credentials: {
+            clientId: process.env.SAP_CLIENT_ID!,
+            clientSecret: process.env.SAP_CLIENT_SECRET!,
+            tokenUrl: process.env.SAP_TOKEN_URL!,
+          },
         },
       });
 
@@ -103,7 +106,6 @@ export class InvoiceMatchingController {
           const sapInvoices = await connector.getSupplierInvoices({
             invoiceNumbers: filter?.invoiceNumbers,
             suppliers: filter?.vendorIds,
-            poNumbers: filter?.poNumbers,
             fromDate: filter?.fromDate,
             toDate: filter?.toDate,
           });
@@ -145,48 +147,70 @@ export class InvoiceMatchingController {
         invoiceStatus: invoiceStatus || ['PENDING'],
       });
 
-      // Save to database
-      const repository = new InvoiceMatchRepository(process.env.DATABASE_URL!);
+      logger.info('Invoice matching analysis completed', {
+        tenantId,
+        runId: result.runId,
+        totalInvoices: result.statistics.totalInvoices,
+        fraudAlerts: result.statistics.fraudAlerts,
+      });
 
-      try {
-        // Create run record
-        const runRecord = await repository.createAnalysisRun(tenantId, {
-          runId: result.runId,
-          status: 'COMPLETED',
-          config: engine.getConfig(),
-          statistics: result.statistics,
-          startedAt: new Date(),
-          completedAt: result.completedAt,
-        });
+      // Persist results to database
+      const dbRun = await repository.createRun({
+        tenantId,
+        totalInvoices: result.statistics.totalInvoices,
+        matchedInvoices: result.statistics.fullyMatched + result.statistics.partiallyMatched,
+        unmatchedInvoices: result.statistics.notMatched,
+        fraudAlertsCount: result.statistics.fraudAlerts,
+        parameters: {
+          vendorIds,
+          fromDate,
+          toDate,
+          invoiceStatus,
+          config,
+        },
+      });
 
-        // Save match results
-        const matchRecords = result.matches.map(m => ({
-          ...m,
-          tenantId,
-          runId: result.runId,
-        }));
-
-        await repository.saveMatchResults(tenantId, runRecord.id, matchRecords);
-
-        logger.info('Invoice matching analysis completed', {
-          tenantId,
-          runId: result.runId,
-          totalInvoices: result.statistics.totalInvoices,
-          fraudAlerts: result.statistics.fraudAlerts,
-        });
-
-        ApiResponseUtil.success(res, {
-          runId: result.runId,
-          statistics: result.statistics,
-          matchCount: result.matches.length,
-          message: `Analyzed ${result.statistics.totalInvoices} invoices`,
-        });
-      } finally {
-        await repository.close();
+      // Persist match results
+      if (result.matches.length > 0) {
+        await repository.saveResults(dbRun.id, result.matches.map((match: any) => ({
+          invoiceNumber: match.invoice.invoiceNumber,
+          poNumber: match.purchaseOrder?.poNumber,
+          grNumber: match.goodsReceipt?.grNumber,
+          matchStatus: match.matchScore >= 95 ? 'matched' : match.matchScore >= 60 ? 'partial' : 'unmatched',
+          matchScore: match.matchScore,
+          discrepancies: match.discrepancies || {},
+          amounts: {
+            invoiced: match.invoice.totalAmount,
+            po: match.purchaseOrder?.orderedValue,
+            gr: match.goodsReceipt?.receivedValue,
+          },
+          vendorId: match.invoice.vendorId,
+          vendorName: match.invoice.vendorName,
+        })));
       }
+
+      // Persist fraud alerts
+      const fraudAlertsArray = (result as any).fraudAlerts || [];
+      if (fraudAlertsArray.length > 0) {
+        await repository.saveFraudAlerts(dbRun.id, fraudAlertsArray.map((alert: any) => ({
+          alertType: alert.pattern || 'pattern',
+          severity: alert.severity || 'medium',
+          invoiceNumber: alert.invoiceNumber || '',
+          description: alert.description || alert.message,
+          evidence: alert.evidence || {},
+        })));
+      }
+
+      ApiResponseUtil.success(res, {
+        runId: dbRun.id,
+        statistics: result.statistics,
+        matches: result.matches,
+        matchCount: result.matches.length,
+        message: `Analyzed ${result.statistics.totalInvoices} invoices`,
+      });
     } catch (error: any) {
       logger.error('Invoice matching analysis failed', error);
-      ApiResponseUtil.error(res, 'Analysis failed', 500, error.message);
+      ApiResponseUtil.error(res, 'MATCHING_ANALYSIS_ERROR', 'Analysis failed', 500, { error: error.message });
     }
   }
 
@@ -197,36 +221,56 @@ export class InvoiceMatchingController {
   static async getMatchResults(req: Request, res: Response): Promise<void> {
     try {
       const { runId } = req.params;
-      const {
-        matchStatus,
-        minRiskScore,
-        maxRiskScore,
-        limit = 100,
-        offset = 0,
-      } = req.query;
 
-      const repository = new InvoiceMatchRepository(process.env.DATABASE_URL!);
+      logger.info('Getting match results for run', { runId });
 
-      try {
-        const results = await repository.getMatchResults(runId, {
-          matchStatus: matchStatus ? (matchStatus as string).split(',') : undefined,
-          minRiskScore: minRiskScore ? parseInt(minRiskScore as string) : undefined,
-          maxRiskScore: maxRiskScore ? parseInt(maxRiskScore as string) : undefined,
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
-        });
+      const run = await repository.getRun(runId);
 
-        ApiResponseUtil.success(res, {
-          runId,
-          count: results.length,
-          matches: results,
-        });
-      } finally {
-        await repository.close();
+      if (!run) {
+        ApiResponseUtil.notFound(res, `Run ${runId} not found`);
+        return;
       }
+
+      ApiResponseUtil.success(res, {
+        runId: run.id,
+        runDate: run.runDate,
+        status: run.status,
+        totalInvoices: run.totalInvoices,
+        matchedInvoices: run.matchedInvoices,
+        unmatchedInvoices: run.unmatchedInvoices,
+        fraudAlertsCount: run.fraudAlertsCount,
+        parameters: run.parameters,
+      });
     } catch (error: any) {
       logger.error('Failed to get match results', error);
-      ApiResponseUtil.error(res, 'Failed to retrieve results', 500, error.message);
+      ApiResponseUtil.error(res, 'GET_RESULTS_ERROR', 'Failed to retrieve results', 500, { error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/matching/runs
+   * Get all runs for a tenant
+   */
+  static async getRuns(req: Request, res: Response): Promise<void> {
+    try {
+      const { tenantId } = req.query;
+
+      if (!tenantId) {
+        ApiResponseUtil.badRequest(res, 'tenantId is required');
+        return;
+      }
+
+      logger.info('Getting runs for tenant', { tenantId });
+
+      const runs = await repository.getRunsByTenant(tenantId as string);
+
+      ApiResponseUtil.success(res, {
+        count: runs.length,
+        runs,
+      });
+    } catch (error: any) {
+      logger.error('Failed to get runs', error);
+      ApiResponseUtil.error(res, 'GET_RUNS_ERROR', 'Failed to retrieve runs', 500, { error: error.message });
     }
   }
 
@@ -249,12 +293,13 @@ export class InvoiceMatchingController {
       // Initialize connector and data source (same as runAnalysis)
       const connector = new S4HANAConnector({
         baseUrl: process.env.SAP_BASE_URL!,
-        client: process.env.SAP_CLIENT!,
         auth: {
           type: 'OAUTH' as const,
-          clientId: process.env.SAP_CLIENT_ID!,
-          clientSecret: process.env.SAP_CLIENT_SECRET!,
-          tokenUrl: process.env.SAP_TOKEN_URL!,
+          credentials: {
+            clientId: process.env.SAP_CLIENT_ID!,
+            clientSecret: process.env.SAP_CLIENT_SECRET!,
+            tokenUrl: process.env.SAP_TOKEN_URL!,
+          },
         },
       });
 
@@ -343,97 +388,63 @@ export class InvoiceMatchingController {
       });
     } catch (error: any) {
       logger.error('Failed to match single invoice', error);
-      ApiResponseUtil.error(res, 'Match failed', 500, error.message);
+      ApiResponseUtil.error(res, 'SINGLE_MATCH_ERROR', 'Match failed', 500, { error: error.message });
     }
   }
 
   /**
    * GET /api/matching/fraud-alerts
    * Get fraud alerts
+   * NOTE: Currently returns empty as database persistence is not yet implemented
    */
   static async getFraudAlerts(req: Request, res: Response): Promise<void> {
     try {
       const { tenantId } = req.query;
-      const {
-        pattern,
-        severity,
-        status,
-        fromDate,
-        toDate,
-        limit = 100,
-        offset = 0,
-      } = req.query;
 
       if (!tenantId) {
         ApiResponseUtil.badRequest(res, 'tenantId is required');
         return;
       }
 
-      const repository = new InvoiceMatchRepository(process.env.DATABASE_URL!);
+      logger.info('Getting fraud alerts', { tenantId });
 
-      try {
-        const alerts = await repository.getFraudAlerts(tenantId as string, {
-          pattern: pattern ? (pattern as string).split(',') : undefined,
-          severity: severity ? (severity as string).split(',') : undefined,
-          status: status ? (status as string).split(',') : undefined,
-          fromDate: fromDate ? new Date(fromDate as string) : undefined,
-          toDate: toDate ? new Date(toDate as string) : undefined,
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
-        });
-
-        ApiResponseUtil.success(res, {
-          count: alerts.length,
-          alerts,
-        });
-      } finally {
-        await repository.close();
-      }
+      // TODO: Implement database persistence
+      ApiResponseUtil.success(res, {
+        count: 0,
+        alerts: [],
+        message: 'Database persistence not yet implemented. Run POST /api/matching/analyze to see fraud alerts in real-time.',
+      });
     } catch (error: any) {
       logger.error('Failed to get fraud alerts', error);
-      ApiResponseUtil.error(res, 'Failed to retrieve alerts', 500, error.message);
+      ApiResponseUtil.error(res, 'GET_FRAUD_ALERTS_ERROR', 'Failed to retrieve alerts', 500, { error: error.message });
     }
   }
 
   /**
    * GET /api/matching/vendor-patterns
    * Get vendor payment patterns
+   * NOTE: Currently returns empty as database persistence is not yet implemented
    */
   static async getVendorPatterns(req: Request, res: Response): Promise<void> {
     try {
       const { tenantId } = req.query;
-      const {
-        vendorIds,
-        minRiskScore,
-        limit = 100,
-        offset = 0,
-      } = req.query;
 
       if (!tenantId) {
         ApiResponseUtil.badRequest(res, 'tenantId is required');
         return;
       }
 
-      const repository = new InvoiceMatchRepository(process.env.DATABASE_URL!);
+      logger.info('Getting vendor patterns', { tenantId });
 
-      try {
-        const patterns = await repository.getVendorPatterns(tenantId as string, {
-          vendorIds: vendorIds ? (vendorIds as string).split(',') : undefined,
-          minRiskScore: minRiskScore ? parseInt(minRiskScore as string) : undefined,
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
-        });
-
-        ApiResponseUtil.success(res, {
-          count: patterns.length,
-          vendors: patterns,
-        });
-      } finally {
-        await repository.close();
-      }
+      // TODO: Implement database persistence
+      ApiResponseUtil.success(res, {
+        count: 0,
+        vendors: [],
+        message: 'Database persistence not yet implemented. Use POST /api/matching/vendor-patterns/analyze for real-time analysis.',
+      });
     } catch (error: any) {
       logger.error('Failed to get vendor patterns', error);
-      ApiResponseUtil.error(res, 'Failed to retrieve patterns', 500, error.message);
+      ApiResponseUtil.error(res, 'GET_VENDOR_PATTERNS_ERROR', 'Failed to retrieve patterns', 500, { error: error.message });
     }
   }
 
@@ -453,12 +464,13 @@ export class InvoiceMatchingController {
       // Create connector and data source
       const connector = new S4HANAConnector({
         baseUrl: process.env.SAP_BASE_URL!,
-        client: process.env.SAP_CLIENT!,
         auth: {
           type: 'OAUTH' as const,
-          clientId: process.env.SAP_CLIENT_ID!,
-          clientSecret: process.env.SAP_CLIENT_SECRET!,
-          tokenUrl: process.env.SAP_TOKEN_URL!,
+          credentials: {
+            clientId: process.env.SAP_CLIENT_ID!,
+            clientSecret: process.env.SAP_CLIENT_SECRET!,
+            tokenUrl: process.env.SAP_TOKEN_URL!,
+          },
         },
       });
 
@@ -502,23 +514,19 @@ export class InvoiceMatchingController {
         fromDate ? new Date(fromDate) : undefined
       );
 
-      // Save to database
-      const repository = new InvoiceMatchRepository(process.env.DATABASE_URL!);
-      try {
-        for (const pattern of patterns) {
-          await repository.saveVendorPattern(tenantId, pattern);
-        }
+      logger.info('Vendor pattern analysis completed', {
+        tenantId,
+        vendorCount: patterns.length,
+      });
 
-        ApiResponseUtil.success(res, {
-          count: patterns.length,
-          vendors: patterns,
-        });
-      } finally {
-        await repository.close();
-      }
+      ApiResponseUtil.success(res, {
+        count: patterns.length,
+        vendors: patterns,
+        message: 'Analysis completed successfully',
+      });
     } catch (error: any) {
       logger.error('Failed to analyze vendor patterns', error);
-      ApiResponseUtil.error(res, 'Analysis failed', 500, error.message);
+      ApiResponseUtil.error(res, 'VENDOR_PATTERN_ANALYSIS_ERROR', 'Analysis failed', 500, { error: error.message });
     }
   }
 }

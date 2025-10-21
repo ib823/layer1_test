@@ -10,6 +10,9 @@
   "references": [
     { "path": "../core" },
     { "path": "../services" },
-    { "path": "../modules/user-access-review" }
+    { "path": "../modules/user-access-review" },
+    { "path": "../modules/invoice-matching" },
+    { "path": "../modules/gl-anomaly-detection" },
+    { "path": "../modules/vendor-data-quality" }
   ]
 }

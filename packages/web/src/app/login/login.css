@@ -1,0 +1,151 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.login-content {
+  display: flex;
+  max-width: 1200px;
+  width: 100%;
+  min-height: 600px;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.login-branding {
+  flex: 1;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  padding: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-branding::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: drift 20s linear infinite;
+}
+
+@keyframes drift {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+.branding-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 400px;
+}
+
+.branding-icon {
+  font-size: 80px;
+  color: white;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.login-form-wrapper {
+  flex: 1;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: white;
+}
+
+.login-card {
+  max-width: 450px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.login-card .ant-card-body {
+  padding: 40px;
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+  .login-branding {
+    display: none;
+  }
+
+  .login-form-wrapper {
+    padding: 40px 20px;
+  }
+
+  .login-card .ant-card-body {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-container {
+    padding: 10px;
+  }
+
+  .login-content {
+    border-radius: 8px;
+  }
+
+  .login-form-wrapper {
+    padding: 20px 10px;
+  }
+
+  .login-card .ant-card-body {
+    padding: 20px;
+  }
+}
+
+/* Form styling */
+.login-form .ant-input-affix-wrapper,
+.login-form .ant-input-password {
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+.login-form .ant-btn-primary {
+  height: 48px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.login-form .ant-btn {
+  border-radius: 8px;
+}
+
+/* Animation for card entrance */
+.login-card {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

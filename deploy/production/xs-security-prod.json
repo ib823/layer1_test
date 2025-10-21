@@ -1,0 +1,145 @@
+{
+  "xsappname": "sapmvp-prod",
+  "tenant-mode": "dedicated",
+  "description": "SAP MVP Framework - Production Security Configuration",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.SystemAdmin",
+      "description": "System Administrator - Full access to all modules and tenant management"
+    },
+    {
+      "name": "$XSAPPNAME.ComplianceManager",
+      "description": "Compliance Manager - Access to compliance modules and audit trails"
+    },
+    {
+      "name": "$XSAPPNAME.FinanceManager",
+      "description": "Finance Manager - Access to invoice matching and GL anomaly detection"
+    },
+    {
+      "name": "$XSAPPNAME.Auditor",
+      "description": "Auditor - Read-only access to all modules for audit purposes"
+    },
+    {
+      "name": "$XSAPPNAME.VendorManager",
+      "description": "Vendor Manager - Access to vendor data quality and vendor management"
+    }
+  ],
+  "attributes": [
+    {
+      "name": "TenantId",
+      "description": "Tenant identifier for multi-tenancy",
+      "valueType": "string"
+    },
+    {
+      "name": "CompanyCode",
+      "description": "SAP company code access control",
+      "valueType": "string"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "SystemAdministrator",
+      "description": "System Administrator Role",
+      "scope-references": [
+        "$XSAPPNAME.SystemAdmin"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "ComplianceManagerRole",
+      "description": "Compliance Manager Role",
+      "scope-references": [
+        "$XSAPPNAME.ComplianceManager"
+      ],
+      "attribute-references": [
+        "TenantId",
+        "CompanyCode"
+      ]
+    },
+    {
+      "name": "FinanceManagerRole",
+      "description": "Finance Manager Role",
+      "scope-references": [
+        "$XSAPPNAME.FinanceManager"
+      ],
+      "attribute-references": [
+        "TenantId",
+        "CompanyCode"
+      ]
+    },
+    {
+      "name": "AuditorRole",
+      "description": "Auditor Role - Read Only",
+      "scope-references": [
+        "$XSAPPNAME.Auditor"
+      ],
+      "attribute-references": [
+        "TenantId"
+      ]
+    },
+    {
+      "name": "VendorManagerRole",
+      "description": "Vendor Manager Role",
+      "scope-references": [
+        "$XSAPPNAME.VendorManager"
+      ],
+      "attribute-references": [
+        "TenantId",
+        "CompanyCode"
+      ]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "SAP_MVP_SystemAdmin",
+      "description": "System Administrator Collection",
+      "role-template-references": [
+        "$XSAPPNAME.SystemAdministrator"
+      ]
+    },
+    {
+      "name": "SAP_MVP_ComplianceManager",
+      "description": "Compliance Manager Collection",
+      "role-template-references": [
+        "$XSAPPNAME.ComplianceManagerRole"
+      ]
+    },
+    {
+      "name": "SAP_MVP_FinanceManager",
+      "description": "Finance Manager Collection",
+      "role-template-references": [
+        "$XSAPPNAME.FinanceManagerRole"
+      ]
+    },
+    {
+      "name": "SAP_MVP_Auditor",
+      "description": "Auditor Collection",
+      "role-template-references": [
+        "$XSAPPNAME.AuditorRole"
+      ]
+    },
+    {
+      "name": "SAP_MVP_VendorManager",
+      "description": "Vendor Manager Collection",
+      "role-template-references": [
+        "$XSAPPNAME.VendorManagerRole"
+      ]
+    }
+  ],
+  "oauth2-configuration": {
+    "token-validity": 3600,
+    "refresh-token-validity": 86400,
+    "redirect-uris": [
+      "https://sapmvp.cfapps.eu10.hana.ondemand.com/**"
+    ],
+    "system-attributes": [
+      "TenantId",
+      "CompanyCode"
+    ],
+    "grant-types": [
+      "authorization_code",
+      "refresh_token",
+      "client_credentials"
+    ]
+  }
+}

@@ -9,29 +9,44 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Always log full error details server-side
   logger.error('Error occurred:', {
     error: error.message,
     stack: error.stack,
     path: req.path,
     method: req.method,
+    type: error.name,
   });
 
   if (error instanceof FrameworkError) {
+    // Sanitize error details in production
+    const sanitizedMessage = isProduction && error.statusCode >= 500
+      ? 'An error occurred while processing your request'
+      : error.message;
+
+    const sanitizedDetails = isProduction
+      ? undefined
+      : error.sapError;
+
     ApiResponseUtil.error(
       res,
       error.type,
-      error.message,
+      sanitizedMessage,
       error.statusCode || 500,
-      error.sapError
+      sanitizedDetails
     );
     return;
   }
 
   if (error.name === 'ValidationError') {
+    // Validation errors are safe to expose (user input issues)
     ApiResponseUtil.badRequest(res, error.message);
     return;
   }
 
+  // Generic server errors - sanitize in production
   ApiResponseUtil.serverError(res, error);
 }
 

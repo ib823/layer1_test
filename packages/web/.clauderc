@@ -1,0 +1,312 @@
+{
+  "name": "ABeam DataBridge Web Application",
+  "version": "1.0.0",
+  "framework": "Next.js 15.5 + TypeScript + Tailwind CSS 4.0",
+  
+  "rules": {
+    "design_system": {
+      "priority": "CRITICAL",
+      "status": "STRICTLY_ENFORCED",
+      "documentation": "packages/web/DESIGN_SYSTEM.md",
+      "tokens_file": "packages/web/src/styles/tokens.css",
+      
+      "mandatory_rules": [
+        "ALWAYS read DESIGN_SYSTEM.md before creating or modifying UI components",
+        "ALWAYS use design tokens from tokens.css - NEVER hardcode colors",
+        "ALWAYS use Inter font family - NEVER use Segoe UI",
+        "ALWAYS check if component exists in src/components/ui/ before creating new",
+        "ALWAYS use existing UI components from @/components/ui/",
+        "ALWAYS maintain mobile-first responsive design (320px → 1920px)",
+        "ALWAYS ensure WCAG 2.1 AAA accessibility compliance",
+        "ALWAYS use TypeScript strict mode with proper types",
+        "ALWAYS follow Next.js 15 App Router conventions",
+        "ALWAYS test at breakpoints: 320px, 768px, 1024px, 1440px"
+      ],
+      
+      "forbidden_patterns": [
+        "NEVER use inline styles with hardcoded colors: style={{ color: '#0C2B87' }}",
+        "NEVER use hex colors in Tailwind: className='text-[#0C2B87]'",
+        "NEVER use Segoe UI font",
+        "NEVER create custom button implementations - use Button component",
+        "NEVER create custom badge implementations - use Badge component",
+        "NEVER create custom colors outside design tokens",
+        "NEVER use <button> directly - use <Button> component",
+        "NEVER use <table> directly - use <Table> component",
+        "NEVER skip accessibility attributes (aria-label, role, etc.)",
+        "NEVER forget keyboard navigation support"
+      ]
+    },
+    
+    "component_library": {
+      "location": "packages/web/src/components/ui/",
+      "index": "packages/web/src/components/ui/index.ts",
+      
+      "available_components": {
+        "Button": {
+          "import": "import { Button } from '@/components/ui/Button';",
+          "variants": ["primary", "secondary", "danger", "ghost"],
+          "sizes": ["sm", "md", "lg"],
+          "usage": "<Button variant='primary' size='md' onClick={handleClick}>Text</Button>"
+        },
+        "Badge": {
+          "import": "import { Badge } from '@/components/ui/Badge';",
+          "variants": ["critical", "high", "medium", "low", "success", "info"],
+          "usage": "<Badge variant='critical'>CRITICAL</Badge>",
+          "note": "Use for risk levels consistently"
+        },
+        "Card": {
+          "import": "import { Card, CardTitle } from '@/components/ui/Card';",
+          "usage": "<Card><CardTitle>Title</CardTitle><p>Content</p></Card>"
+        },
+        "Table": {
+          "import": "import { Table } from '@/components/ui/Table';",
+          "usage": "<Table data={data} columns={columns} sortable paginated />",
+          "note": "Integrated with TanStack Table"
+        },
+        "Input": {
+          "import": "import { Input } from '@/components/ui/Input';",
+          "usage": "<Input label='Email' placeholder='you@company.com' required />"
+        },
+        "Select": {
+          "import": "import { Select } from '@/components/ui/Select';",
+          "usage": "<Select options={options} value={value} onChange={handleChange} />"
+        },
+        "Modal": {
+          "import": "import { Modal } from '@/components/ui/Modal';",
+          "usage": "<Modal isOpen={isOpen} onClose={handleClose}><p>Content</p></Modal>"
+        },
+        "Toast": {
+          "import": "import { useToast } from '@/components/ui/ToastContainer';",
+          "usage": "const { toast } = useToast(); toast.success('Message');"
+        },
+        "Tabs": {
+          "import": "import { Tabs } from '@/components/ui/Tabs';",
+          "usage": "<Tabs tabs={tabsArray} />"
+        },
+        "Timeline": {
+          "import": "import { Timeline } from '@/components/ui/Timeline';",
+          "usage": "<Timeline items={timelineItems} />"
+        },
+        "Sidebar": {
+          "import": "import { Sidebar } from '@/components/ui/Sidebar';",
+          "usage": "<Sidebar items={navItems} />"
+        },
+        "Breadcrumbs": {
+          "import": "import { Breadcrumbs } from '@/components/ui/Breadcrumbs';",
+          "usage": "<Breadcrumbs items={[{ label: 'Home', href: '/' }]} />"
+        },
+        "ConnectionBanner": {
+          "import": "import { ConnectionBanner } from '@/components/ui/ConnectionBanner';",
+          "usage": "<ConnectionBanner variant='disconnected' message='No connection' />"
+        }
+      }
+    },
+    
+    "color_usage": {
+      "brand_colors": {
+        "primary": {
+          "css_var": "var(--brand-primary)",
+          "tailwind": "bg-brand-primary text-brand-primary",
+          "usage": "Primary buttons, links, active states"
+        },
+        "secondary": {
+          "css_var": "var(--brand-secondary)",
+          "tailwind": "bg-brand-secondary text-brand-secondary",
+          "usage": "Hover states, darker variants"
+        },
+        "accent": {
+          "css_var": "var(--brand-accent)",
+          "tailwind": "bg-brand-accent text-brand-accent",
+          "usage": "Highlights, interactive elements"
+        }
+      },
+      
+      "risk_levels": {
+        "critical": {
+          "css_var": "var(--risk-critical)",
+          "tailwind": "bg-risk-critical/10 text-risk-critical",
+          "badge": "<Badge variant='critical'>CRITICAL</Badge>"
+        },
+        "high": {
+          "css_var": "var(--risk-high)",
+          "tailwind": "bg-risk-high/10 text-risk-high",
+          "badge": "<Badge variant='high'>HIGH</Badge>"
+        },
+        "medium": {
+          "css_var": "var(--risk-medium)",
+          "tailwind": "bg-risk-medium/10 text-risk-medium",
+          "badge": "<Badge variant='medium'>MEDIUM</Badge>"
+        },
+        "low": {
+          "css_var": "var(--risk-low)",
+          "tailwind": "bg-risk-low/10 text-risk-low",
+          "badge": "<Badge variant='low'>LOW</Badge>"
+        }
+      }
+    },
+    
+    "file_structure": {
+      "components": {
+        "location": "packages/web/src/components/ui/",
+        "purpose": "Reusable UI components following design system",
+        "pattern": "PascalCase.tsx",
+        "export": "Export from index.ts"
+      },
+      "pages": {
+        "location": "packages/web/src/app/**/page.tsx",
+        "purpose": "Next.js App Router pages",
+        "pattern": "page.tsx in feature folders"
+      },
+      "hooks": {
+        "location": "packages/web/src/hooks/",
+        "purpose": "Custom React hooks",
+        "pattern": "use*.ts"
+      },
+      "lib": {
+        "location": "packages/web/src/lib/",
+        "purpose": "Utilities, helpers, API clients",
+        "files": ["api.ts", "store.ts", "utils.ts"]
+      },
+      "styles": {
+        "location": "packages/web/src/styles/",
+        "files": ["tokens.css", "design-system.css", "globals.css"],
+        "note": "Import tokens.css first"
+      },
+      "types": {
+        "location": "packages/web/src/types/",
+        "purpose": "TypeScript type definitions",
+        "pattern": "*.ts"
+      }
+    },
+    
+    "workflow": {
+      "before_creating_component": [
+        "1. Read DESIGN_SYSTEM.md to understand design patterns",
+        "2. Check if component exists in src/components/ui/",
+        "3. Review similar existing components for patterns",
+        "4. If component exists, use it instead of creating new",
+        "5. If creating new, follow shadcn/ui component patterns",
+        "6. Use design tokens exclusively (no hardcoded values)",
+        "7. Add proper TypeScript types",
+        "8. Include accessibility attributes (aria-label, role, etc.)",
+        "9. Test at all breakpoints (mobile, tablet, desktop)",
+        "10. Export from src/components/ui/index.ts"
+      ],
+      
+      "before_styling": [
+        "1. Check tokens.css for available design tokens",
+        "2. Use CSS variables: var(--brand-primary)",
+        "3. Use Tailwind classes: bg-brand-primary",
+        "4. NEVER use hardcoded hex colors",
+        "5. NEVER use inline styles for colors",
+        "6. Follow spacing scale (--space-*)",
+        "7. Use consistent border radius (--radius-*)",
+        "8. Apply proper shadows (--shadow-*)"
+      ],
+      
+      "before_committing": [
+        "1. Run npm run lint:design",
+        "2. Verify no hardcoded colors",
+        "3. Check mobile responsiveness",
+        "4. Test keyboard navigation",
+        "5. Validate accessibility (WCAG AAA)",
+        "6. Review component reusability"
+      ]
+    },
+    
+    "responsive_design": {
+      "mobile_first": true,
+      "breakpoints": {
+        "mobile": "320px - 767px (base styles)",
+        "tablet": "768px - 1023px",
+        "desktop": "1024px - 1439px",
+        "wide": "1440px+"
+      },
+      "touch_targets": {
+        "minimum": "44x44px",
+        "recommended": "48x48px"
+      },
+      "testing": [
+        "iPhone SE (375px)",
+        "iPhone 12/13 (390px)",
+        "iPad Mini (768px)",
+        "iPad Pro (1024px)",
+        "Desktop (1440px)"
+      ]
+    },
+    
+    "accessibility": {
+      "standard": "WCAG 2.1 AAA",
+      "requirements": [
+        "Contrast ratio 7:1 for text",
+        "Contrast ratio 3:1 for UI components",
+        "Keyboard navigation for all interactive elements",
+        "Screen reader support with proper ARIA labels",
+        "Focus indicators visible",
+        "Skip links for main content",
+        "Form labels properly associated",
+        "Error messages announced",
+        "Touch targets minimum 44x44px"
+      ]
+    },
+    
+    "state_management": {
+      "global": "Zustand (packages/web/src/lib/store.ts)",
+      "server": "React Query (@tanstack/react-query)",
+      "forms": "React Hook Form + Zod validation",
+      "local": "useState, useReducer"
+    }
+  },
+  
+  "commands": {
+    "check_design": {
+      "description": "Check if code follows design system",
+      "command": "npm run lint:design"
+    },
+    "list_components": {
+      "description": "List all available UI components",
+      "location": "packages/web/src/components/ui/index.ts"
+    },
+    "create_component": {
+      "description": "Create new component following design system",
+      "steps": [
+        "Read DESIGN_SYSTEM.md",
+        "Check existing components",
+        "Use design tokens",
+        "Add TypeScript types",
+        "Include accessibility",
+        "Test responsiveness",
+        "Export from index.ts"
+      ]
+    },
+    "review_tokens": {
+      "description": "Review available design tokens",
+      "location": "packages/web/src/styles/tokens.css"
+    }
+  },
+  
+  "validation": {
+    "pre_commit": [
+      "npm run lint:design",
+      "npm run test",
+      "Check for hardcoded colors",
+      "Verify component reusability",
+      "Test mobile responsiveness"
+    ],
+    "ci_cd": [
+      "npm run build",
+      "npm run lint:design",
+      "npm run test",
+      "Visual regression tests",
+      "Accessibility audit"
+    ]
+  },
+  
+  "resources": {
+    "design_system": "packages/web/DESIGN_SYSTEM.md",
+    "component_library": "packages/web/COMPONENT_LIBRARY.md",
+    "tokens": "packages/web/src/styles/tokens.css",
+    "tailwind_config": "packages/web/tailwind.config.ts",
+    "examples": "packages/web/src/app/**/page.tsx"
+  }
+}

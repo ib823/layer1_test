@@ -1,200 +1,99 @@
 /**
- * Feature Flag System
+ * Feature Flags Utility
  *
- * Enables runtime feature toggling with:
- * - Environment variable configuration (server-side)
- * - localStorage override (client-side development)
- * - Default values for safety
- *
- * Usage:
- * ```typescript
- * import { isFeatureEnabled, FeatureFlag } from '@/lib/featureFlags';
- *
- * if (isFeatureEnabled(FeatureFlag.LIVE_DASHBOARD_DATA)) {
- *   // Use real API calls
- * } else {
- *   // Use mock data
- * }
- * ```
+ * Provides runtime feature toggles for incomplete/experimental features.
+ * Supports environment variables and localStorage overrides for development.
  */
 
 export enum FeatureFlag {
-  // Data Source Flags
-  LIVE_DASHBOARD_DATA = 'live_dashboard_data',
-  LIVE_VIOLATIONS_DATA = 'live_violations_data',
-  LIVE_ANALYTICS_DATA = 'live_analytics_data',
-  LIVE_USER_DATA = 'live_user_data',
-  LIVE_TIMELINE_DATA = 'live_timeline_data',
+  // Backend Integration
+  USE_REAL_API = 'USE_REAL_API',
 
-  // Module Flags
-  INVOICE_MATCHING_MODULE = 'invoice_matching_module',
-  GL_ANOMALY_MODULE = 'gl_anomaly_module',
-  VENDOR_DQ_MODULE = 'vendor_dq_module',
+  // Module Features
+  SOD_ANALYSIS = 'SOD_ANALYSIS',
+  INVOICE_MATCHING = 'INVOICE_MATCHING',
+  GL_ANOMALY_DETECTION = 'GL_ANOMALY_DETECTION',
+  VENDOR_DATA_QUALITY = 'VENDOR_DATA_QUALITY',
 
-  // Integration Flags
-  SAP_S4HANA_CONNECTED = 'sap_s4hana_connected',
-  SAP_ARIBA_CONNECTED = 'sap_ariba_connected',
-  SAP_SUCCESSFACTORS_CONNECTED = 'sap_successfactors_connected',
+  // UI Features
+  DARK_MODE = 'DARK_MODE',
+  ADVANCED_FILTERS = 'ADVANCED_FILTERS',
+  EXPORT_PDF = 'EXPORT_PDF',
+  REAL_TIME_UPDATES = 'REAL_TIME_UPDATES',
 
-  // Feature Flags
-  ADVANCED_ANALYTICS = 'advanced_analytics',
-  WORKFLOW_ENGINE = 'workflow_engine',
-  EXPORT_TO_EXCEL = 'export_to_excel',
-  EXPORT_TO_PDF = 'export_to_pdf',
+  // Experimental
+  AI_INSIGHTS = 'AI_INSIGHTS',
+  PREDICTIVE_ANALYTICS = 'PREDICTIVE_ANALYTICS',
 }
 
 /**
- * Default flag states
- * true = enabled by default
- * false = disabled by default (safer for incomplete features)
+ * Default feature flag configuration
+ * These defaults can be overridden via environment variables or localStorage
  */
 const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
-  // Data sources - disabled by default until APIs are wired
-  [FeatureFlag.LIVE_DASHBOARD_DATA]: false,
-  [FeatureFlag.LIVE_VIOLATIONS_DATA]: false,
-  [FeatureFlag.LIVE_ANALYTICS_DATA]: false,
-  [FeatureFlag.LIVE_USER_DATA]: false,
-  [FeatureFlag.LIVE_TIMELINE_DATA]: false,
+  // Backend Integration - disabled by default (use mock data)
+  [FeatureFlag.USE_REAL_API]: false,
 
-  // Modules - disabled until fully implemented
-  [FeatureFlag.INVOICE_MATCHING_MODULE]: false,
-  [FeatureFlag.GL_ANOMALY_MODULE]: false,
-  [FeatureFlag.VENDOR_DQ_MODULE]: false,
+  // Modules - enable what's ready
+  [FeatureFlag.SOD_ANALYSIS]: true,
+  [FeatureFlag.INVOICE_MATCHING]: true,
+  [FeatureFlag.GL_ANOMALY_DETECTION]: true,
+  [FeatureFlag.VENDOR_DATA_QUALITY]: true,
 
-  // Integrations - disabled until connected
-  [FeatureFlag.SAP_S4HANA_CONNECTED]: false,
-  [FeatureFlag.SAP_ARIBA_CONNECTED]: false,
-  [FeatureFlag.SAP_SUCCESSFACTORS_CONNECTED]: false,
+  // UI Features
+  [FeatureFlag.DARK_MODE]: true,
+  [FeatureFlag.ADVANCED_FILTERS]: false,
+  [FeatureFlag.EXPORT_PDF]: false,
+  [FeatureFlag.REAL_TIME_UPDATES]: false,
 
-  // Features - disabled until complete
-  [FeatureFlag.ADVANCED_ANALYTICS]: false,
-  [FeatureFlag.WORKFLOW_ENGINE]: false,
-  [FeatureFlag.EXPORT_TO_EXCEL]: false,
-  [FeatureFlag.EXPORT_TO_PDF]: false,
+  // Experimental
+  [FeatureFlag.AI_INSIGHTS]: false,
+  [FeatureFlag.PREDICTIVE_ANALYTICS]: false,
 };
 
 /**
- * Environment variable prefix for feature flags
- * e.g., NEXT_PUBLIC_FF_LIVE_DASHBOARD_DATA=true
- */
-const ENV_PREFIX = 'NEXT_PUBLIC_FF_';
-
-/**
- * localStorage key prefix for feature flag overrides
- * e.g., ff_live_dashboard_data=true
- */
-const STORAGE_PREFIX = 'ff_';
-
-/**
- * Check if a feature flag is enabled
+ * Check if a feature is enabled
  *
  * Priority order:
- * 1. localStorage override (development only)
- * 2. Environment variable (NEXT_PUBLIC_FF_*)
- * 3. Default value
- *
- * @param flag - Feature flag to check
- * @returns true if enabled, false otherwise
+ * 1. localStorage override (for development)
+ * 2. Environment variable
+ * 3. Default configuration
  */
 export function isFeatureEnabled(flag: FeatureFlag): boolean {
-  // 1. Check localStorage override (client-side only)
-  if (typeof window !== 'undefined') {
-    const storageKey = `${STORAGE_PREFIX}${flag}`;
-    const storageValue = localStorage.getItem(storageKey);
-
-    if (storageValue !== null) {
-      return storageValue === 'true';
+  // Check localStorage override first (highest priority)
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const key = `featureFlag:${flag}`;
+      const value = localStorage.getItem(key);
+      if (value === 'true') return true;
+      if (value === 'false') return false;
+    } catch {
+      // Ignore localStorage errors
     }
   }
 
-  // 2. Check environment variable (both server and client via NEXT_PUBLIC_)
-  const envKey = `${ENV_PREFIX}${flag.toUpperCase()}`;
-  const envValue = process.env[envKey];
-
-  if (envValue !== undefined) {
-    return envValue === 'true';
+  // Check environment variable
+  if (typeof process !== 'undefined' && process.env) {
+    const envVar = `NEXT_PUBLIC_FEATURE_${flag}`;
+    const value = process.env[envVar];
+    if (value === 'true' || value === '1') return true;
+    if (value === 'false' || value === '0') return false;
   }
 
-  // 3. Fall back to default
-  return DEFAULT_FLAGS[flag];
+  // Fall back to default
+  return DEFAULT_FLAGS[flag] ?? false;
 }
 
 /**
- * Enable a feature flag in localStorage (development only)
- *
- * @param flag - Feature flag to enable
+ * Helper: Check if using mock data (real API disabled)
  */
-export function enableFeature(flag: FeatureFlag): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(`${STORAGE_PREFIX}${flag}`, 'true');
-  }
+export function isUsingMockData(): boolean {
+  return !isFeatureEnabled(FeatureFlag.USE_REAL_API);
 }
 
 /**
- * Disable a feature flag in localStorage (development only)
- *
- * @param flag - Feature flag to disable
+ * Helper: Check if API is connected
  */
-export function disableFeature(flag: FeatureFlag): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(`${STORAGE_PREFIX}${flag}`, 'false');
-  }
-}
-
-/**
- * Remove a feature flag override from localStorage
- *
- * @param flag - Feature flag to reset
- */
-export function resetFeature(flag: FeatureFlag): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(`${STORAGE_PREFIX}${flag}`);
-  }
-}
-
-/**
- * Get all feature flags and their current states
- *
- * @returns Object with all flags and their enabled/disabled state
- */
-export function getAllFeatureFlags(): Record<FeatureFlag, boolean> {
-  const flags: Record<FeatureFlag, boolean> = {} as Record<FeatureFlag, boolean>;
-
-  for (const flag of Object.values(FeatureFlag)) {
-    flags[flag as FeatureFlag] = isFeatureEnabled(flag as FeatureFlag);
-  }
-
-  return flags;
-}
-
-/**
- * Debug helper: Log all feature flags to console
- *
- * Usage: Add to browser console or component for debugging
- */
-export function debugFeatureFlags(): void {
-  console.group('🚩 Feature Flags');
-
-  const flags = getAllFeatureFlags();
-
-  for (const [flag, enabled] of Object.entries(flags)) {
-    console.log(`${enabled ? '✅' : '❌'} ${flag}`);
-  }
-
-  console.groupEnd();
-}
-
-/**
- * Developer tools for feature flag management
- * Access via window.featureFlags in browser console
- */
-if (typeof window !== 'undefined') {
-  (window as any).featureFlags = {
-    enable: enableFeature,
-    disable: disableFeature,
-    reset: resetFeature,
-    isEnabled: isFeatureEnabled,
-    getAll: getAllFeatureFlags,
-    debug: debugFeatureFlags,
-  };
+export function isAPIConnected(): boolean {
+  return isFeatureEnabled(FeatureFlag.USE_REAL_API);
 }

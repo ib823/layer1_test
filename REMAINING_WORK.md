@@ -765,7 +765,7 @@ packages/api/tests/api/
 Contact: ikmal.baharudin@gmail.com
 
 **Want to contribute?**
-See: `CLAUDE.md` for development guidelines
+See: `ABIDBN.md` for development guidelines
 
 **Reporting blockers?**
 Create issue with:

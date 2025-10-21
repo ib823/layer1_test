@@ -1,0 +1,169 @@
+{
+  "xsappname": "sapframework",
+  "tenant-mode": "dedicated",
+  "description": "SAP MVP Framework - GRC Platform",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Admin",
+      "description": "Administrator - Full access to all functions"
+    },
+    {
+      "name": "$XSAPPNAME.User",
+      "description": "User - Access to read and analyze data"
+    },
+    {
+      "name": "$XSAPPNAME.Auditor",
+      "description": "Auditor - Read-only access to compliance data"
+    },
+    {
+      "name": "$XSAPPNAME.TenantAdmin",
+      "description": "Tenant Administrator - Manage tenant configuration"
+    },
+    {
+      "name": "$XSAPPNAME.SoDAnalyst",
+      "description": "SoD Analyst - Execute and view SoD analyses"
+    },
+    {
+      "name": "$XSAPPNAME.ComplianceOfficer",
+      "description": "Compliance Officer - View and export compliance reports"
+    }
+  ],
+  "attributes": [
+    {
+      "name": "tenantId",
+      "description": "Tenant identifier for multi-tenancy",
+      "valueType": "string"
+    },
+    {
+      "name": "department",
+      "description": "User department for data filtering",
+      "valueType": "string"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Admin",
+      "description": "Administrator Role",
+      "scope-references": [
+        "$XSAPPNAME.Admin",
+        "$XSAPPNAME.User",
+        "$XSAPPNAME.Auditor",
+        "$XSAPPNAME.TenantAdmin",
+        "$XSAPPNAME.SoDAnalyst",
+        "$XSAPPNAME.ComplianceOfficer"
+      ],
+      "attribute-references": [
+        "tenantId",
+        "department"
+      ]
+    },
+    {
+      "name": "TenantAdmin",
+      "description": "Tenant Administrator Role",
+      "scope-references": [
+        "$XSAPPNAME.TenantAdmin",
+        "$XSAPPNAME.User",
+        "$XSAPPNAME.SoDAnalyst"
+      ],
+      "attribute-references": [
+        "tenantId",
+        "department"
+      ]
+    },
+    {
+      "name": "SoDAnalyst",
+      "description": "SoD Analyst Role",
+      "scope-references": [
+        "$XSAPPNAME.SoDAnalyst",
+        "$XSAPPNAME.User"
+      ],
+      "attribute-references": [
+        "tenantId"
+      ]
+    },
+    {
+      "name": "ComplianceOfficer",
+      "description": "Compliance Officer Role",
+      "scope-references": [
+        "$XSAPPNAME.ComplianceOfficer",
+        "$XSAPPNAME.Auditor",
+        "$XSAPPNAME.User"
+      ],
+      "attribute-references": [
+        "tenantId"
+      ]
+    },
+    {
+      "name": "Auditor",
+      "description": "Auditor Role (Read-Only)",
+      "scope-references": [
+        "$XSAPPNAME.Auditor",
+        "$XSAPPNAME.User"
+      ],
+      "attribute-references": [
+        "tenantId"
+      ]
+    },
+    {
+      "name": "User",
+      "description": "Basic User Role",
+      "scope-references": [
+        "$XSAPPNAME.User"
+      ],
+      "attribute-references": [
+        "tenantId"
+      ]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "SAP_Framework_Admin",
+      "description": "SAP Framework Administrator",
+      "role-template-references": [
+        "$XSAPPNAME.Admin"
+      ]
+    },
+    {
+      "name": "SAP_Framework_TenantAdmin",
+      "description": "SAP Framework Tenant Administrator",
+      "role-template-references": [
+        "$XSAPPNAME.TenantAdmin"
+      ]
+    },
+    {
+      "name": "SAP_Framework_SoDAnalyst",
+      "description": "SAP Framework SoD Analyst",
+      "role-template-references": [
+        "$XSAPPNAME.SoDAnalyst"
+      ]
+    },
+    {
+      "name": "SAP_Framework_ComplianceOfficer",
+      "description": "SAP Framework Compliance Officer",
+      "role-template-references": [
+        "$XSAPPNAME.ComplianceOfficer"
+      ]
+    },
+    {
+      "name": "SAP_Framework_Auditor",
+      "description": "SAP Framework Auditor",
+      "role-template-references": [
+        "$XSAPPNAME.Auditor"
+      ]
+    },
+    {
+      "name": "SAP_Framework_User",
+      "description": "SAP Framework User",
+      "role-template-references": [
+        "$XSAPPNAME.User"
+      ]
+    }
+  ],
+  "oauth2-configuration": {
+    "token-validity": 3600,
+    "refresh-token-validity": 86400,
+    "redirect-uris": [
+      "https://sapframework.cfapps.sap.hana.ondemand.com/**"
+    ]
+  }
+}

@@ -10,8 +10,6 @@ import {
   SupplierInvoice,
   ThreeWayMatchResult,
   Discrepancy,
-  ToleranceViolation,
-  ToleranceRule,
   MatchingConfig,
 } from './types';
 import { validateAllTolerances, STANDARD_TOLERANCE_RULES } from './rules/toleranceRules';

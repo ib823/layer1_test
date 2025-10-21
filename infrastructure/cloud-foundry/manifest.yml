@@ -1,17 +1,45 @@
 ---
 applications:
+  # Backend API Service (deploy first)
   - name: sapframework-api
-    memory: 1G
-    instances: 2
+    memory: 512M
+    instances: 1
     buildpacks:
       - nodejs_buildpack
     path: ../../packages/api
     command: node dist/server.js
     services:
-      - sapframework-db
       - sapframework-xsuaa
+      - sapframework-destination
     env:
       NODE_ENV: production
       PORT: 8080
-    routes:
-      - route: sapframework-api.cfapps.sap.hana.ondemand.com
+      AUTH_ENABLED: "false"
+    random-route: true
+
+  # App Router - Public entry point for the application
+  - name: sapframework-approuter
+    memory: 128M
+    instances: 1
+    buildpacks:
+      - nodejs_buildpack
+    path: ../../app-router
+    services:
+      - sapframework-xsuaa
+      - sapframework-destination
+    env:
+      NODE_ENV: production
+      destinations: >
+        [
+          {
+            "name": "sapframework-api",
+            "url": "~{api-url}",
+            "forwardAuthToken": true
+          }
+        ]
+    random-route: true
+    requires:
+      - name: sapframework-api-url
+        parameters:
+          config:
+            api-url: https://((sapframework-api.url))

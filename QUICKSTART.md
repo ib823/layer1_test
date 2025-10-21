@@ -263,7 +263,7 @@ docker exec sap-framework-redis redis-cli ping
 ## Next Steps 🚀
 
 1. **Explore API Docs**: http://localhost:3000/api-docs
-2. **Read Full Documentation**: `CLAUDE.md`
+2. **Read Full Documentation**: `ABIDBN.md`
 3. **Check Implementation Status**: `COMPLETION_SUMMARY.md`
 4. **Review Project Roadmap**: `IMPLEMENTATION_ROADMAP.md`
 5. **Run Tests**: `pnpm test`
@@ -362,7 +362,7 @@ Project Root
 
 ## Support
 
-- **Documentation**: `CLAUDE.md` (detailed instructions)
+- **Documentation**: `ABIDBN.md` (detailed instructions)
 - **Completion Summary**: `COMPLETION_SUMMARY.md`
 - **Contact**: ikmal.baharudin@gmail.com
 - **Repository**: https://github.com/ib823/layer1_test
@@ -372,4 +372,4 @@ Project Root
 **Last Updated**: October 4, 2025
 **Production Ready**: 85%
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+🤖 Generated with abidbn

@@ -1,0 +1,46 @@
+{
+  "name": "@sap-framework/sod-control",
+  "version": "1.0.0",
+  "description": "Segregation of Duties (SoD) audit and control module for SAP Framework",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
+  },
+  "keywords": [
+    "sap",
+    "sod",
+    "segregation-of-duties",
+    "access-control",
+    "compliance",
+    "sox",
+    "iso27001",
+    "nist"
+  ],
+  "author": "SAP Framework Team",
+  "license": "MIT",
+  "dependencies": {
+    "@sap-framework/core": "workspace:*",
+    "axios": "^1.7.7",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.19.18",
+    "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/parser": "^8.21.0",
+    "eslint": "^9.20.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.6",
+    "typescript": "^5.7.3",
+    "uuid": "^9.0.1"
+  }
+}

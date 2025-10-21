@@ -1,0 +1,14 @@
+{
+  "name": "sapframework-approuter",
+  "version": "1.0.0",
+  "description": "SAP Framework App Router",
+  "engines": {
+    "node": ">=18 <23"
+  },
+  "scripts": {
+    "start": "node node_modules/@sap/approuter/approuter.js"
+  },
+  "dependencies": {
+    "@sap/approuter": "^16.7.1"
+  }
+}

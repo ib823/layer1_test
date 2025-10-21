@@ -1,4 +1,10 @@
-import { EncryptionService } from '../../src/utils/encryption';
+import {
+  EncryptionService,
+  initializeEncryption,
+  getEncryptionService,
+  encryptCredentials,
+  decryptCredentials
+} from '../../src/utils/encryption';
 
 describe('EncryptionService', () => {
   let encryptionService: EncryptionService;
@@ -142,6 +148,51 @@ describe('EncryptionService', () => {
       expect(() => {
         encryptionService.decrypt('');
       }).toThrow();
+    });
+  });
+
+  describe('singleton pattern', () => {
+    it('should initialize global encryption service', () => {
+      const service = initializeEncryption('test-singleton-key');
+      expect(service).toBeInstanceOf(EncryptionService);
+    });
+
+    it('should return existing instance when already initialized', () => {
+      const service1 = initializeEncryption('test-key-1');
+      const service2 = initializeEncryption('test-key-2');
+      expect(service1).toBe(service2);
+    });
+
+    it('should get initialized encryption service', () => {
+      initializeEncryption('test-get-key');
+      const service = getEncryptionService();
+      expect(service).toBeInstanceOf(EncryptionService);
+    });
+  });
+
+  describe('utility functions', () => {
+    beforeAll(() => {
+      initializeEncryption('test-utility-key');
+    });
+
+    it('should encrypt credentials using utility function', () => {
+      const credentials = {
+        username: 'testuser',
+        password: 'testpass'
+      };
+      const encrypted = encryptCredentials(credentials);
+      expect(encrypted).toBeDefined();
+      expect(typeof encrypted).toBe('string');
+    });
+
+    it('should decrypt credentials using utility function', () => {
+      const credentials = {
+        apiKey: 'test-api-key',
+        secret: 'test-secret'
+      };
+      const encrypted = encryptCredentials(credentials);
+      const decrypted = decryptCredentials(encrypted);
+      expect(decrypted).toEqual(credentials);
     });
   });
 });

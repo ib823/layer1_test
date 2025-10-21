@@ -10,7 +10,7 @@
  * - Velocity anomalies
  */
 
-import { GLLineItem, GLAnomaly, VelocityAnomaly, UserBehaviorPattern } from '../types';
+import { GLLineItem, GLAnomaly, VelocityAnomaly } from '../types';
 
 /**
  * Check if posting was made after hours
@@ -193,7 +193,7 @@ export function detectSameDayReversals(
   }
 
   // Look for reversals
-  for (const [key, items] of byAccountAndDate) {
+  for (const [_key, items] of byAccountAndDate) {
     const reversals = items.filter(item => item.isReversal || item.reversalDocumentNumber);
 
     if (reversals.length === 0) continue;

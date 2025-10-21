@@ -54,6 +54,28 @@ router.post('/analyze', InvoiceMatchingController.runAnalysis);
 
 /**
  * @swagger
+ * /api/matching/runs:
+ *   get:
+ *     summary: Get all runs for a tenant
+ *     tags: [Invoice Matching]
+ *     parameters:
+ *       - in: query
+ *         name: tenantId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Runs retrieved successfully
+ *       400:
+ *         description: Invalid request
+ *       500:
+ *         description: Server error
+ */
+router.get('/runs', InvoiceMatchingController.getRuns);
+
+/**
+ * @swagger
  * /api/matching/runs/{runId}:
  *   get:
  *     summary: Get match results for a specific run

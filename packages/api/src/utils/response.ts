@@ -47,12 +47,20 @@ export class ApiResponseUtil {
     statusCode: number = 500,
     details?: any
   ): Response {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // Sanitize error details in production (5xx errors only)
+    let sanitizedDetails = details;
+    if (isProduction && statusCode >= 500) {
+      sanitizedDetails = undefined; // Never expose internal error details in production
+    }
+
     const response: ApiResponse = {
       success: false,
       error: {
         code,
         message,
-        details,
+        details: sanitizedDetails,
       },
       meta: {
         timestamp: new Date().toISOString(),
@@ -81,12 +89,16 @@ export class ApiResponseUtil {
 
   static serverError(res: Response, error: Error): Response {
     console.error('Server error:', error);
+
+    // In production, never expose error details
+    const isProduction = process.env.NODE_ENV === 'production';
+
     return this.error(
       res,
       'INTERNAL_SERVER_ERROR',
-      'An internal server error occurred',
+      isProduction ? 'An internal server error occurred' : error.message,
       500,
-      process.env.NODE_ENV === 'development' ? error.stack : undefined
+      isProduction ? undefined : { stack: error.stack, name: error.name }
     );
   }
 }

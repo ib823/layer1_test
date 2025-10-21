@@ -455,4 +455,100 @@ export class S4HANAConnector extends BaseSAPConnector {
   resetCircuitBreaker() {
     this.circuitBreaker.reset();
   }
+
+  /**
+   * Get GL line items
+   * Uses API_JOURNALENTRY_SRV OData service
+   */
+  async getGLLineItems(options: {
+    glAccounts?: string[];
+    fiscalYear: string;
+    fiscalPeriod?: string;
+    fromDate?: Date;
+    toDate?: Date;
+    companyCode?: string;
+  }): Promise<any[]> {
+    const query = new ODataQueryBuilder();
+
+    const filters: string[] = [];
+
+    // Fiscal year is required
+    filters.push(`FiscalYear eq ${escapeODataString(options.fiscalYear)}`);
+
+    if (options.glAccounts && options.glAccounts.length > 0) {
+      const glFilter = options.glAccounts
+        .map((gl) => `GLAccount eq ${escapeODataString(gl)}`)
+        .join(' or ');
+      filters.push(`(${glFilter})`);
+    }
+
+    if (options.fiscalPeriod) {
+      filters.push(`FiscalPeriod eq ${escapeODataString(options.fiscalPeriod)}`);
+    }
+
+    if (options.fromDate) {
+      const dateStr = options.fromDate.toISOString().split('T')[0];
+      filters.push(`PostingDate ge datetime'${dateStr}'`);
+    }
+
+    if (options.toDate) {
+      const dateStr = options.toDate.toISOString().split('T')[0];
+      filters.push(`PostingDate le datetime'${dateStr}'`);
+    }
+
+    if (options.companyCode) {
+      filters.push(`CompanyCode eq ${escapeODataString(options.companyCode)}`);
+    }
+
+    filters.forEach((f) => query.filter(f));
+
+    // API_JOURNALENTRY_SRV - A_JournalEntryItem entity
+    return await this.executeQuery<any>(
+      '/sap/opu/odata/sap/API_JOURNALENTRY_SRV/A_JournalEntryItem',
+      query
+    );
+  }
+
+  /**
+   * Get business partners (vendors)
+   * Uses API_BUSINESS_PARTNER OData service
+   */
+  async getBusinessPartners(options: {
+    businessPartnerIds?: string[];
+    countries?: string[];
+    isBlocked?: boolean;
+  }): Promise<any[]> {
+    const query = new ODataQueryBuilder();
+
+    const filters: string[] = [];
+
+    // Filter for vendors only (BusinessPartnerCategory = '2')
+    filters.push(`BusinessPartnerCategory eq '2'`);
+
+    if (options.businessPartnerIds && options.businessPartnerIds.length > 0) {
+      const bpFilter = options.businessPartnerIds
+        .map((bp) => `BusinessPartner eq ${escapeODataString(bp)}`)
+        .join(' or ');
+      filters.push(`(${bpFilter})`);
+    }
+
+    if (options.countries && options.countries.length > 0) {
+      const countryFilter = options.countries
+        .map((country) => `Country eq ${escapeODataString(country)}`)
+        .join(' or ');
+      filters.push(`(${countryFilter})`);
+    }
+
+    if (options.isBlocked !== undefined) {
+      filters.push(`IsBlocked eq ${options.isBlocked ? 'true' : 'false'}`);
+    }
+
+    filters.forEach((f) => query.filter(f));
+
+    // API_BUSINESS_PARTNER - A_BusinessPartner entity
+    return await this.executeQuery<any>(
+      '/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner',
+      query
+    );
+  }
 }

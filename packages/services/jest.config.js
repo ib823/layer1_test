@@ -8,5 +8,6 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/**/*.test.ts',
     '!src/**/*.spec.ts'
-  ]
+  ],
+  maxConcurrency: 14
 };

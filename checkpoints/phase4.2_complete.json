@@ -1,0 +1,74 @@
+{
+  "phase": "4.2",
+  "name": "Health Check and Monitoring Endpoints",
+  "status": "complete",
+  "timestamp": "2025-10-13T03:20:00Z",
+  "successCriteria": {
+    "healthEndpointsCreated": true,
+    "databaseHealthCheck": true,
+    "kubernetesProbes": true,
+    "moduleAvailabilityCheck": true
+  },
+  "details": {
+    "filesCreated": [
+      "packages/api/src/routes/health.ts"
+    ],
+    "routesUpdated": [
+      "packages/api/src/routes/index.ts"
+    ],
+    "endpoints": [
+      {
+        "path": "GET /api/health",
+        "description": "Overall system health check",
+        "checks": ["api", "database", "modules"]
+      },
+      {
+        "path": "GET /api/health/database",
+        "description": "Database connectivity and table health",
+        "features": ["connection test", "response time", "table count checks"]
+      },
+      {
+        "path": "GET /api/health/modules",
+        "description": "Module availability check",
+        "modules": ["Invoice Matching", "GL Anomaly Detection", "Vendor Data Quality", "SoD Control"]
+      },
+      {
+        "path": "GET /api/health/ready",
+        "description": "Kubernetes readiness probe",
+        "usage": "Load balancer traffic routing"
+      },
+      {
+        "path": "GET /api/health/live",
+        "description": "Kubernetes liveness probe",
+        "usage": "Container restart detection"
+      },
+      {
+        "path": "GET /api/healthz",
+        "description": "Cloud Foundry / K8s compatibility alias"
+      }
+    ],
+    "features": [
+      "Database connection testing",
+      "Response time measurement",
+      "Table existence verification (4 critical tables)",
+      "Module capability listing",
+      "Degraded state detection",
+      "Kubernetes-compatible probes",
+      "Cloud Foundry compatibility"
+    ]
+  },
+  "verification": {
+    "databaseChecks": [
+      "Tenant",
+      "InvoiceMatchRun",
+      "GLAnomalyRun",
+      "VendorQualityRun"
+    ],
+    "statusCodes": {
+      "healthy": 200,
+      "degraded": 503,
+      "unhealthy": 503
+    },
+    "productionReady": true
+  }
+}

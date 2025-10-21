@@ -1,0 +1,126 @@
+_schema-version: '3.1'
+ID: sapmvp-prod
+version: 1.0.0
+description: SAP MVP Framework - Multi-Target Application Descriptor (Production)
+parameters:
+  enable-parallel-deployments: true
+
+modules:
+  # API Backend Module
+  - name: sapmvp-api
+    type: nodejs
+    path: ../../packages/api
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 1024M
+      disk-quota: 512M
+      instances: 2
+      health-check-type: http
+      health-check-http-endpoint: /api/health/ready
+    build-parameters:
+      builder: npm-ci
+      ignore:
+        - node_modules/
+        - .env
+        - .env.local
+    provides:
+      - name: api-url
+        properties:
+          url: '${default-url}'
+    requires:
+      - name: sapmvp-postgres
+      - name: sapmvp-redis
+      - name: sapmvp-xsuaa
+      - name: sapmvp-destination
+      - name: sapmvp-connectivity
+    properties:
+      NODE_ENV: production
+      AUTH_ENABLED: true
+      LOG_LEVEL: info
+
+  # Web Frontend Module
+  - name: sapmvp-web
+    type: html5
+    path: ../../packages/web
+    parameters:
+      buildpack: staticfile_buildpack
+      memory: 512M
+      disk-quota: 256M
+      instances: 2
+    build-parameters:
+      builder: custom
+      commands:
+        - npm install
+        - npm run build
+      supported-platforms: []
+    requires:
+      - name: api-url
+      - name: sapmvp-xsuaa
+
+  # Database Deployer Module
+  - name: sapmvp-db-deployer
+    type: nodejs
+    path: ../../infrastructure/database
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 256M
+      no-route: true
+      no-start: true
+      tasks:
+        - name: deploy-schema
+          command: npm run migrate:deploy
+    requires:
+      - name: sapmvp-postgres
+
+resources:
+  # PostgreSQL Database Service
+  - name: sapmvp-postgres
+    type: postgresql
+    parameters:
+      service: postgresql-db
+      service-plan: v9.6-m
+      config:
+        engine: postgres
+        version: '16'
+        storage: 20GB
+        backup_enabled: true
+        backup_retention_days: 30
+
+  # Redis Cache Service
+  - name: sapmvp-redis
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: redis-cache
+      service-plan: cache-medium
+      config:
+        maxmemory-policy: allkeys-lru
+        timeout: 300
+
+  # XSUAA Security Service
+  - name: sapmvp-xsuaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security-prod.json
+
+  # SAP Destination Service
+  - name: sapmvp-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: destination
+      service-plan: lite
+
+  # SAP Connectivity Service (for S/4HANA access)
+  - name: sapmvp-connectivity
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: connectivity
+      service-plan: lite
+
+  # Application Logging Service
+  - name: sapmvp-logging
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: application-logs
+      service-plan: standard

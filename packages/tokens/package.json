@@ -1,0 +1,27 @@
+{
+  "name": "@sap-framework/tokens",
+  "version": "1.0.0",
+  "description": "Design tokens for ABeam DataBridge GRC Platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc && cp src/tokens.css dist/tokens.css",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./tokens.css": "./dist/tokens.css"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

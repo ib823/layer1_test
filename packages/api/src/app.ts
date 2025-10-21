@@ -8,7 +8,6 @@ import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { auditLog } from './middleware/auditLog';
 import { enforceDataResidency } from './middleware/dataResidency';
-import { apiLimiter } from './middleware/rateLimiting';
 import { metricsMiddleware } from './middleware/metrics';
 import { config } from './config';
 import logger from './utils/logger';
@@ -30,8 +29,34 @@ export function createApp(): Application {
     throw error;
   }
 
-  // Security middleware
-  app.use(helmet());
+  // Security middleware with comprehensive headers
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline needed for Swagger UI
+          styleSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline needed for Swagger UI
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+        },
+      },
+      crossOriginEmbedderPolicy: false, // Allow embedding resources
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true,
+      },
+      noSniff: true, // X-Content-Type-Options: nosniff
+      frameguard: { action: 'deny' }, // X-Frame-Options: DENY
+      xssFilter: true, // X-XSS-Protection: 1; mode=block
+    })
+  );
   app.use(cors(config.cors));
 
   // Request parsing

@@ -1,0 +1,139 @@
+{
+  "welcomeFile": "/index.html",
+  "authenticationMethod": "route",
+  "sessionTimeout": 30,
+  "routes": [
+    {
+      "source": "^/api/health$",
+      "target": "/api/health",
+      "destination": "sapframework-api",
+      "authenticationType": "none",
+      "csrfProtection": false
+    },
+    {
+      "source": "^/api/healthz$",
+      "target": "/api/healthz",
+      "destination": "sapframework-api",
+      "authenticationType": "none",
+      "csrfProtection": false
+    },
+    {
+      "source": "^/api/version$",
+      "target": "/api/version",
+      "destination": "sapframework-api",
+      "authenticationType": "none",
+      "csrfProtection": false
+    },
+    {
+      "source": "^/api/capabilities/(.*)$",
+      "target": "/api/capabilities/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.Admin",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/admin/(.*)$",
+      "target": "/api/admin/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.Admin",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/modules/sod/analyze$",
+      "target": "/api/modules/sod/analyze",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.SoDAnalyst",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/modules/(.*)$",
+      "target": "/api/modules/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.User",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/compliance/(.*)$",
+      "target": "/api/compliance/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.ComplianceOfficer",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/analytics/(.*)$",
+      "target": "/api/analytics/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.User",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/dashboard/(.*)$",
+      "target": "/api/dashboard/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.User",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/monitoring/(.*)$",
+      "target": "/api/monitoring/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.User",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/onboarding/(.*)$",
+      "target": "/api/onboarding/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.TenantAdmin",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/api/(.*)$",
+      "target": "/api/$1",
+      "destination": "sapframework-api",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.User",
+      "csrfProtection": true
+    },
+    {
+      "source": "^/(.*)$",
+      "target": "/$1",
+      "localDir": "resources",
+      "authenticationType": "xsuaa",
+      "scope": "$XSAPPNAME.User"
+    }
+  ],
+  "logout": {
+    "logoutEndpoint": "/do/logout",
+    "logoutPage": "/"
+  },
+  "compression": {
+    "enabled": true,
+    "minSize": 2048
+  },
+  "cors": [
+    {
+      "uriPattern": "^/api/.*",
+      "allowedMethods": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+      "allowedOrigin": [
+        {
+          "host": "*.cfapps.sap.hana.ondemand.com",
+          "protocol": "https"
+        }
+      ],
+      "maxAge": 3600,
+      "allowedHeaders": ["Content-Type", "Authorization", "X-Requested-With"],
+      "exposeHeaders": ["Content-Length", "Content-Type"],
+      "allowedCredentials": true
+    }
+  ]
+}

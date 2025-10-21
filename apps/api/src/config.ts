@@ -14,7 +14,17 @@ export const config = {
   // auth
   featureAuth: bool(process.env.FEATURE_AUTH, true),
   featureAuthDev: bool(process.env.FEATURE_AUTH_DEV, true),
-  jwtSecret: (process.env.JWT_SECRET || 'dev-secret') as string,
+  jwtSecret: (() => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('FATAL: JWT_SECRET must be set in production. Generate with: openssl rand -base64 32');
+      }
+      console.warn('⚠️  JWT_SECRET not set, using insecure default for DEVELOPMENT ONLY');
+      return 'INSECURE-DEV-SECRET-DO-NOT-USE-IN-PRODUCTION';
+    }
+    return secret;
+  })(),
   jwtIssuer: process.env.JWT_ISSUER || 'sapmvp',
   jwtAccessTtl: num(process.env.JWT_ACCESS_TTL, 900),
 

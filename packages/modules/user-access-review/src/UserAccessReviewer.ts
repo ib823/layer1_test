@@ -86,7 +86,7 @@ export class UserAccessReviewer {
     const BATCH_SIZE = 50;
 
     const usersToProcess = ipsUsers.filter(
-      (user) => this.config.analysis.includeInactiveUsers || user.active
+      (user: any) => this.config.analysis.includeInactiveUsers || user.active
     );
 
     for (let i = 0; i < usersToProcess.length; i += BATCH_SIZE) {
@@ -94,7 +94,7 @@ export class UserAccessReviewer {
 
       // Process batch in parallel
       const batchResults = await Promise.all(
-        batch.map(async (ipsUser) => {
+        batch.map(async (ipsUser: any) => {
           // If groups are already included, use them; otherwise fetch
           const groups = ipsUser.groups && ipsUser.groups.length > 0
             ? ipsUser.groups

@@ -2,436 +2,301 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
-
 ## Project Overview
 
-**SAP MVP Framework** - Enterprise-grade multi-tenant GRC (Governance, Risk, Compliance) platform for SAP environments. Built with TypeScript, PostgreSQL, and designed for SAP BTP Cloud Foundry deployment.
-
-**Core Innovation**: Automatic service discovery that scans SAP Gateway catalogs during tenant onboarding, detects available OData services, and activates/deactivates modules based on tenant capabilities.
-
----
+This is a multi-tenant SAP GRC (Governance, Risk, and Compliance) platform with automatic service discovery, built as a monorepo using pnpm workspaces and Turbo. The system connects to various SAP products (S/4HANA, IPS, Ariba, SuccessFactors) and provides compliance modules for invoice matching, anomaly detection, SoD analysis, and more.
 
 ## Architecture
 
-4-layer monorepo using pnpm workspaces + Turbo:
+### 4-Layer Architecture
+- **Layer 1 (Core)**: `packages/core` - SAP connectors, authentication, events, persistence, utilities
+- **Layer 2 (Services)**: `packages/services` - Shared business services (rule engine, analytics)
+- **Layer 3 (Modules)**: `packages/modules/*` - Independent business modules
+- **Layer 4 (API)**: `packages/api` - REST API endpoints
+- **Web UI**: `packages/web` - Next.js 15 frontend with Ant Design
 
-```
-Layer 4: API          → REST endpoints (Express + XSUAA auth)
-Layer 3: Modules      → Business modules (SoD Analysis, etc.)
-Layer 2: Services     → Business logic (Rules engine, analytics)
-Layer 1: Core         → Connectors, persistence, utils
-```
+### Module System
+Each module in `packages/modules/` is an independent package with its own:
+- Business logic engine
+- Data models
+- Tests
+- API controllers (exported to Layer 4)
 
-**Key Packages:**
-- `@sap-framework/core` - SAP connectors, service discovery, database repositories
-- `@sap-framework/services` - Rule engine and business services
-- `@sap-framework/user-access-review` - SoD (Segregation of Duties) analysis
-- `@sap-framework/api` - REST API with XSUAA authentication
+Active modules:
+- `sod-control` - Segregation of Duties analysis
+- `user-access-review` - User access reviews
+- `lhdn-einvoice` - Malaysia MyInvois e-invoicing
+- `invoice-matching` - Invoice/PO/GR matching
+- `gl-anomaly-detection` - GL transaction anomaly detection
+- `vendor-data-quality` - Vendor master data quality
 
----
+## Build System & Commands
 
-## Common Commands
-
-### Development
+### Core Commands
 ```bash
-pnpm install              # Install all dependencies
-pnpm build                # Build all packages (uses Turbo)
-pnpm dev                  # Watch mode for all packages
-pnpm test                 # Run all unit tests
-pnpm test:watch           # Watch mode for tests
-pnpm test:coverage        # Run tests with coverage (70% threshold)
-pnpm test:e2e             # Run E2E tests (requires PostgreSQL)
-pnpm lint                 # Lint all packages
-pnpm lint:fix             # Auto-fix linting issues
-pnpm typecheck            # TypeScript type checking only
+# Build all packages (respects dependency order via Turbo)
+pnpm build
+
+# Development mode with watch (runs all packages concurrently)
+pnpm dev
+
+# Run all tests
+pnpm test
+
+# Run tests excluding web package (faster for backend work)
+pnpm -r --filter="!@sap-framework/web" test
+
+# Type checking
+pnpm typecheck
+
+# Linting
+pnpm lint
+pnpm lint:fix
 ```
 
-### Single Package Testing
+### Database Setup
 ```bash
-cd packages/core && pnpm test                    # Test core package only
-cd packages/core && pnpm test ServiceDiscovery   # Test specific file
-cd packages/api && pnpm test:watch               # Watch mode for API tests
-```
+# Create database
+createdb sapframework
 
-### Database
-```bash
-# Setup local PostgreSQL (Docker)
-docker run -d --name sap-framework-db \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=sapframework \
-  -p 5432:5432 postgres:15
-
-# Apply schema
+# Run schema
 psql sapframework < infrastructure/database/schema.sql
 
-# Check DATABASE_URL is set
+# Generate Prisma client (when schema.prisma changes)
+cd packages/core
+npx prisma generate
+
+# Set DATABASE_URL before running tests
 export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sapframework"
 ```
 
-### Running E2E Tests
+### Running Tests
 ```bash
-# Automated test runner (recommended)
-cd packages/core/tests/e2e && ./run-e2e-tests.sh
+# Run tests in a specific package
+cd packages/api
+pnpm test
 
-# Or directly
-DATABASE_URL="postgresql://localhost/sapframework" pnpm test:e2e
+# Watch mode
+pnpm test:watch
+
+# Coverage
+pnpm test:coverage
+
+# E2E tests (require PostgreSQL running)
+pnpm test:e2e:sod
+pnpm test:e2e:discovery
+pnpm test:e2e:onboarding
 ```
 
----
+### Running the Application
+```bash
+# Start API server (default port 3000)
+cd packages/api
+pnpm dev
+
+# Start frontend (default port 3001)
+cd packages/web
+pnpm dev
+
+# Production build
+pnpm build
+cd packages/api
+pnpm start
+```
 
 ## Key Architectural Patterns
 
-### 1. Multi-Tenant Service Discovery
+### Multi-Tenant Architecture
+- Each tenant has isolated data in PostgreSQL
+- Tenant profiles track available SAP services and capabilities
+- Modules auto-activate based on discovered capabilities
+- Schema: `infrastructure/database/schema.sql` (SQL tables) and `packages/core/prisma/schema.prisma` (Prisma ORM)
 
-**Flow**: Tenant onboards → ServiceDiscovery scans SAP Gateway → Generates TenantProfile → Activates modules based on available services
+### Service Discovery
+- On tenant onboarding, system discovers available OData services from SAP Gateway
+- Generates capability profile indicating which modules can be activated
+- Located in: `packages/core/src/connectors/base/ServiceDiscovery.ts`
 
-**Critical Files:**
-- `packages/core/src/connectors/base/ServiceDiscovery.ts` - Auto-discovers OData services
-- `packages/core/src/connectors/base/BaseSAPConnector.ts` - Abstract SAP connector
-- `packages/core/src/persistence/TenantProfileRepository.ts` - Stores capabilities
+### SAP Connectors
+All connectors extend `BaseSAPConnector` (`packages/core/src/connectors/base/`):
+- **S4HANAConnector**: Complete implementation with retry logic and circuit breaker
+- **IPSConnector**: Identity Provisioning Service
+- **AribaConnector**: Procurement (stub)
+- **SuccessFactorsConnector**: HR data (stub)
 
-**Example Usage:**
-```typescript
-const connector = new S4HANAConnector({ baseUrl, auth });
-const discovery = new ServiceDiscovery(connector);
-const result = await discovery.discoverServices();
-const profile = await discovery.generateTenantProfile('tenant-123');
+### Error Handling
+15+ specialized error types in `packages/core/src/errors/`:
+- All extend `FrameworkError`
+- Includes SAP-specific errors (OData, authentication, connectivity)
+- Used consistently across all layers
 
-// Check capabilities
-if (profile.capabilities.canDoSoD) {
-  await repo.activateModule('tenant-123', 'SoD_Analysis');
-}
-```
+### Authentication
+- XSUAA (SAP BTP) integration in `packages/core/src/auth/`
+- JWT-based authentication for standalone deployments
+- Toggle with `AUTH_ENABLED` environment variable
+- Middleware in `packages/api/src/middleware/auth.ts`
 
-### 2. SAP Product Connectors
+### Encryption & Security
+- Master key encryption for sensitive data (credentials, PII)
+- Initialize at startup: `initializeEncryption(process.env.ENCRYPTION_MASTER_KEY)`
+- PII masking service in `packages/core/src/utils/piiMasking.ts`
+- GDPR compliance with data retention policies
 
-All connectors extend `BaseSAPConnector` which provides:
-- Circuit breaker pattern (fail-fast after 5 errors)
-- Exponential backoff retry (3 attempts)
-- OAuth/Basic auth abstraction
-- OData v2 query building
+### Persistence Layer
+- **SQL schema**: `infrastructure/database/schema.sql` (multi-tenant tables)
+- **Prisma ORM**: `packages/core/prisma/schema.prisma` (module-specific tables)
+- Repositories in `packages/core/src/repositories/` and `packages/core/src/persistence/`
+- SoD violations use dedicated repository: `SoDViolationRepository`
 
-**Implemented:**
-- `S4HANAConnector` - Complete OData v2 support (users, roles, authorizations)
-- `IPSConnector` - Identity Provisioning (SCIM protocol)
+## Important Implementation Details
 
-**Stubs (future):**
-- `AribaConnector` - Procurement data
-- `SuccessFactorsConnector` - HR data
+### Module Development Pattern
+When adding a new module:
+1. Create package in `packages/modules/your-module/`
+2. Create engine class with `analyze()` or `execute()` method
+3. Export engine from module's `index.ts`
+4. Create controller in `packages/api/src/controllers/YourModuleController.ts`
+5. Create route in `packages/api/src/routes/modules/your-module.ts`
+6. Import and mount in `packages/api/src/routes/index.ts`
+7. Add Prisma models in `packages/core/prisma/schema.prisma`
+8. Run `npx prisma generate` to update client
 
-**Adding New Connectors:**
-1. Create `packages/core/src/connectors/yourproduct/`
-2. Extend `BaseSAPConnector`
-3. Implement `abstract initialize()` and `abstract fetchODataMetadata()`
-4. Export from `packages/core/src/connectors/index.ts`
+### Adding API Endpoints
+1. Create controller in `packages/api/src/controllers/`
+2. Create route file in `packages/api/src/routes/`
+3. Import route in `packages/api/src/routes/index.ts`
+4. Use middleware: `authenticate`, `rateLimiter`, `validateTenant`
 
-### 3. Error Handling Hierarchy
+### Turbo Pipeline
+- Build dependencies run first (`dependsOn: ["^build"]`)
+- Tests depend on build completion
+- Dev mode is persistent (won't exit)
+- Configuration in `turbo.json`
 
-All errors extend `FrameworkError` from `packages/core/src/errors/FrameworkError.ts`:
-
-```typescript
-- AuthenticationError
-- ConfigurationError
-- ConnectorError
-  - CircuitBreakerOpenError
-  - ODataQueryError
-- ValidationError
-- DatabaseError
-```
-
-**Usage:**
-```typescript
-import { AuthenticationError, ErrorCode } from '@sap-framework/core';
-throw new AuthenticationError('Token expired', ErrorCode.AUTH_TOKEN_INVALID);
-```
-
-### 4. Database Multi-Tenancy
-
-PostgreSQL schema with tenant isolation via foreign keys:
-
-**Core Tables:**
-- `tenants` - Tenant metadata
-- `tenant_capability_profiles` - Discovered SAP services per tenant
-- `tenant_module_activations` - Which modules are active per tenant
-- `sod_violations` - SoD analysis results (tenant-scoped)
-- `sod_analysis_runs` - Analysis execution metadata
-
-**Repository Pattern:**
-- `TenantProfileRepository` - CRUD for tenant profiles with database-level pagination
-- `SoDViolationRepository` - Batch insert optimizations and query filters
-
-**Performance Optimizations:**
-- Database uses composite indexes (see migration 003) for common query patterns
-- Repositories use Promise.all() for parallel queries (3x faster)
-- Batch inserts instead of loops (100x faster for N violations)
-- Response caching middleware with configurable TTL
-
-### 5. Event-Driven Architecture
-
-`EventBus` (packages/core/src/events/EventBus.ts) enables decoupled communication:
-
-```typescript
-import { EventBus, EventType } from '@sap-framework/core';
-
-// Emit events
-EventBus.emit(EventType.TENANT_ONBOARDED, { tenantId: 'acme-123' });
-EventBus.emit(EventType.DISCOVERY_COMPLETED, { services: [...] });
-
-// Subscribe
-EventBus.on(EventType.SOD_VIOLATION_DETECTED, async (data) => {
-  await notifySecurityTeam(data);
-});
-```
-
-### 6. Security Implementation
-
-**Authentication**: XSUAA JWT validation (SAP BTP standard)
-- Middleware: `packages/api/src/middleware/auth.ts`
-- Validates JWT signature, expiration, tenant claims
-- **Note**: Currently commented out (line 37 in routes/index.ts) - enable for production
-
-**Encryption**: AES-256-GCM for credentials at rest
-- Utility: `packages/core/src/utils/encryption.ts`
-- Auto-encrypts credentials in `TenantProfileRepository`
-- Keys stored in BTP credential store (never in code)
-
-**Data Protection**:
-- PII masking: `packages/core/src/utils/piiMasking.ts`
-- GDPR service: `packages/core/src/services/GDPRService.ts`
-- Retention: `packages/core/src/services/DataRetentionService.ts`
-
----
-
-## Testing Strategy
-
-### Unit Tests
-- **Location**: `packages/{package}/tests/unit/`
-- **Coverage Target**: 70% minimum (configured in jest.config.js)
-- **Mocking**: Use Jest mocks for SAP connectors, database
-
-### Integration Tests
-- **Location**: `packages/core/tests/integration/`
-- **Status**: Some currently skipped (require real SAP connection)
-- **Future**: Mock SAP OData server for CI/CD
-
-### E2E Tests
-- **Location**: `packages/core/tests/e2e/test-sod-e2e.ts`
-- **Coverage**: Full SoD workflow (create run → store violations → query → export CSV)
-- **Database**: Requires PostgreSQL with schema
-- **Cleanup**: Automatic (deletes test-tenant-e2e-* data)
-
-**Run E2E**: See `docs/E2E_TESTING_GUIDE.md` for detailed instructions
-
----
-
-## Important Implementation Notes
-
-### Circuit Breaker Pattern
-All SAP connectors use circuit breaker (packages/core/src/utils/circuitBreaker.ts):
-- Opens after 5 consecutive failures
-- Stays open for 60 seconds
-- Half-open state allows 1 test request
-
-**Implication**: When testing connectors, consecutive failures will trigger circuit breaker. Reset by waiting 60s or restarting.
-
-### Retry Strategy
-Exponential backoff with jitter (packages/core/src/utils/retry.ts):
-- Default: 3 attempts, 1s base delay
-- Jitter prevents thundering herd
-
-### OData Query Building
-Helper functions in `packages/core/src/utils/odata.ts`:
-```typescript
-buildODataQuery('Users', {
-  $select: ['UserId', 'UserName'],
-  $filter: "Department eq 'Finance'",
-  $top: 100
-});
-// Returns: Users?$select=UserId,UserName&$filter=Department eq 'Finance'&$top=100
-```
-
-### Database Connection Pooling
-Repositories accept `DATABASE_URL` and create `pg.Pool` internally:
-```typescript
-const repo = new TenantProfileRepository(process.env.DATABASE_URL!);
-await repo.createTenant('tenant-123', 'ACME Corp');
-// Pool automatically manages connections
-```
-
----
+### Test Configuration
+- Jest is configured with 70% coverage threshold
+- E2E tests use actual database connections
+- Integration tests may use testcontainers
+- Config: `jest.config.js` in each package
 
 ## Environment Variables
 
-Required for local development:
+Critical variables (see `.env.example`):
+- `DATABASE_URL` - PostgreSQL connection string
+- `ENCRYPTION_MASTER_KEY` - AES-256-GCM key (generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`)
+- `AUTH_ENABLED` - Toggle authentication (true/false)
+- `JWT_SECRET` or XSUAA credentials
+- `PORT` - API server port (default: 3000)
+- `CORS_ORIGIN` - Frontend origin (default: http://localhost:3001)
+- `REDIS_URL` - Optional for distributed rate limiting
+- `SAP_BASE_URL`, `SAP_CLIENT`, `SAP_CLIENT_ID`, `SAP_CLIENT_SECRET` - SAP connection
 
-```bash
-# Database
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sapframework
+## Common Gotchas
 
-# SAP S/4HANA (for testing connectors)
-SAP_BASE_URL=https://your-sap-system.com
-SAP_CLIENT=100
-SAP_AUTH_TYPE=OAUTH  # or BASIC
-SAP_CLIENT_ID=your_client_id
-SAP_CLIENT_SECRET=your_client_secret
+### Workspace Dependencies
+- Use `workspace:*` for internal dependencies in package.json
+- Changes in `packages/core` require rebuild for dependent packages
+- Run `pnpm build` from root after core changes
 
-# SAP IPS (Identity Provisioning)
-IPS_BASE_URL=https://your-ips-instance.accounts.ondemand.com
-IPS_CLIENT_ID=your_ips_client
-IPS_CLIENT_SECRET=your_ips_secret
+### Prisma Client Location
+- Generated client is in `packages/core/src/generated/prisma/`
+- Import as: `import { PrismaClient } from '@sap-framework/core'`
+- Must run `npx prisma generate` after schema changes
 
-# Encryption (production)
-ENCRYPTION_KEY=base64-encoded-32-byte-key  # Stored in BTP credential store
-```
+### Docker/PostgreSQL
+- Tests require PostgreSQL running
+- Docker Compose available in `infrastructure/`
+- Default credentials: postgres/postgres
+- Database name: sapframework
 
----
+### TypeScript Builds
+- Each package builds independently
+- Output in `dist/` folder
+- Type declarations (`.d.ts`) generated automatically
+- Clean builds: `pnpm clean` then `pnpm build`
 
-## Deployment
-
-### SAP BTP Cloud Foundry
-1. Build: `pnpm build`
-2. Deploy: `cf push -f infrastructure/cloud-foundry/manifest.yml`
-3. Bind services: PostgreSQL, XSUAA, Destination, Credential Store
-
-**See**: `docs/BTP_DEPLOYMENT.md` for full deployment guide
-
-### CI/CD
-GitHub Actions workflows in `.github/workflows/`:
-- `ci-cd.yml` - Build, test, deploy pipeline
-- `security.yml` - Security scanning (Snyk)
-
-**E2E tests run only on main branch** (requires PostgreSQL service in CI)
-
----
-
-## Production Readiness Status
-
-**Current**: 70% complete - core architecture solid, production components in progress
-
-**Recent Additions** (see IMPLEMENTATION_ROADMAP.md):
-- ✅ AES-256-GCM encryption service
-- ✅ SoD violation database storage
-- ✅ E2E test suite with automated runner
-- ✅ CI/CD pipeline setup
-- ✅ Security implementation (auth, encryption, PII masking)
-- ✅ Comprehensive performance optimizations (database, API, frontend)
-- ✅ Response caching middleware with TTL support
-- ✅ Database composite indexes for 10-100x query performance
-
-**Remaining Work**:
-- Enable XSUAA authentication (uncomment line 37 in packages/api/src/routes/index.ts)
-- Increase test coverage to 80%+
-- Add rate limiting with Redis
-- Complete Swagger API documentation
-- Build React dashboard frontend
-
-**Timeline**: 8-12 weeks to production (see IMPLEMENTATION_ROADMAP.md for detailed plan)
-
----
-
-## Module Activation Logic
-
-**Key Concept**: Modules auto-activate/deactivate based on tenant's available SAP services.
-
-**Example - SoD Analysis Requirements:**
-```typescript
-// Requires these SAP OData services:
-- API_USER_SRV (user data)
-- API_ROLE_SRV (role assignments)
-- API_AUTHORIZATION_OBJ_SRV (authorization objects)
-
-// Capability check:
-if (profile.capabilities.canDoSoD) {
-  // Tenant has all required services → activate
-} else {
-  // Show error with missing services
-  console.log('Missing:', profile.missingServices);
-  // UI shows "Contact SAP admin to activate API_USER_SRV"
-}
-```
-
-**Future Modules** (defined but not implemented):
-- Invoice Matching (requires FI-related services)
-- Anomaly Detection (requires audit log services)
-
----
-
-## Troubleshooting
-
-### Build Failures
-```bash
-# Clean and rebuild
-pnpm clean
-pnpm install
-pnpm build
-```
-
-### Test Failures
-```bash
-# Check DATABASE_URL
-echo $DATABASE_URL
-
-# Verify PostgreSQL is running
-psql sapframework -c "SELECT 1"
-
-# Run tests with verbose output
-cd packages/core && pnpm test -- --verbose
-```
-
-### Circuit Breaker Issues
-If SAP connector tests fail with "Circuit breaker is open":
-- Wait 60 seconds for reset
-- Or restart test process
-- Check SAP system is reachable
-
-### TypeScript Errors
-```bash
-# Type check without building
-pnpm typecheck
-
-# Check specific package
-cd packages/core && pnpm typecheck
-```
-
----
+### Rate Limiting
+- Applied after public endpoints in `routes/index.ts`
+- Uses Redis if available, otherwise in-memory
+- Health endpoints are excluded
 
 ## Code Style & Conventions
 
-- **TypeScript**: Strict mode enabled
-- **Imports**: Use workspace aliases (`@sap-framework/core`)
-- **Errors**: Always extend FrameworkError
-- **Async**: Prefer async/await over promises
-- **Database**: Use repositories, never raw queries in controllers
-- **Logging**: Use Winston logger from `packages/core/src/utils/logger.ts`
-- **Config**: Use ConfigManager (`packages/core/src/config/ConfigManager.ts`)
+### Naming
+- Controllers: `YourModuleController.ts` with class `YourModuleController`
+- Engines: `YourModuleEngine.ts` with class `YourModuleEngine`
+- Repositories: `EntityRepository.ts` with class `EntityRepository`
+- Types: PascalCase interfaces, exported from `types/` folder
 
----
+### Error Handling
+- Always throw `FrameworkError` or its subclasses
+- Use specific error types (e.g., `ODataError`, `AuthenticationError`)
+- Include context in error constructors
 
-## Key Dependencies
+### Async Patterns
+- Prefer `async/await` over promises
+- Use try-catch blocks, especially in controllers
+- Return proper HTTP status codes (200, 201, 400, 401, 404, 500)
 
-- **axios** - HTTP client for SAP APIs
-- **pg** - PostgreSQL driver
-- **express** - REST API framework
-- **@sap/xssec** - XSUAA authentication
-- **zod** - Runtime validation
-- **winston** - Structured logging
-- **jest** - Testing framework
-- **turbo** - Monorepo build system
+### Logging
+- Import logger: `import logger from './utils/logger'` (or from @sap-framework/core)
+- Use structured logging: `logger.info('message', { context })`
+- Levels: error, warn, info, debug
 
----
+## Testing Guidelines
 
-## Related Documentation
+### Unit Tests
+- Located in `tests/unit/` or `tests/` in each package
+- Mock external dependencies (SAP connectors, databases)
+- Test file naming: `YourClass.test.ts`
 
-- `README.md` - Project overview and quick start
-- `IMPLEMENTATION_ROADMAP.md` - 12-week production roadmap
-- `docs/E2E_TESTING_GUIDE.md` - E2E testing instructions
-- `docs/BTP_DEPLOYMENT.md` - SAP BTP deployment guide
-- `docs/MULTI_TENANT_DISCOVERY.md` - Service discovery architecture
-- `docs/CICD_SETUP_GUIDE.md` - CI/CD configuration
+### Integration Tests
+- Located in `tests/integration/`
+- May use testcontainers for PostgreSQL
+- Run with `--runInBand` flag for serial execution
 
----
+### E2E Tests
+- Located in `packages/api/tests/e2e/`
+- Use actual database and API server
+- Named as `feature-name.e2e.ts`
 
-**Contact**: ikmal.baharudin@gmail.com
-**Repository**: https://github.com/ib823/layer1_test
-**Last Updated**: 2025-10-04
+### Web Tests
+- Playwright for E2E: `packages/web/e2e/`
+- Run with: `pnpm test:e2e` (in web package)
+- Configured in `playwright.config.ts`
+
+## Deployment
+
+### Local Development
+1. Start PostgreSQL
+2. Create database and run schema
+3. Copy `.env.example` to `.env` and configure
+4. Run `pnpm install && pnpm build`
+5. Start API: `cd packages/api && pnpm dev`
+6. Start Web: `cd packages/web && pnpm dev`
+
+### SAP BTP Cloud Foundry
+- Manifests in `infrastructure/cloud-foundry/`
+- Bind services: PostgreSQL, XSUAA, Redis
+- Deploy with: `cf push -f infrastructure/cloud-foundry/manifest.yml`
+- VCAP_SERVICES auto-configured
+
+### Standalone Production
+- Build: `pnpm build`
+- Set environment variables (especially `ENCRYPTION_MASTER_KEY`, `AUTH_ENABLED=true`)
+- Run: `cd packages/api && node dist/server.js`
+
+## Key Files Reference
+
+- `packages/core/src/index.ts` - Core exports
+- `packages/api/src/app.ts` - Express app setup with middleware
+- `packages/api/src/routes/index.ts` - Route mounting and rate limiting
+- `packages/api/src/server.ts` - Server entry point
+- `packages/web/src/app/layout.tsx` - Next.js root layout
+- `infrastructure/database/schema.sql` - Multi-tenant SQL schema
+- `packages/core/prisma/schema.prisma` - Module data models
+- `.env.example` - Environment variable documentation
+
+## Contact & Support
+
+Maintainer: ikmal.baharudin@gmail.com
