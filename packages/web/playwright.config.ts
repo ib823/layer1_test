@@ -37,28 +37,66 @@ export default defineConfig({
 
   // Configure projects for major browsers
   projects: [
+    // Comprehensive test suites (desktop only for speed)
+    {
+      name: 'comprehensive-rbac',
+      testMatch: '**/comprehensive/rbac-permutations.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+      timeout: 60000,
+    },
+    {
+      name: 'comprehensive-user-lifecycle',
+      testMatch: '**/comprehensive/user-lifecycle.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+      timeout: 120000,
+    },
+    {
+      name: 'comprehensive-tenant-lifecycle',
+      testMatch: '**/comprehensive/tenant-lifecycle.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+      timeout: 120000,
+    },
+    {
+      name: 'comprehensive-module-workflows',
+      testMatch: '**/comprehensive/module-workflows.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+      timeout: 90000,
+    },
+    {
+      name: 'comprehensive-summary',
+      testMatch: '**/comprehensive/comprehensive-test-runner.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+      timeout: 30000,
+    },
+
+    // Standard browser tests (for smoke and regression)
     {
       name: 'chromium',
+      testIgnore: '**/comprehensive/**',
       use: { ...devices['Desktop Chrome'] },
     },
 
     {
       name: 'firefox',
+      testIgnore: '**/comprehensive/**',
       use: { ...devices['Desktop Firefox'] },
     },
 
     {
       name: 'webkit',
+      testIgnore: '**/comprehensive/**',
       use: { ...devices['Desktop Safari'] },
     },
 
-    // Test against mobile viewports
+    // Test against mobile viewports (smoke tests only)
     {
       name: 'Mobile Chrome',
+      testIgnore: '**/comprehensive/**',
       use: { ...devices['Pixel 5'] },
     },
     {
       name: 'Mobile Safari',
+      testIgnore: '**/comprehensive/**',
       use: { ...devices['iPhone 12'] },
     },
   ],

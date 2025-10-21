@@ -1,4 +1,5 @@
 import { FrameworkError } from '../errors';
+import logger from './logger';
 
 export interface CircuitBreakerConfig {
   failureThreshold: number;
@@ -31,7 +32,7 @@ export class CircuitBreaker {
     // Check circuit state
     if (this.state === 'OPEN') {
       if (this.shouldAttemptReset()) {
-        console.log(`[${this.name}] Circuit transitioning to HALF_OPEN`);
+        logger.info(`Circuit transitioning to HALF_OPEN`, { circuit: this.name });
         this.state = 'HALF_OPEN';
       } else {
         throw new CircuitOpenError(
@@ -56,10 +57,14 @@ export class CircuitBreaker {
 
     if (this.state === 'HALF_OPEN') {
       this.successCount++;
-      console.log(`[${this.name}] Success in HALF_OPEN: ${this.successCount}/${this.config.successThreshold}`);
+      logger.info(`Success in HALF_OPEN state`, {
+        circuit: this.name,
+        successCount: this.successCount,
+        threshold: this.config.successThreshold,
+      });
 
       if (this.successCount >= this.config.successThreshold) {
-        console.log(`[${this.name}] Circuit transitioning to CLOSED`);
+        logger.info(`Circuit transitioning to CLOSED`, { circuit: this.name });
         this.state = 'CLOSED';
         this.successCount = 0;
       }
@@ -70,10 +75,14 @@ export class CircuitBreaker {
     this.failureCount++;
     this.lastFailureTime = Date.now();
 
-    console.warn(`[${this.name}] Failure recorded: ${this.failureCount}/${this.config.failureThreshold}`);
+    logger.warn(`Failure recorded in circuit breaker`, {
+      circuit: this.name,
+      failureCount: this.failureCount,
+      threshold: this.config.failureThreshold,
+    });
 
     if (this.failureCount >= this.config.failureThreshold) {
-      console.error(`[${this.name}] Circuit transitioning to OPEN`);
+      logger.error(`Circuit transitioning to OPEN`, { circuit: this.name });
       this.state = 'OPEN';
       this.notifyCircuitOpen();
     }
@@ -86,7 +95,11 @@ export class CircuitBreaker {
 
   private notifyCircuitOpen(): void {
     // This would integrate with your notification system
-    console.error(`CRITICAL: Circuit breaker "${this.name}" is now OPEN`);
+    logger.error(`CRITICAL: Circuit breaker is now OPEN`, {
+      circuit: this.name,
+      failureCount: this.failureCount,
+      lastFailureTime: new Date(this.lastFailureTime).toISOString(),
+    });
     // In production: Send alert via EventBus or notification service
   }
 
@@ -108,6 +121,6 @@ export class CircuitBreaker {
     this.failureCount = 0;
     this.successCount = 0;
     this.lastFailureTime = 0;
-    console.log(`[${this.name}] Circuit manually reset to CLOSED`);
+    logger.info(`Circuit manually reset to CLOSED`, { circuit: this.name });
   }
 }

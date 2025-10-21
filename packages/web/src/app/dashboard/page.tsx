@@ -6,18 +6,26 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useDashboardKPIs } from '@/hooks/useDashboard';
 
 export default function DashboardPage() {
-  const { data, isLoading } = useDashboardKPIs();
+  const { data, isLoading, error } = useDashboardKPIs();
+
+  // Status message for screen readers
+  const getStatusMessage = () => {
+    if (isLoading) return 'Loading dashboard data...';
+    if (error) return 'Failed to load dashboard data';
+    if (data) return 'Dashboard data loaded successfully';
+    return '';
+  };
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <main id="main-content" className="p-6">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => <div key={i} className="h-32 bg-gray-200 rounded"></div>)}
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -29,15 +37,25 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <Breadcrumbs items={[{ label: 'Dashboard' }]} />
-
-      <div>
-        <h1 className="text-2xl font-bold mb-2">Dashboard Overview</h1>
-        <p className="text-gray-600">Real-time metrics and insights from your SAP environment</p>
+    <main id="main-content" className="p-6 space-y-6">
+      {/* Screen reader status announcements */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {getStatusMessage()}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <Breadcrumbs items={[{ label: 'Dashboard' }]} />
+
+      <header>
+        <h1 className="text-2xl font-bold mb-2">Dashboard Overview</h1>
+        <p className="text-gray-600">Real-time metrics and insights from your SAP environment</p>
+      </header>
+
+      <section aria-label="Key Performance Indicators" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpis.map((kpi, i) => (
           <Card key={i}>
             <div className="p-6">
@@ -47,9 +65,9 @@ export default function DashboardPage() {
             </div>
           </Card>
         ))}
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section aria-label="Quick Actions and System Status" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
@@ -85,7 +103,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </Card>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

@@ -7,6 +7,23 @@ import * as xssec from '@sap/xssec';
 import * as xsenv from '@sap/xsenv';
 
 /**
+ * Decoded JWT token interface
+ */
+interface DecodedJWT {
+  sub?: string;
+  user_id?: string;
+  email?: string;
+  user_name?: string;
+  scope?: string[];
+  roles?: string[];
+  exp?: number;
+  iat?: number;
+  zid?: string;
+  tenant_id?: string;
+  [key: string]: unknown;
+}
+
+/**
  * Authentication middleware with XSUAA JWT validation
  */
 export function authenticate(
@@ -68,8 +85,9 @@ export function authenticate(
           next();
         });
         return;
-      } catch (xsuaaError: any) {
-        logger.error('XSUAA service not available:', xsuaaError.message);
+      } catch (xsuaaError: unknown) {
+        const errorMessage = xsuaaError instanceof Error ? xsuaaError.message : 'Unknown error';
+        logger.error('XSUAA service not available:', errorMessage);
         // Fall through to development mode if XSUAA is not available
       }
     }
@@ -106,8 +124,9 @@ export function authenticate(
     });
 
     next();
-  } catch (error: any) {
-    logger.error('Authentication error:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Authentication error:', { error: errorMessage });
     ApiResponseUtil.unauthorized(res, 'Authentication failed');
     return;
   }
@@ -117,7 +136,7 @@ export function authenticate(
  * Simple JWT decoder (base64 decode - no signature validation)
  * FOR DEVELOPMENT ONLY - Use XSUAA validation in production
  */
-function decodeJWT(token: string): any {
+function decodeJWT(token: string): DecodedJWT | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) {
@@ -126,9 +145,10 @@ function decodeJWT(token: string): any {
 
     const payload = parts[1];
     const decoded = Buffer.from(payload, 'base64').toString('utf-8');
-    return JSON.parse(decoded);
-  } catch (error) {
-    logger.error('JWT decode error:', error);
+    return JSON.parse(decoded) as DecodedJWT;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('JWT decode error:', { error: errorMessage });
     return null;
   }
 }

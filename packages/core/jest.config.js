@@ -1,7 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests'],
+  roots: ['<rootDir>/tests', '<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -17,5 +17,7 @@ module.exports = {
       statements: 70
     }
   },
-  maxConcurrency: 14
+  maxConcurrency: 14,
+  clearMocks: true,
+  resetMocks: true,
 };

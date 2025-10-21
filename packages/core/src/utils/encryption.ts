@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import logger from './logger';
 
 /**
  * Encryption Service for sensitive data (credentials, tokens, etc.)
@@ -29,8 +30,72 @@ export class EncryptionService {
       );
     }
 
-    // Derive key from master key string using PBKDF2
-    this.masterKey = crypto.scryptSync(keyString, 'salt', KEY_LENGTH);
+    // Validate key strength
+    this.validateKeyStrength(keyString);
+
+    // Try to decode as base64 first (preferred format for direct key usage)
+    try {
+      const decodedKey = Buffer.from(keyString, 'base64');
+      if (decodedKey.length === KEY_LENGTH) {
+        // Direct key usage (preferred) - no derivation needed
+        this.masterKey = decodedKey;
+        return;
+      }
+    } catch (error) {
+      // Not valid base64, fall through to derivation
+    }
+
+    // Fall back to key derivation for non-base64 or wrong-length keys
+    // Use a cryptographically random salt (deterministic from key for consistency)
+    const salt = crypto.createHash('sha256').update(keyString).digest().slice(0, 16);
+    this.masterKey = crypto.scryptSync(keyString, salt, KEY_LENGTH);
+  }
+
+  /**
+   * Validate encryption key strength
+   * @private
+   */
+  private validateKeyStrength(key: string): void {
+    // Try to decode as base64 first
+    try {
+      const decoded = Buffer.from(key, 'base64');
+      // If it's valid base64, check the decoded length
+      if (decoded.toString('base64') === key) {
+        // It's proper base64, check decoded byte length
+        if (decoded.length >= 16) {
+          // 16+ bytes is acceptable for base64 keys
+          return;
+        }
+      }
+    } catch (error) {
+      // Not base64, continue to string length check
+    }
+
+    // For non-base64 keys, check string length
+    if (key.length < 32) {
+      throw new Error(
+        'Encryption key too weak. Must be at least 32 characters or 16+ byte base64 encoded.'
+      );
+    }
+
+    // Warn about common weak patterns (but don't reject - allow for testing)
+    // Skip validation in test environment to avoid logger dependencies
+    if (process.env.NODE_ENV !== 'test') {
+      const weakPatterns = [
+        /^(test|demo|example|sample|default)/i,
+        /^(.)\1{10,}/, // Repeated characters
+        /^(password|secret|key)/i,
+      ];
+
+      for (const pattern of weakPatterns) {
+        if (pattern.test(key)) {
+          logger.warn('Encryption key appears to use a weak or default pattern', {
+            recommendation: 'Generate a strong key using: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64\'))"',
+          });
+          break;
+        }
+      }
+    }
   }
 
   /**

@@ -20,8 +20,8 @@ export default function HomePage() {
   }, [isAuthenticated, isLoading, router]);
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <Spin size="large" />
-    </div>
+    </main>
   );
 }
