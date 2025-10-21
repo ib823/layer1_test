@@ -218,7 +218,7 @@ export class RuleEngine {
       }
 
       // Check each user for conflicts
-      for (const [userId, functions] of userFunctionsMap.entries()) {
+      for (const [userId, functions] of Array.from(userFunctionsMap.entries())) {
         const hasFunctionA = functions.some((f: any) => f.id === rule.functionA.id);
         const hasFunctionB = functions.some((f: any) => f.id === rule.functionB.id);
 

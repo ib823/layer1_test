@@ -22,5 +22,6 @@ module.exports = {
   // },
   moduleNameMapper: {
     '^@sap-framework/(.*)$': '<rootDir>/../../$1/src'
-  }
+  },
+  maxConcurrency: 14
 };

@@ -1,0 +1,33 @@
+{
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:e2e": "cd packages/api/tests/e2e && ./run-all-e2e-tests.sh",
+    "test:e2e:onboarding": "node packages/api/tests/e2e/tenant-onboarding.e2e.js",
+    "test:e2e:discovery": "tsx packages/api/tests/e2e/service-discovery.e2e.ts",
+    "test:e2e:sod": "tsx packages/core/tests/e2e/test-sod-e2e.ts",
+    "test:coverage": "turbo run test -- --coverage",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/supertest": "^6.0.2",
+    "fastify": "^4.28.1",
+    "husky": "^8.0.3",
+    "prettier": "^3.2.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
+    "turbo": "^1.12.0",
+    "typescript": "^5.3.3"
+  }
+}

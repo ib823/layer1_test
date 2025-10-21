@@ -5,9 +5,12 @@
 
 import { Request, Response } from 'express';
 import { GLAnomalyDetectionEngine, GLDataSource } from '@sap-framework/gl-anomaly-detection';
-import { S4HANAConnector } from '@sap-framework/core';
+import { S4HANAConnector, GLAnomalyRepository, PrismaClient } from '@sap-framework/core';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
+
+const prisma = new PrismaClient();
+const repository = new GLAnomalyRepository(prisma);
 
 export class GLAnomalyDetectionController {
   /**
@@ -110,7 +113,44 @@ export class GLAnomalyDetectionController {
         anomaliesDetected: result.anomaliesDetected,
       });
 
+      // Persist results to database
+      const dbRun = await repository.createRun({
+        tenantId,
+        fiscalYear,
+        fiscalPeriod,
+        totalTransactions: result.totalLineItems,
+        anomaliesFound: result.anomaliesDetected,
+        parameters: {
+          glAccounts,
+          fromDate,
+          toDate,
+          companyCode,
+          config,
+        },
+        summary: result.summary || {},
+      });
+
+      // Persist anomalies
+      if (result.anomalies && result.anomalies.length > 0) {
+        await repository.saveAnomalies(dbRun.id, result.anomalies.map((anomaly: any) => ({
+          documentNumber: anomaly.documentNumber || '',
+          lineItem: anomaly.lineItem,
+          glAccount: anomaly.glAccount,
+          amount: anomaly.amount,
+          postingDate: anomaly.postingDate,
+          detectionMethod: anomaly.detectionMethod || anomaly.method || 'unknown',
+          riskScore: anomaly.riskScore || anomaly.score || 50,
+          riskLevel: anomaly.riskLevel || (anomaly.riskScore >= 80 ? 'critical' : anomaly.riskScore >= 60 ? 'high' : anomaly.riskScore >= 40 ? 'medium' : 'low'),
+          description: anomaly.description || anomaly.reason || 'Anomaly detected',
+          evidence: anomaly.evidence || anomaly.details || {},
+          assignedTo: null,
+          resolvedAt: null,
+          resolution: null,
+        })));
+      }
+
       ApiResponseUtil.success(res, {
+        runId: dbRun.id,
         analysisId: result.analysisId,
         totalLineItems: result.totalLineItems,
         anomaliesDetected: result.anomaliesDetected,
@@ -122,6 +162,67 @@ export class GLAnomalyDetectionController {
     } catch (error: any) {
       logger.error('GL anomaly detection failed', error);
       ApiResponseUtil.error(res, 'GL_ANOMALY_DETECTION_ERROR', 'Analysis failed', 500, { error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/modules/gl-anomaly/runs/:runId
+   * Get anomaly detection results for a specific run
+   */
+  static async getRun(req: Request, res: Response): Promise<void> {
+    try {
+      const { runId } = req.params;
+
+      logger.info('Getting GL anomaly run', { runId });
+
+      const run = await repository.getRun(runId);
+
+      if (!run) {
+        ApiResponseUtil.notFound(res, `Run ${runId} not found`);
+        return;
+      }
+
+      ApiResponseUtil.success(res, {
+        runId: run.id,
+        fiscalYear: run.fiscalYear,
+        fiscalPeriod: run.fiscalPeriod,
+        runDate: run.runDate,
+        status: run.status,
+        totalTransactions: run.totalTransactions,
+        anomaliesFound: run.anomaliesFound,
+        summary: run.summary,
+        parameters: run.parameters,
+      });
+    } catch (error: any) {
+      logger.error('Failed to get GL anomaly run', error);
+      ApiResponseUtil.error(res, 'GET_RUN_ERROR', 'Failed to retrieve run', 500, { error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/modules/gl-anomaly/runs
+   * Get all runs for a tenant
+   */
+  static async getRuns(req: Request, res: Response): Promise<void> {
+    try {
+      const { tenantId } = req.query;
+
+      if (!tenantId) {
+        ApiResponseUtil.badRequest(res, 'tenantId is required');
+        return;
+      }
+
+      logger.info('Getting GL anomaly runs for tenant', { tenantId });
+
+      const runs = await repository.getRunsByTenant(tenantId as string);
+
+      ApiResponseUtil.success(res, {
+        count: runs.length,
+        runs,
+      });
+    } catch (error: any) {
+      logger.error('Failed to get GL anomaly runs', error);
+      ApiResponseUtil.error(res, 'GET_RUNS_ERROR', 'Failed to retrieve runs', 500, { error: error.message });
     }
   }
 

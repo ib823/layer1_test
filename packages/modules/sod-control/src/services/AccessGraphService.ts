@@ -55,13 +55,13 @@ export class AccessGraphService {
   /**
    * Persist normalized users to database
    */
-  async persistUsers(users: CanonicalUser[]): Promise<void> {
-    if (users.length === 0) return;
+  async persistUsers(tenantId: string, users: CanonicalUser[]): Promise<number> {
+    if (users.length === 0) return 0;
 
     // Batch insert with conflict handling (upsert)
     await this.db('access_graph_users')
       .insert(users.map(user => ({
-        tenant_id: user.tenantId,
+        tenant_id: tenantId,
         user_id: user.userId,
         user_name: user.userName,
         email: user.email,
@@ -83,17 +83,19 @@ export class AccessGraphService {
       })))
       .onConflict(['tenant_id', 'source_system_id', 'user_id'])
       .merge();
+
+    return users.length;
   }
 
   /**
    * Persist normalized roles to database
    */
-  async persistRoles(roles: CanonicalRole[]): Promise<void> {
-    if (roles.length === 0) return;
+  async persistRoles(tenantId: string, roles: CanonicalRole[]): Promise<number> {
+    if (roles.length === 0) return 0;
 
     await this.db('access_graph_roles')
       .insert(roles.map(role => ({
-        tenant_id: role.tenantId,
+        tenant_id: tenantId,
         role_id: role.roleId,
         role_name: role.roleName,
         role_description: role.roleDescription,
@@ -109,17 +111,19 @@ export class AccessGraphService {
       })))
       .onConflict(['tenant_id', 'source_system_id', 'role_id'])
       .merge();
+
+    return roles.length;
   }
 
   /**
    * Persist normalized permissions to database
    */
-  async persistPermissions(permissions: CanonicalPermission[]): Promise<void> {
-    if (permissions.length === 0) return;
+  async persistPermissions(tenantId: string, permissions: CanonicalPermission[]): Promise<number> {
+    if (permissions.length === 0) return 0;
 
     await this.db('sod_permissions')
       .insert(permissions.map(perm => ({
-        tenant_id: perm.tenantId,
+        tenant_id: tenantId,
         permission_code: perm.permissionCode,
         permission_name: perm.permissionName,
         source_system_id: perm.sourceSystemId,
@@ -132,27 +136,29 @@ export class AccessGraphService {
       })))
       .onConflict(['tenant_id', 'source_system_id', 'permission_code'])
       .merge();
+
+    return permissions.length;
   }
 
   /**
    * Persist user-role assignments to database
    */
-  async persistAssignments(assignments: UserRoleAssignment[]): Promise<void> {
-    if (assignments.length === 0) return;
+  async persistAssignments(tenantId: string, assignments: UserRoleAssignment[]): Promise<number> {
+    if (assignments.length === 0) return 0;
 
     // First, resolve user and role IDs from canonical tables
     const enrichedAssignments = await Promise.all(
       assignments.map(async (assignment) => {
         const user = await this.db('access_graph_users')
           .where({
-            tenant_id: assignment.tenantId,
+            tenant_id: tenantId,
             user_id: assignment.userId,
           })
           .first();
 
         const role = await this.db('access_graph_roles')
           .where({
-            tenant_id: assignment.tenantId,
+            tenant_id: tenantId,
             role_id: assignment.roleId,
           })
           .first();
@@ -163,7 +169,7 @@ export class AccessGraphService {
         }
 
         return {
-          tenant_id: assignment.tenantId,
+          tenant_id: tenantId,
           user_id: user.id, // Internal UUID
           role_id: role.id, // Internal UUID
           assignment_type: assignment.assignmentType,
@@ -187,6 +193,8 @@ export class AccessGraphService {
         .onConflict(['tenant_id', 'user_id', 'role_id', 'assignment_type'])
         .merge();
     }
+
+    return validAssignments.length;
   }
 
   /**
@@ -263,6 +271,7 @@ export class AccessGraphService {
    * Compare two snapshots and detect deltas
    */
   async detectDeltas(
+    tenantId: string,
     fromSnapshotId: string,
     toSnapshotId: string
   ): Promise<DeltaChange[]> {
@@ -319,7 +328,7 @@ export class AccessGraphService {
     const toUserMap = new Map(toUsers.map(u => [u.user_id, u]));
 
     // Detect added users
-    for (const [userId, user] of toUserMap) {
+    Array.from(toUserMap.entries()).forEach(([userId, user]) => {
       if (!fromUserMap.has(userId)) {
         deltas.push({
           changeType: 'USER_ADDED',
@@ -330,10 +339,10 @@ export class AccessGraphService {
           introducesSodRisk: false, // Will be assessed by rule engine
         });
       }
-    }
+    });
 
     // Detect removed users
-    for (const [userId, user] of fromUserMap) {
+    Array.from(fromUserMap.entries()).forEach(([userId, user]) => {
       if (!toUserMap.has(userId)) {
         deltas.push({
           changeType: 'USER_REMOVED',
@@ -344,7 +353,7 @@ export class AccessGraphService {
           introducesSodRisk: false,
         });
       }
-    }
+    });
 
     return deltas;
   }
@@ -358,7 +367,7 @@ export class AccessGraphService {
     const toMap = new Map(toAssignments.map(a => [`${a.user_id}_${a.role_id}`, a]));
 
     // Detect new assignments
-    for (const [key, assignment] of toMap) {
+    Array.from(toMap.entries()).forEach(([key, assignment]) => {
       if (!fromMap.has(key)) {
         deltas.push({
           changeType: 'ROLE_ASSIGNED',
@@ -368,10 +377,10 @@ export class AccessGraphService {
           introducesSodRisk: true, // Flag for SoD analysis
         });
       }
-    }
+    });
 
     // Detect revoked assignments
-    for (const [key, assignment] of fromMap) {
+    Array.from(fromMap.entries()).forEach(([key, assignment]) => {
       if (!toMap.has(key)) {
         deltas.push({
           changeType: 'ROLE_REVOKED',
@@ -381,7 +390,7 @@ export class AccessGraphService {
           introducesSodRisk: false,
         });
       }
-    }
+    });
 
     return deltas;
   }
@@ -443,10 +452,10 @@ export class AccessGraphService {
       const assignments = await connector.extractAssignments();
 
       // Persist to database
-      await this.persistUsers(users);
-      await this.persistRoles(roles);
-      await this.persistPermissions(permissions);
-      await this.persistAssignments(assignments);
+      await this.persistUsers(tenantId, users);
+      await this.persistRoles(tenantId, roles);
+      await this.persistPermissions(tenantId, permissions);
+      await this.persistAssignments(tenantId, assignments);
 
       // Update system statistics
       await this.db('access_systems')
@@ -472,5 +481,132 @@ export class AccessGraphService {
 
       throw error;
     }
+  }
+
+  /**
+   * Get comprehensive user access summary
+   */
+  async getUserAccessSummary(tenantId: string, userId: string): Promise<{
+    user: any;
+    roles: any[];
+    permissions: any[];
+    assignments: any[];
+    criticalRolesCount: number;
+    totalRolesCount: number;
+    lastAssignmentDate: Date | null;
+  }> {
+    const user = await this.db('access_graph_users')
+      .where({ tenant_id: tenantId, id: userId })
+      .first();
+
+    if (!user) {
+      throw new Error(`User ${userId} not found`);
+    }
+
+    const assignments = await this.db('access_graph_assignments')
+      .where({ tenant_id: tenantId, user_id: userId })
+      .select('*');
+
+    const roleIds = assignments.map((a: any) => a.role_id);
+
+    const roles = roleIds.length > 0
+      ? await this.db('access_graph_roles')
+          .whereIn('id', roleIds)
+          .select('*')
+      : [];
+
+    const permissions = roleIds.length > 0
+      ? await this.db('sod_permissions')
+          .where({ tenant_id: tenantId })
+          .select('*')
+      : [];
+
+    const criticalRolesCount = roles.filter((r: any) => r.is_critical).length;
+    const lastAssignment = assignments.length > 0
+      ? assignments.reduce((latest: any, curr: any) =>
+          curr.assigned_at > latest.assigned_at ? curr : latest
+        )
+      : null;
+
+    return {
+      user,
+      roles,
+      permissions,
+      assignments,
+      criticalRolesCount,
+      totalRolesCount: roles.length,
+      lastAssignmentDate: lastAssignment?.assigned_at || null,
+    };
+  }
+
+  /**
+   * Get count of users assigned to a role
+   */
+  async getRoleMembershipCount(tenantId: string, roleId: string): Promise<number> {
+    const result = await this.db('access_graph_assignments')
+      .where({ tenant_id: tenantId, role_id: roleId })
+      .count('* as count')
+      .first();
+
+    return parseInt(result?.count || '0', 10);
+  }
+
+  /**
+   * Get comprehensive access graph statistics
+   */
+  async getAccessGraphStatistics(tenantId: string): Promise<{
+    totalUsers: number;
+    totalRoles: number;
+    totalAssignments: number;
+    totalSystems: number;
+    avgRolesPerUser: number;
+    criticalRoles: number;
+    inactiveUsers: number;
+  }> {
+    const [usersCount, rolesCount, assignmentsCount, systemsCount] = await Promise.all([
+      this.db('access_graph_users')
+        .where({ tenant_id: tenantId })
+        .count('* as count')
+        .first(),
+      this.db('access_graph_roles')
+        .where({ tenant_id: tenantId })
+        .count('* as count')
+        .first(),
+      this.db('access_graph_assignments')
+        .where({ tenant_id: tenantId })
+        .count('* as count')
+        .first(),
+      this.db('access_systems')
+        .where({ tenant_id: tenantId })
+        .count('* as count')
+        .first(),
+    ]);
+
+    const totalUsers = parseInt(usersCount?.count || '0', 10);
+    const totalRoles = parseInt(rolesCount?.count || '0', 10);
+    const totalAssignments = parseInt(assignmentsCount?.count || '0', 10);
+    const totalSystems = parseInt(systemsCount?.count || '0', 10);
+
+    const avgRolesPerUser = totalUsers > 0 ? totalAssignments / totalUsers : 0;
+
+    const criticalRolesResult = await this.db('access_graph_roles')
+      .where({ tenant_id: tenantId, is_critical: true })
+      .count('* as count')
+      .first();
+
+    const inactiveUsersResult = await this.db('access_graph_users')
+      .where({ tenant_id: tenantId, is_active: false })
+      .count('* as count')
+      .first();
+
+    return {
+      totalUsers,
+      totalRoles,
+      totalAssignments,
+      totalSystems,
+      avgRolesPerUser,
+      criticalRoles: parseInt(criticalRolesResult?.count || '0', 10),
+      inactiveUsers: parseInt(inactiveUsersResult?.count || '0', 10),
+    };
   }
 }

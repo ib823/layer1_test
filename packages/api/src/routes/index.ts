@@ -32,14 +32,9 @@ const router: Router = Router();
 // PUBLIC ENDPOINTS (no auth, no rate limiting)
 // ==============================================================================
 
-// Health check (BTP standard: /healthz)
-router.get('/health', (req, res) => {
-  ApiResponseUtil.success(res, {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
+// Health check routes with comprehensive monitoring
+import healthRoutes from './health';
+router.use('/health', healthRoutes);
 
 // Healthz alias for Cloud Foundry / K8s compatibility
 router.get('/healthz', (req, res) => {
@@ -58,6 +53,10 @@ router.get('/version', (req, res) => {
     framework: 'SAP MVP Framework',
   });
 });
+
+// Authentication routes (login, refresh are public; me, logout require auth)
+import authRoutes from './auth';
+router.use('/auth', authRoutes);
 
 // ==============================================================================
 // GLOBAL MIDDLEWARE: Apply to all routes below

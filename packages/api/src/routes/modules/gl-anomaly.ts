@@ -14,6 +14,18 @@ const router: Router = Router();
 router.post('/detect', GLAnomalyDetectionController.detectAnomalies);
 
 /**
+ * GET /api/modules/gl-anomaly/runs
+ * Get all runs for a tenant
+ */
+router.get('/runs', GLAnomalyDetectionController.getRuns);
+
+/**
+ * GET /api/modules/gl-anomaly/runs/:runId
+ * Get specific run results
+ */
+router.get('/runs/:runId', GLAnomalyDetectionController.getRun);
+
+/**
  * POST /api/modules/gl-anomaly/analyze-account
  * Analyze a specific GL account
  */

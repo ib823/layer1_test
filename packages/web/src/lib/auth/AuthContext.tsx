@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import type { AuthContextType, User, LoginCredentials } from '@/types/auth';
 import { Role, Permission, matchesPermission } from '@/types/auth';
 import { authService } from './authService';
-import { message } from 'antd';
+import { useMessage } from '../hooks/useMessage';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -18,6 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const message = useMessage();
 
   // Initialize auth state
   useEffect(() => {

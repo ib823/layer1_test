@@ -14,6 +14,18 @@ const router: Router = Router();
 router.post('/analyze', VendorDataQualityController.analyzeVendorQuality);
 
 /**
+ * GET /api/modules/vendor-quality/runs
+ * Get all runs for a tenant
+ */
+router.get('/runs', VendorDataQualityController.getRuns);
+
+/**
+ * GET /api/modules/vendor-quality/runs/:runId
+ * Get specific run results
+ */
+router.get('/runs/:runId', VendorDataQualityController.getRun);
+
+/**
  * POST /api/modules/vendor-quality/analyze-vendor
  * Analyze a single vendor
  */

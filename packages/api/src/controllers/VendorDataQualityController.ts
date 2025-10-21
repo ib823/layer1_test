@@ -5,9 +5,12 @@
 
 import { Request, Response } from 'express';
 import { VendorDataQualityEngine, VendorDataSource } from '@sap-framework/vendor-data-quality';
-import { S4HANAConnector } from '@sap-framework/core';
+import { S4HANAConnector, VendorQualityRepository, PrismaClient } from '@sap-framework/core';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
+
+const prisma = new PrismaClient();
+const repository = new VendorQualityRepository(prisma);
 
 export class VendorDataQualityController {
   /**
@@ -140,7 +143,61 @@ export class VendorDataQualityController {
         averageQualityScore: result.averageQualityScore,
       });
 
+      // Persist results to database
+      const qualityIssues = (result.qualityScores || []).flatMap((qs: any) =>
+        (qs.issues || []).map((issue: any) => ({
+          vendorId: qs.vendorId,
+          vendorName: qs.vendorName || '',
+          issueType: issue.type || 'missing_field',
+          severity: issue.severity || 'medium',
+          fieldName: issue.field,
+          currentValue: issue.currentValue,
+          suggestedValue: issue.suggestedValue,
+          description: issue.description || issue.message || '',
+          qualityScore: qs.overallScore || 0,
+        }))
+      );
+
+      const duplicateClusters = (result.duplicates || []).map((dup: any) => ({
+        clusterSize: dup.vendors?.length || 2,
+        vendorIds: dup.vendors?.map((v: any) => v.vendorId) || [],
+        vendorNames: dup.vendors?.map((v: any) => v.vendorName) || [],
+        similarityScore: dup.similarityScore || dup.confidence || 75,
+        matchFields: dup.matchedFields || dup.matchFields || [],
+        estimatedSavings: dup.estimatedSavings || 0,
+        recommendedAction: dup.recommendation || 'Review for potential merge',
+        reviewedBy: null,
+        reviewedAt: null,
+        notes: null,
+      }));
+
+      const dbRun = await repository.createRun({
+        tenantId,
+        totalVendors: result.totalVendors,
+        issuesFound: qualityIssues.length,
+        duplicatesFound: duplicateClusters.length,
+        potentialSavings: duplicateClusters.reduce((sum: number, c: any) => sum + c.estimatedSavings, 0),
+        parameters: {
+          vendorIds,
+          countries,
+          isBlocked,
+          modifiedSince,
+        },
+        summary: result.summary || {},
+      });
+
+      // Persist quality issues
+      if (qualityIssues.length > 0) {
+        await repository.saveQualityIssues(dbRun.id, qualityIssues);
+      }
+
+      // Persist duplicate clusters
+      if (duplicateClusters.length > 0) {
+        await repository.saveDuplicateClusters(dbRun.id, duplicateClusters);
+      }
+
       ApiResponseUtil.success(res, {
+        runId: dbRun.id,
         analysisId: result.analysisId,
         totalVendors: result.totalVendors,
         averageQualityScore: result.averageQualityScore,
@@ -153,6 +210,67 @@ export class VendorDataQualityController {
     } catch (error: any) {
       logger.error('Vendor data quality analysis failed', error);
       ApiResponseUtil.error(res, 'VENDOR_QUALITY_ANALYSIS_ERROR', 'Analysis failed', 500, { error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/modules/vendor-quality/runs/:runId
+   * Get vendor quality results for a specific run
+   */
+  static async getRun(req: Request, res: Response): Promise<void> {
+    try {
+      const { runId } = req.params;
+
+      logger.info('Getting vendor quality run', { runId });
+
+      const run = await repository.getRun(runId);
+
+      if (!run) {
+        ApiResponseUtil.notFound(res, `Run ${runId} not found`);
+        return;
+      }
+
+      ApiResponseUtil.success(res, {
+        runId: run.id,
+        runDate: run.runDate,
+        status: run.status,
+        totalVendors: run.totalVendors,
+        issuesFound: run.issuesFound,
+        duplicatesFound: run.duplicatesFound,
+        potentialSavings: run.potentialSavings,
+        summary: run.summary,
+        parameters: run.parameters,
+      });
+    } catch (error: any) {
+      logger.error('Failed to get vendor quality run', error);
+      ApiResponseUtil.error(res, 'GET_RUN_ERROR', 'Failed to retrieve run', 500, { error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/modules/vendor-quality/runs
+   * Get all runs for a tenant
+   */
+  static async getRuns(req: Request, res: Response): Promise<void> {
+    try {
+      const { tenantId } = req.query;
+
+      if (!tenantId) {
+        ApiResponseUtil.badRequest(res, 'tenantId is required');
+        return;
+      }
+
+      logger.info('Getting vendor quality runs for tenant', { tenantId });
+
+      const runs = await repository.getRunsByTenant(tenantId as string);
+
+      ApiResponseUtil.success(res, {
+        count: runs.length,
+        runs,
+      });
+    } catch (error: any) {
+      logger.error('Failed to get vendor quality runs', error);
+      ApiResponseUtil.error(res, 'GET_RUNS_ERROR', 'Failed to retrieve runs', 500, { error: error.message });
     }
   }
 

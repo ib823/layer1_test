@@ -1,0 +1,13 @@
+.env:8:DATABASE_URL=****
+.env.example:8:DATABASE_URL=****
+gptdebug/archive/20251013_0000/env_report_20251011_0057/.env.share:8:DATABASE_URL=****
+gptdebug/archive/20251018_0613/env_report_20251013_0340/.env.share:8:DATABASE_URL=****
+packages/core/.env:7:DATABASE_URL=****
+gptdebug/archive/20251009_0917/env_report_20251005_0852/.env.share:8:DATABASE_URL=****
+gptdebug/archive/20251018_0615/env_report_20251018_0613/.env.share:8:DATABASE_URL=****
+gptdebug/archive/20251005_0852/env_report_20251005_0716/.env.share:8:DATABASE_URL=****
+gptdebug/archive/20251011_0057/env_report_20251009_2339/.env.share:8:DATABASE_URL=****
+gptdebug/archive/20251009_2339/env_report_20251009_0917/.env.share:8:DATABASE_URL=****
+gptdebug/archive/20251013_0340/env_report_20251013_0000/.env.share:8:DATABASE_URL=****
+.env.local:2:DATABASE_URL=****
+gptdebug/archive/20251018_1618/env_report_20251018_0615/.env.share:8:DATABASE_URL=****

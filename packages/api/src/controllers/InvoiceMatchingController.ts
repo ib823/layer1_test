@@ -5,9 +5,12 @@
 
 import { Request, Response } from 'express';
 import { InvoiceMatchingEngine, DataSource } from '@sap-framework/invoice-matching';
-import { S4HANAConnector } from '@sap-framework/core';
+import { S4HANAConnector, InvoiceMatchRepository, PrismaClient } from '@sap-framework/core';
 import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
+
+const prisma = new PrismaClient();
+const repository = new InvoiceMatchRepository(prisma);
 
 export class InvoiceMatchingController {
   /**
@@ -151,8 +154,55 @@ export class InvoiceMatchingController {
         fraudAlerts: result.statistics.fraudAlerts,
       });
 
+      // Persist results to database
+      const dbRun = await repository.createRun({
+        tenantId,
+        totalInvoices: result.statistics.totalInvoices,
+        matchedInvoices: result.statistics.fullyMatched + result.statistics.partiallyMatched,
+        unmatchedInvoices: result.statistics.notMatched,
+        fraudAlertsCount: result.statistics.fraudAlerts,
+        parameters: {
+          vendorIds,
+          fromDate,
+          toDate,
+          invoiceStatus,
+          config,
+        },
+      });
+
+      // Persist match results
+      if (result.matches.length > 0) {
+        await repository.saveResults(dbRun.id, result.matches.map((match: any) => ({
+          invoiceNumber: match.invoice.invoiceNumber,
+          poNumber: match.purchaseOrder?.poNumber,
+          grNumber: match.goodsReceipt?.grNumber,
+          matchStatus: match.matchScore >= 95 ? 'matched' : match.matchScore >= 60 ? 'partial' : 'unmatched',
+          matchScore: match.matchScore,
+          discrepancies: match.discrepancies || {},
+          amounts: {
+            invoiced: match.invoice.totalAmount,
+            po: match.purchaseOrder?.orderedValue,
+            gr: match.goodsReceipt?.receivedValue,
+          },
+          vendorId: match.invoice.vendorId,
+          vendorName: match.invoice.vendorName,
+        })));
+      }
+
+      // Persist fraud alerts
+      const fraudAlertsArray = (result as any).fraudAlerts || [];
+      if (fraudAlertsArray.length > 0) {
+        await repository.saveFraudAlerts(dbRun.id, fraudAlertsArray.map((alert: any) => ({
+          alertType: alert.pattern || 'pattern',
+          severity: alert.severity || 'medium',
+          invoiceNumber: alert.invoiceNumber || '',
+          description: alert.description || alert.message,
+          evidence: alert.evidence || {},
+        })));
+      }
+
       ApiResponseUtil.success(res, {
-        runId: result.runId,
+        runId: dbRun.id,
         statistics: result.statistics,
         matches: result.matches,
         matchCount: result.matches.length,
@@ -167,7 +217,6 @@ export class InvoiceMatchingController {
   /**
    * GET /api/matching/runs/:runId
    * Get match results for a specific run
-   * NOTE: Currently returns empty as database persistence is not yet implemented
    */
   static async getMatchResults(req: Request, res: Response): Promise<void> {
     try {
@@ -175,16 +224,53 @@ export class InvoiceMatchingController {
 
       logger.info('Getting match results for run', { runId });
 
-      // TODO: Implement database persistence
+      const run = await repository.getRun(runId);
+
+      if (!run) {
+        ApiResponseUtil.notFound(res, `Run ${runId} not found`);
+        return;
+      }
+
       ApiResponseUtil.success(res, {
-        runId,
-        count: 0,
-        matches: [],
-        message: 'Database persistence not yet implemented. Use POST /api/matching/analyze to run real-time analysis.',
+        runId: run.id,
+        runDate: run.runDate,
+        status: run.status,
+        totalInvoices: run.totalInvoices,
+        matchedInvoices: run.matchedInvoices,
+        unmatchedInvoices: run.unmatchedInvoices,
+        fraudAlertsCount: run.fraudAlertsCount,
+        parameters: run.parameters,
       });
     } catch (error: any) {
       logger.error('Failed to get match results', error);
       ApiResponseUtil.error(res, 'GET_RESULTS_ERROR', 'Failed to retrieve results', 500, { error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/matching/runs
+   * Get all runs for a tenant
+   */
+  static async getRuns(req: Request, res: Response): Promise<void> {
+    try {
+      const { tenantId } = req.query;
+
+      if (!tenantId) {
+        ApiResponseUtil.badRequest(res, 'tenantId is required');
+        return;
+      }
+
+      logger.info('Getting runs for tenant', { tenantId });
+
+      const runs = await repository.getRunsByTenant(tenantId as string);
+
+      ApiResponseUtil.success(res, {
+        count: runs.length,
+        runs,
+      });
+    } catch (error: any) {
+      logger.error('Failed to get runs', error);
+      ApiResponseUtil.error(res, 'GET_RUNS_ERROR', 'Failed to retrieve runs', 500, { error: error.message });
     }
   }
 

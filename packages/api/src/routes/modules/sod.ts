@@ -1,70 +1,61 @@
-import { Router } from 'express';
-import { SoDController } from '../../controllers/SoDController';
-import { TenantProfileRepository } from '@sap-framework/core';
-import { validateRequest, schemas } from '../../middleware/validator';
-import { z } from 'zod';
-import { config } from '../../config';
-
-const router: Router = Router();
-const tenantRepo = new TenantProfileRepository(config.databaseUrl);
-const controller = new SoDController(tenantRepo);
-
 /**
- * SoD Analysis Module Routes
+ * SoD Analyzer Routes
+ *
+ * Routes for Segregation of Duties analysis and violation management
  */
 
-// Validation schemas
-const acknowledgeViolationSchema = z.object({
-  justification: z.string().min(10, 'Justification must be at least 10 characters'),
-  approvedBy: z.string().min(1, 'Approver name is required'),
-});
+import { Router } from 'express';
+import { SODAnalyzerController } from '../../controllers/SODAnalyzerController';
 
-// List violations
-router.get(
-  '/:tenantId/violations',
-  validateRequest({
-    params: schemas.tenantId,
-    query: schemas.pagination,
-  }),
-  (req, res, next) => controller.listViolations(req, res, next)
-);
+const router: Router = Router();
+const controller = new SODAnalyzerController();
 
-// Get violation details
-router.get(
-  '/:tenantId/violations/:violationId',
-  validateRequest({ params: schemas.tenantId }),
-  (req, res, next) => controller.getViolation(req, res, next)
-);
+/**
+ * POST /api/modules/sod/analyze
+ * Run comprehensive SoD analysis
+ */
+router.post('/analyze', (req, res, next) => controller.runAnalysis(req, res, next));
 
-// Acknowledge violation
-router.post(
-  '/:tenantId/violations/:violationId/acknowledge',
-  validateRequest({
-    params: schemas.tenantId,
-    body: acknowledgeViolationSchema,
-  }),
-  (req, res, next) => controller.acknowledgeViolation(req, res, next)
-);
+/**
+ * GET /api/modules/sod/results/:runId
+ * Get specific analysis run results
+ */
+router.get('/results/:runId', (req, res, next) => controller.getAnalysisResults(req, res, next));
 
-// Get latest analysis
-router.get(
-  '/:tenantId/analysis',
-  validateRequest({ params: schemas.tenantId }),
-  (req, res, next) => controller.getAnalysis(req, res, next)
-);
+/**
+ * GET /api/modules/sod/violations
+ * List all violations with filtering and pagination
+ */
+router.get('/violations', (req, res, next) => controller.listViolations(req, res, next));
 
-// Run analysis
-router.post(
-  '/:tenantId/analyze',
-  validateRequest({ params: schemas.tenantId }),
-  (req, res, next) => controller.runAnalysis(req, res, next)
-);
+/**
+ * GET /api/modules/sod/recommendations/:findingId
+ * Get remediation recommendations for a violation
+ */
+router.get('/recommendations/:findingId', (req, res, next) => controller.getRecommendations(req, res, next));
 
-// Export report
-router.get(
-  '/:tenantId/export',
-  validateRequest({ params: schemas.tenantId }),
-  (req, res, next) => controller.exportReport(req, res, next)
-);
+/**
+ * POST /api/modules/sod/exceptions/approve
+ * Approve an exception request
+ */
+router.post('/exceptions/approve', (req, res, next) => controller.approveException(req, res, next));
+
+/**
+ * POST /api/modules/sod/exceptions/reject
+ * Reject an exception request
+ */
+router.post('/exceptions/reject', (req, res, next) => controller.rejectException(req, res, next));
+
+/**
+ * GET /api/modules/sod/compliance/report
+ * Get comprehensive compliance report
+ */
+router.get('/compliance/report', (req, res, next) => controller.getComplianceReport(req, res, next));
+
+/**
+ * GET /api/modules/sod/health
+ * Module health check
+ */
+router.get('/health', (req, res, next) => controller.getModuleHealth(req, res, next));
 
 export default router;

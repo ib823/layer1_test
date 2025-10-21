@@ -15,6 +15,7 @@ export { AccessGraphService } from './services/AccessGraphService';
 
 // Engine
 export { RuleEngine } from './engine/RuleEngine';
+export { SODAnalyzerEngine } from './engine/SODAnalyzerEngine';
 
 // Version
 export const VERSION = '1.0.0';

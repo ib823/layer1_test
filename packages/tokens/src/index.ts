@@ -5,9 +5,6 @@
  * Prefer CSS variables in stylesheets, use this object only when necessary.
  */
 
-// Import the CSS to ensure it's bundled
-import './tokens.css';
-
 export const tokens = {
   brand: {
     50: '#EFF6FF',

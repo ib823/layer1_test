@@ -12,4 +12,5 @@ module.exports = {
       statements: 70,
     },
   },
+  maxConcurrency: 14
 };

@@ -24,13 +24,20 @@ export * from './config';
 export * from './utils';
 export * from './utils/piiMasking';
 export * from './utils/dbEncryptionValidator';
+export * from './utils/securityValidation';
 
 // Types
 export * from './types';
 
 // Persistence (NEW)
-export * from './persistence';
 export * from './persistence/SoDViolationRepository';
+export * from './persistence/TenantProfileRepository';
+
+// Repositories
+export * from './repositories';
+
+// Prisma Client
+export { PrismaClient } from './generated/prisma';
 
 // Services
 export * from './services/GDPRService';

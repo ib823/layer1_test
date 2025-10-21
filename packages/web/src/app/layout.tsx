@@ -5,6 +5,8 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { TokenThemeProvider } from '@sap-framework/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { App as AntdApp } from 'antd';
+import "@sap-framework/tokens/tokens.css";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui";
 import { AuthProvider } from "@/lib/auth/AuthContext";
@@ -35,11 +37,13 @@ export default function RootLayout({
         <QueryClientProvider client={queryClient}>
           <AntdRegistry>
             <TokenThemeProvider mode="light">
-              <AuthProvider>
-                <ToastProvider>
-                  {children}
-                </ToastProvider>
-              </AuthProvider>
+              <AntdApp>
+                <AuthProvider>
+                  <ToastProvider>
+                    {children}
+                  </ToastProvider>
+                </AuthProvider>
+              </AntdApp>
             </TokenThemeProvider>
           </AntdRegistry>
         </QueryClientProvider>

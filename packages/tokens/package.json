@@ -9,7 +9,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp src/tokens.css dist/tokens.css",
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
   },
@@ -19,7 +19,7 @@
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./tokens.css": "./src/tokens.css"
+    "./tokens.css": "./dist/tokens.css"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

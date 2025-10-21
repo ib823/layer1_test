@@ -1,24 +1,44 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { buildApp } from './app';
-import { Pool } from 'pg';
 
-let app: Awaited<ReturnType<typeof buildApp>>;
-let pool: Pool;
+// Mock redis to avoid connection issues in tests
+vi.mock('redis', () => ({
+  createClient: () => ({
+    on: vi.fn(),
+    connect: vi.fn(),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn(),
+    quit: vi.fn()
+  })
+}));
+
+// Mock pg to avoid database connection issues in tests
+vi.mock('pg', () => ({
+  Pool: vi.fn(() => ({
+    connect: vi.fn(() => ({
+      query: vi.fn(() => ({ rows: [{ ts: 'now' }] })),
+      release: vi.fn()
+    }))
+  }))
+}));
+
+let app: Awaited<ReturnType<typeof buildApp>> | undefined;
 
 describe('API smoke', () => {
   beforeAll(async () => {
-    // Disable rate limiting in tests to avoid Redis dependency
-    process.env.FEATURE_RATE_LIMIT = 'false';
     app = await buildApp();
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  });
+  }, 30000); // 30 second timeout for app initialization
 
   afterAll(async () => {
-    await app.close();
-    await pool.end();
+    if (app) {
+      await app.close();
+    }
   });
 
   it('health returns ok', async () => {
+    if (!app) {
+      throw new Error('App not initialized');
+    }
     const res = await app.inject({ method: 'GET', url: '/health' });
     expect(res.statusCode).toBe(200);
     const body = res.json() as any;

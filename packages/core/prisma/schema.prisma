@@ -1,0 +1,905 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Base Tenant model
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  subdomain String   @unique
+  status    String // 'active', 'inactive', 'suspended'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  invoiceMatchRuns  InvoiceMatchRun[]
+  glAnomalyRuns     GLAnomalyRun[]
+  vendorQualityRuns VendorQualityRun[]
+}
+
+// Invoice Matching Module Tables
+model InvoiceMatchRun {
+  id                String   @id @default(uuid())
+  tenantId          String
+  runDate           DateTime @default(now())
+  status            String // 'running', 'completed', 'failed'
+  totalInvoices     Int
+  matchedInvoices   Int
+  unmatchedInvoices Int
+  fraudAlertsCount  Int
+  parameters        Json
+  results           Json?
+  errorMessage      String?
+  executionTimeMs   Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [id])
+  matchResults InvoiceMatchResult[]
+  fraudAlerts  FraudAlert[]
+
+  @@index([tenantId, runDate])
+  @@index([status])
+}
+
+model InvoiceMatchResult {
+  id            String   @id @default(uuid())
+  runId         String
+  invoiceNumber String
+  poNumber      String?
+  grNumber      String?
+  matchStatus   String // 'matched', 'partial', 'unmatched'
+  matchScore    Float
+  discrepancies Json
+  amounts       Json
+  vendorId      String?
+  vendorName    String?
+  createdAt     DateTime @default(now())
+
+  run InvoiceMatchRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@index([invoiceNumber])
+  @@index([matchStatus])
+}
+
+model FraudAlert {
+  id            String    @id @default(uuid())
+  runId         String
+  alertType     String // 'duplicate', 'pattern', 'outlier'
+  severity      String // 'high', 'medium', 'low'
+  invoiceNumber String
+  description   String
+  evidence      Json
+  status        String    @default("open") // 'open', 'investigating', 'resolved', 'false_positive'
+  assignedTo    String?
+  resolvedAt    DateTime?
+  resolution    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  run InvoiceMatchRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@index([status])
+  @@index([severity])
+}
+
+// GL Anomaly Detection Module Tables
+model GLAnomalyRun {
+  id                String   @id @default(uuid())
+  tenantId          String
+  fiscalYear        String
+  fiscalPeriod      String?
+  runDate           DateTime @default(now())
+  status            String // 'running', 'completed', 'failed'
+  totalTransactions Int
+  anomaliesFound    Int
+  parameters        Json
+  summary           Json?
+  errorMessage      String?
+  executionTimeMs   Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant    Tenant      @relation(fields: [tenantId], references: [id])
+  anomalies GLAnomaly[]
+
+  @@index([tenantId, fiscalYear, fiscalPeriod])
+  @@index([status])
+}
+
+model GLAnomaly {
+  id              String    @id @default(uuid())
+  runId           String
+  documentNumber  String
+  lineItem        String?
+  glAccount       String
+  amount          Float
+  postingDate     DateTime
+  detectionMethod String // 'benford', 'outlier', 'after_hours', etc.
+  riskScore       Float
+  riskLevel       String // 'critical', 'high', 'medium', 'low'
+  description     String
+  evidence        Json
+  status          String    @default("open")
+  assignedTo      String?
+  resolvedAt      DateTime?
+  resolution      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  run GLAnomalyRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@index([glAccount])
+  @@index([riskLevel])
+  @@index([status])
+}
+
+// Vendor Data Quality Module Tables
+model VendorQualityRun {
+  id               String   @id @default(uuid())
+  tenantId         String
+  runDate          DateTime @default(now())
+  status           String // 'running', 'completed', 'failed'
+  totalVendors     Int
+  issuesFound      Int
+  duplicatesFound  Int
+  potentialSavings Float
+  parameters       Json
+  summary          Json?
+  errorMessage     String?
+  executionTimeMs  Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant            Tenant                   @relation(fields: [tenantId], references: [id])
+  qualityIssues     VendorQualityIssue[]
+  duplicateClusters VendorDuplicateCluster[]
+
+  @@index([tenantId, runDate])
+  @@index([status])
+}
+
+model VendorQualityIssue {
+  id             String    @id @default(uuid())
+  runId          String
+  vendorId       String
+  vendorName     String
+  issueType      String // 'missing_field', 'invalid_format', 'outdated', 'risk'
+  severity       String // 'high', 'medium', 'low'
+  fieldName      String?
+  currentValue   String?
+  suggestedValue String?
+  description    String
+  qualityScore   Float
+  status         String    @default("open")
+  assignedTo     String?
+  resolvedAt     DateTime?
+  resolution     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  run VendorQualityRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@index([vendorId])
+  @@index([issueType])
+  @@index([status])
+}
+
+model VendorDuplicateCluster {
+  id                String    @id @default(uuid())
+  runId             String
+  clusterSize       Int
+  vendorIds         String[] // Array of vendor IDs in cluster
+  vendorNames       String[] // Array of vendor names
+  similarityScore   Float
+  matchFields       String[] // Fields that matched
+  estimatedSavings  Float
+  recommendedAction String
+  status            String    @default("pending") // 'pending', 'merged', 'ignored'
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  run VendorQualityRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
+  @@index([status])
+}
+
+// ============================================================================
+// LHDN E-INVOICE MODULE TABLES
+// ============================================================================
+
+model lhdn_einvoices {
+  id                     String    @id @default(uuid())
+  tenant_id              String
+  invoice_number         String
+  document_type          String // '01'=Invoice, '02'=Credit Note, etc.
+  status                 String // 'DRAFT', 'VALIDATED', 'SUBMITTED', 'ACCEPTED', 'REJECTED', 'CANCELLED'
+  invoice_date           DateTime
+  due_date               DateTime?
+  currency               String    @default("MYR")
+  supplier               Json
+  buyer                  Json
+  line_items             Json
+  subtotal_amount        Decimal   @db.Decimal(15, 2)
+  total_tax_amount       Decimal   @db.Decimal(15, 2)
+  total_discount_amount  Decimal   @default(0) @db.Decimal(15, 2)
+  total_amount           Decimal   @db.Decimal(15, 2)
+  payment_mode           String?
+  payment_terms          String?
+  sap_billing_document   String
+  sap_company_code       String
+  purchase_order_ref     String?
+  submission_uid         String?
+  lhdn_reference_number  String?
+  qr_code_data           String?   @db.Text
+  submitted_at           DateTime?
+  accepted_at            DateTime?
+  rejected_at            DateTime?
+  rejection_reasons      Json?
+  validated_at           DateTime?
+  validation_errors      Json?
+  validation_warnings    Json?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  created_by             String
+
+  audit_logs lhdn_audit_log[]
+
+  @@unique([tenant_id, invoice_number])
+  @@index([tenant_id])
+  @@index([status])
+  @@index([invoice_date(sort: Desc)])
+  @@index([sap_billing_document])
+  @@index([tenant_id, status, invoice_date(sort: Desc)])
+}
+
+model lhdn_audit_log {
+  id            String    @id @default(uuid())
+  tenant_id     String
+  invoice_id    String?
+  action        String // 'CREATED', 'VALIDATED', 'SUBMITTED', etc.
+  actor         String
+  request_data  Json?
+  response_data Json?
+  success       Boolean
+  error_message String?   @db.Text
+  ip_address    String?
+  user_agent    String?   @db.Text
+  request_id    String?
+  created_at    DateTime  @default(now())
+
+  invoice lhdn_einvoices? @relation(fields: [invoice_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([invoice_id])
+  @@index([action])
+  @@index([created_at(sort: Desc)])
+}
+
+model lhdn_tenant_config {
+  id                       String   @id @default(uuid())
+  tenant_id                String   @unique
+  client_id_encrypted      String   @db.Text
+  client_secret_encrypted  String   @db.Text
+  api_base_url             String
+  environment              String // 'SANDBOX' or 'PRODUCTION'
+  company_tin              String
+  company_name             String
+  company_address          Json
+  company_contact          Json?
+  invoice_prefix           String?
+  auto_submit              Boolean  @default(false)
+  validate_before_post     Boolean  @default(true)
+  generate_qr_code         Boolean  @default(true)
+  notification_emails      String[]
+  webhook_url              String?  @db.Text
+  tax_code_mapping         Json
+  is_active                Boolean  @default(true)
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  @@index([tenant_id])
+}
+
+// ============================================================================
+// SOD CONTROL MODULE TABLES
+// ============================================================================
+
+// SoD Analysis Runs
+model sod_analysis_runs {
+  id                   String    @id @default(uuid())
+  tenant_id            String
+  status               String // 'RUNNING', 'COMPLETED', 'FAILED'
+  mode                 String? // 'snapshot', 'delta', 'continuous'
+  total_users_analyzed Int?
+  violations_found     Int       @default(0)
+  high_risk_count      Int       @default(0)
+  medium_risk_count    Int       @default(0)
+  low_risk_count       Int       @default(0)
+  started_at           DateTime  @default(now())
+  completed_at         DateTime?
+  error_message        String?   @db.Text
+  summary              Json?
+  config               Json?
+  created_at           DateTime  @default(now())
+
+  findings sod_findings[]
+
+  @@index([tenant_id])
+  @@index([status])
+}
+
+// SoD Risks
+model sod_risks {
+  id                   String   @id @default(uuid())
+  tenant_id            String
+  risk_code            String
+  name                 String
+  description          String?  @db.Text
+  business_process     String? // OTC, P2P, R2R, etc.
+  category             String?
+  severity             String // CRITICAL, HIGH, MEDIUM, LOW
+  standard_references  Json? // SOX, ISO27001, etc.
+  is_active            Boolean  @default(true)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+  created_by           String
+  updated_by           String?
+
+  rulesets sod_rulesets[]
+  findings sod_findings[]
+
+  @@unique([tenant_id, risk_code])
+  @@index([tenant_id])
+  @@index([business_process])
+  @@index([severity])
+}
+
+// SoD Functions
+model sod_functions {
+  id                String   @id @default(uuid())
+  tenant_id         String
+  function_code     String
+  name              String
+  description       String?  @db.Text
+  category          String?
+  business_process  String?
+  system_type       String? // S4HC, BTP, etc.
+  technical_objects Json?
+  is_active         Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  rulesets_a              sod_rulesets[]               @relation("function_a")
+  rulesets_b              sod_rulesets[]               @relation("function_b")
+  function_permissions    sod_function_permissions[]
+
+  @@unique([tenant_id, function_code])
+  @@index([tenant_id])
+  @@index([system_type])
+  @@index([category])
+}
+
+// Connected Systems
+model access_systems {
+  id                String    @id @default(uuid())
+  tenant_id         String
+  system_code       String
+  system_name       String
+  system_type       String // S4HC, BTP, etc.
+  base_url          String?
+  connection_config Json?
+  last_sync_at      DateTime?
+  sync_frequency    String? // HOURLY, DAILY, etc.
+  sync_status       String? // ACTIVE, PAUSED, ERROR
+  last_sync_error   String?  @db.Text
+  total_users       Int       @default(0)
+  total_roles       Int       @default(0)
+  total_permissions Int       @default(0)
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  created_by        String
+
+  users               access_graph_users[]
+  roles               access_graph_roles[]
+  permissions         sod_permissions[]
+
+  @@unique([tenant_id, system_code])
+  @@index([tenant_id])
+  @@index([system_type])
+  @@index([sync_status])
+}
+
+// SoD Permissions
+model sod_permissions {
+  id                  String   @id @default(uuid())
+  tenant_id           String
+  permission_code     String
+  permission_name     String?
+  source_system_id    String
+  source_system_type  String
+  auth_object         String?
+  field_values        Json?
+  normalized_action   String? // CREATE, READ, UPDATE, DELETE
+  normalized_object   String? // VENDOR, PAYMENT, etc.
+  scope               Json?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  source_system        access_systems                @relation(fields: [source_system_id], references: [id])
+  function_permissions sod_function_permissions[]
+  role_permissions     access_graph_role_permissions[]
+
+  @@unique([tenant_id, source_system_id, permission_code])
+  @@index([tenant_id])
+  @@index([source_system_id])
+  @@index([normalized_action])
+}
+
+// SoD Rulesets
+model sod_rulesets {
+  id               String   @id @default(uuid())
+  tenant_id        String
+  risk_id          String
+  function_a_id    String
+  function_b_id    String
+  condition_type   String? // SAME_SCOPE, THRESHOLD, etc.
+  condition_config Json?
+  logic_operator   String   @default("AND")
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  created_by       String
+
+  risk       sod_risks      @relation(fields: [risk_id], references: [id])
+  function_a sod_functions  @relation("function_a", fields: [function_a_id], references: [id])
+  function_b sod_functions  @relation("function_b", fields: [function_b_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([risk_id])
+  @@index([function_a_id, function_b_id])
+}
+
+// Function to Permission Mapping
+model sod_function_permissions {
+  id               String   @id @default(uuid())
+  tenant_id        String
+  function_id      String
+  permission_id    String
+  confidence_score Decimal? @db.Decimal(3, 2)
+  mapping_source   String? // MANUAL, AUTO, ML
+  created_at       DateTime @default(now())
+
+  function   sod_functions   @relation(fields: [function_id], references: [id])
+  permission sod_permissions @relation(fields: [permission_id], references: [id])
+
+  @@unique([tenant_id, function_id, permission_id])
+  @@index([function_id])
+  @@index([permission_id])
+}
+
+// Access Graph Users
+model access_graph_users {
+  id                   String    @id @default(uuid())
+  tenant_id            String
+  user_id              String
+  user_name            String?
+  email                String?
+  full_name            String?
+  source_system_id     String
+  is_active            Boolean   @default(true)
+  is_locked            Boolean   @default(false)
+  user_type            String? // EMPLOYEE, CONTRACTOR, etc.
+  department           String?
+  position             String?
+  org_unit             String?
+  cost_center          String?
+  manager_id           String?
+  last_login_at        DateTime?
+  password_changed_at  DateTime?
+  valid_from           DateTime?
+  valid_to             DateTime?
+  synced_at            DateTime  @default(now())
+  source_data          Json?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  source_system access_systems              @relation(fields: [source_system_id], references: [id])
+  assignments   access_graph_assignments[]
+  findings      sod_findings[]
+  simulations   sod_simulation_results[]
+
+  @@unique([tenant_id, source_system_id, user_id])
+  @@index([tenant_id])
+  @@index([source_system_id])
+  @@index([email])
+  @@index([org_unit])
+}
+
+// Access Graph Roles
+model access_graph_roles {
+  id                String    @id @default(uuid())
+  tenant_id         String
+  role_id           String
+  role_name         String?
+  role_description  String?   @db.Text
+  source_system_id  String
+  role_type         String? // SINGLE, COMPOSITE, etc.
+  is_technical      Boolean   @default(false)
+  is_critical       Boolean   @default(false)
+  business_process  String?
+  risk_level        String?
+  parent_role_id    String?
+  synced_at         DateTime  @default(now())
+  source_data       Json?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  source_system    access_systems                  @relation(fields: [source_system_id], references: [id])
+  parent_role      access_graph_roles?             @relation("role_hierarchy", fields: [parent_role_id], references: [id])
+  child_roles      access_graph_roles[]            @relation("role_hierarchy")
+  assignments      access_graph_assignments[]
+  role_permissions access_graph_role_permissions[]
+
+  @@unique([tenant_id, source_system_id, role_id])
+  @@index([tenant_id])
+  @@index([source_system_id])
+  @@index([role_type])
+  @@index([business_process])
+}
+
+// User-to-Role Assignments
+model access_graph_assignments {
+  id                String    @id @default(uuid())
+  tenant_id         String
+  user_id           String
+  role_id           String
+  assignment_type   String // DIRECT, INHERITED, etc.
+  org_scope         Json?
+  valid_from        DateTime?
+  valid_to          DateTime?
+  assigned_by       String?
+  assigned_at       DateTime  @default(now())
+  assignment_reason String?   @db.Text
+  ticket_reference  String?
+  synced_at         DateTime  @default(now())
+  created_at        DateTime  @default(now())
+
+  user access_graph_users @relation(fields: [user_id], references: [id])
+  role access_graph_roles @relation(fields: [role_id], references: [id])
+
+  @@unique([tenant_id, user_id, role_id, assignment_type])
+  @@index([tenant_id])
+  @@index([user_id])
+  @@index([role_id])
+  @@index([assignment_type])
+}
+
+// Role to Permission Mappings
+model access_graph_role_permissions {
+  id            String   @id @default(uuid())
+  tenant_id     String
+  role_id       String
+  permission_id String
+  scope         Json?
+  synced_at     DateTime @default(now())
+  created_at    DateTime @default(now())
+
+  role       access_graph_roles @relation(fields: [role_id], references: [id])
+  permission sod_permissions    @relation(fields: [permission_id], references: [id])
+
+  @@unique([tenant_id, role_id, permission_id])
+  @@index([role_id])
+  @@index([permission_id])
+}
+
+// Access Graph Snapshots
+model access_graph_snapshots {
+  id                 String    @id @default(uuid())
+  tenant_id          String
+  snapshot_date      DateTime  @default(now())
+  snapshot_type      String // SCHEDULED, ON_DEMAND, etc.
+  snapshot_reason    String?   @db.Text
+  triggered_by       String?
+  total_users        Int
+  total_roles        Int
+  total_assignments  Int
+  total_systems      Int
+  snapshot_data      Json?
+  snapshot_hash      String?
+  status             String // CREATING, COMPLETED, FAILED
+  error_message      String?   @db.Text
+  created_at         DateTime  @default(now())
+
+  deltas_from access_graph_deltas[] @relation("from_snapshot")
+  deltas_to   access_graph_deltas[] @relation("to_snapshot")
+
+  @@index([tenant_id])
+  @@index([snapshot_date(sort: Desc)])
+  @@index([snapshot_type])
+}
+
+// Access Graph Deltas
+model access_graph_deltas {
+  id                  String    @id @default(uuid())
+  tenant_id           String
+  from_snapshot_id    String?
+  to_snapshot_id      String
+  change_type         String // USER_ADDED, ROLE_ASSIGNED, etc.
+  entity_type         String // USER, ROLE, etc.
+  entity_id           String
+  entity_name         String?
+  old_value           Json?
+  new_value           Json?
+  introduces_sod_risk Boolean   @default(false)
+  risk_assessment     Json?
+  detected_at         DateTime  @default(now())
+
+  from_snapshot access_graph_snapshots? @relation("from_snapshot", fields: [from_snapshot_id], references: [id])
+  to_snapshot   access_graph_snapshots  @relation("to_snapshot", fields: [to_snapshot_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([from_snapshot_id])
+  @@index([to_snapshot_id])
+  @@index([change_type])
+}
+
+// SoD Findings (Violations)
+model sod_findings {
+  id                       String    @id @default(uuid())
+  tenant_id                String
+  finding_code             String
+  risk_id                  String
+  user_id                  String
+  run_id                   String? // Changed from analysis_run_id to run_id
+  rule_id                  String? // Added for compatibility
+  rule_name                String? // Added for compatibility
+  conflicting_roles        String[]
+  conflicting_functions    String[]
+  conflicting_permissions  String[]
+  org_scope                Json?
+  context_data             Json?
+  business_context         Json? // Added for compatibility
+  severity                 String // CRITICAL, HIGH, MEDIUM, LOW
+  risk_score               Decimal?  @db.Decimal(5, 2)
+  trace_path               Json?
+  status                   String    @default("OPEN")
+  resolution_type          String?
+  resolution_notes         String?   @db.Text
+  resolved_at              DateTime?
+  resolved_by              String?
+  assigned_to              String?
+  assigned_at              DateTime?
+  due_date                 DateTime?
+  is_recurring             Boolean   @default(false)
+  recurrence_count         Int       @default(1)
+  first_detected           DateTime  @default(now())
+  last_detected            DateTime  @default(now())
+  last_checked             DateTime? // Added for compatibility
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+
+  risk            sod_risks              @relation(fields: [risk_id], references: [id])
+  user            access_graph_users     @relation(fields: [user_id], references: [id])
+  analysis_run    sod_analysis_runs?     @relation(fields: [run_id], references: [id])
+  comments        sod_finding_comments[]
+  mitigations     sod_mitigations[]
+  workflows       sod_workflows[]
+
+  @@unique([tenant_id, finding_code])
+  @@index([tenant_id])
+  @@index([risk_id])
+  @@index([user_id])
+  @@index([status])
+  @@index([severity])
+  @@index([first_detected(sort: Desc)])
+}
+
+// Finding Comments
+model sod_finding_comments {
+  id           String   @id @default(uuid())
+  tenant_id    String
+  finding_id   String
+  comment_text String   @db.Text
+  comment_type String? // REVIEW, RESOLUTION, etc.
+  attachments  Json?
+  created_by   String
+  created_at   DateTime @default(now())
+
+  finding sod_findings @relation(fields: [finding_id], references: [id])
+
+  @@index([finding_id])
+  @@index([created_at(sort: Desc)])
+}
+
+// Mitigations
+model sod_mitigations {
+  id                       String    @id @default(uuid())
+  tenant_id                String
+  finding_id               String
+  mitigation_type          String // COMPENSATING_CONTROL, EXCEPTION, etc.
+  description              String    @db.Text
+  control_objective        String?   @db.Text
+  implementation_details   String?   @db.Text
+  control_frequency        String?
+  control_owner            String?
+  reviewer                 String?
+  evidence_required        Boolean   @default(false)
+  exception_reason         String?   @db.Text
+  exception_justification  String?   @db.Text
+  business_justification   String?   @db.Text
+  approved_by              String?
+  approved_at              DateTime?
+  exception_expires_at     DateTime?
+  effectiveness_rating     String?
+  last_tested_at           DateTime?
+  test_results             String?   @db.Text
+  status                   String    @default("PENDING")
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+  created_by               String
+
+  finding   sod_findings              @relation(fields: [finding_id], references: [id])
+  evidence  sod_mitigation_evidence[]
+  workflows sod_workflows[]
+
+  @@index([tenant_id])
+  @@index([finding_id])
+  @@index([mitigation_type])
+  @@index([status])
+}
+
+// Mitigation Evidence
+model sod_mitigation_evidence {
+  id                   String    @id @default(uuid())
+  tenant_id            String
+  mitigation_id        String
+  evidence_type        String
+  evidence_name        String
+  evidence_description String?   @db.Text
+  storage_location     String?
+  file_hash            String?
+  file_size_bytes      BigInt?
+  mime_type            String?
+  collected_at         DateTime  @default(now())
+  collected_by         String
+  verified_at          DateTime?
+  verified_by          String?
+  verification_notes   String?   @db.Text
+  created_at           DateTime  @default(now())
+
+  mitigation sod_mitigations @relation(fields: [mitigation_id], references: [id])
+
+  @@index([mitigation_id])
+  @@index([evidence_type])
+}
+
+// Simulation Results
+model sod_simulation_results {
+  id                          String    @id @default(uuid())
+  tenant_id                   String
+  user_id                     String?
+  requested_roles             String[]
+  requested_permissions       String[]
+  simulation_type             String
+  current_risk_score          Decimal?  @db.Decimal(5, 2)
+  current_violations_count    Int       @default(0)
+  projected_risk_score        Decimal?  @db.Decimal(5, 2)
+  projected_violations_count  Int       @default(0)
+  risk_score_delta            Decimal?  @db.Decimal(5, 2)
+  new_violations              Json?
+  resolved_violations         Json?
+  recommendations             Json?
+  least_privilege_roles       String[]
+  requested_by                String
+  requested_at                DateTime  @default(now())
+  simulation_duration_ms      Int?
+  status                      String
+  error_message               String?   @db.Text
+  created_at                  DateTime  @default(now())
+
+  user      access_graph_users? @relation(fields: [user_id], references: [id])
+  workflows sod_workflows[]
+
+  @@index([tenant_id])
+  @@index([user_id])
+  @@index([requested_by])
+  @@index([created_at(sort: Desc)])
+}
+
+// Workflows
+model sod_workflows {
+  id                     String    @id @default(uuid())
+  tenant_id              String
+  workflow_type          String
+  finding_id             String?
+  mitigation_id          String?
+  simulation_id          String?
+  title                  String
+  description            String?   @db.Text
+  justification          String?   @db.Text
+  requested_by           String
+  requested_at           DateTime  @default(now())
+  approvers              Json?
+  current_approval_level Int       @default(1)
+  status                 String    @default("PENDING")
+  approved_by            String?
+  approved_at            DateTime?
+  rejected_by            String?
+  rejected_at            DateTime?
+  rejection_reason       String?   @db.Text
+  due_date               DateTime?
+  expires_at             DateTime?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  finding    sod_findings?            @relation(fields: [finding_id], references: [id])
+  mitigation sod_mitigations?         @relation(fields: [mitigation_id], references: [id])
+  simulation sod_simulation_results?  @relation(fields: [simulation_id], references: [id])
+  history    sod_workflow_history[]
+
+  @@index([tenant_id])
+  @@index([workflow_type])
+  @@index([status])
+  @@index([finding_id])
+  @@index([requested_by])
+}
+
+// Workflow History
+model sod_workflow_history {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  workflow_id String
+  action      String
+  actor       String
+  action_at   DateTime @default(now())
+  comment     String?  @db.Text
+  from_status String?
+  to_status   String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  workflow sod_workflows @relation(fields: [workflow_id], references: [id])
+
+  @@index([workflow_id])
+  @@index([action])
+}
+
+// SoD Rules (baseline rules table if needed)
+model sod_rules {
+  id                String   @id @default(uuid())
+  tenant_id         String
+  rule_code         String
+  rule_name         String
+  description       String?  @db.Text
+  rule_type         String // ROLE_CONFLICT, PERMISSION_CONFLICT, etc.
+  severity          String
+  business_process  String?
+  detection_logic   Json?
+  is_active         Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@unique([tenant_id, rule_code])
+  @@index([tenant_id])
+  @@index([rule_type])
+  @@index([severity])
+}

@@ -9,6 +9,8 @@ import { devLogin, extractBearer, verifyAccessToken, issueAccessToken } from './
 import { runDiscovery } from './discovery';
 import { requestMagicLink, consumeMagicLink } from './magic';
 import { registerConnectorRoutes } from './routes/connectors';
+import { registerLHDNRoutes } from './routes/modules/lhdn';
+import { registerSODRoutes } from './routes/modules/sod';
 import { Actor, CustomRequest } from './types';
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -273,6 +275,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   if (config.featureConnectors) {
     await registerConnectorRoutes(app);
   }
+
+  // Module Routes
+  await registerLHDNRoutes(app, pool);
+  await registerSODRoutes(app, pool);
 
   return app;
 }

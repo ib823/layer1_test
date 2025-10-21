@@ -78,31 +78,31 @@ function LoginForm() {
           <div className="branding-content">
             <SafetyOutlined className="branding-icon" />
             <Title level={1} style={{ color: 'white', marginBottom: 16 }}>
-              SAP GRC Platform
+              ABeam CoreBridge
             </Title>
             <Text style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 16 }}>
-              Governance, Risk & Compliance
+              Intelligent Enterprise Integration & Governance
             </Text>
             <Divider style={{ borderColor: 'rgba(255, 255, 255, 0.3)', margin: '32px 0' }} />
             <Space direction="vertical" size="large">
               <div>
                 <Text style={{ color: 'white', fontSize: 14, fontWeight: 500 }}>
-                  ✓ Segregation of Duties Analysis
+                  ✓ Unified Business Process Monitoring
                 </Text>
               </div>
               <div>
                 <Text style={{ color: 'white', fontSize: 14, fontWeight: 500 }}>
-                  ✓ Real-time Violation Detection
+                  ✓ Cross-System Data Integration
                 </Text>
               </div>
               <div>
                 <Text style={{ color: 'white', fontSize: 14, fontWeight: 500 }}>
-                  ✓ Multi-tenant Architecture
+                  ✓ AI-Powered Insights & Analytics
                 </Text>
               </div>
               <div>
                 <Text style={{ color: 'white', fontSize: 14, fontWeight: 500 }}>
-                  ✓ SAP Integration Ready
+                  ✓ Enterprise-Grade Security & Compliance
                 </Text>
               </div>
             </Space>
@@ -111,7 +111,7 @@ function LoginForm() {
 
         {/* Right side - Login form */}
         <div className="login-form-wrapper">
-          <Card className="login-card" bordered={false}>
+          <Card className="login-card" variant="borderless">
             <div style={{ textAlign: 'center', marginBottom: 32 }}>
               <Title level={2} style={{ marginBottom: 8 }}>
                 Welcome Back
@@ -230,7 +230,7 @@ function LoginForm() {
 
           <div style={{ textAlign: 'center', marginTop: 24 }}>
             <Text type="secondary" style={{ fontSize: 12 }}>
-              © 2025 SAP GRC Platform. All rights reserved.
+              © 2025 ABeam CoreBridge. All rights reserved.
             </Text>
           </div>
         </div>

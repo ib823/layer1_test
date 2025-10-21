@@ -33,6 +33,8 @@ import {
   FileTextOutlined,
   AuditOutlined,
   HomeOutlined,
+  AppstoreOutlined,
+  SecurityScanOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { Role, Permission } from '@/types/auth';
@@ -93,6 +95,68 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       label: 'Dashboard',
       onClick: () => router.push('/dashboard'),
     });
+
+    // Modules - Available to admins and compliance managers
+    if (hasRole([Role.SYSTEM_ADMIN, Role.TENANT_ADMIN, Role.COMPLIANCE_MANAGER])) {
+      items.push({
+        key: 'modules',
+        icon: <AppstoreOutlined />,
+        label: 'Modules',
+        children: [
+          {
+            key: 'sod',
+            icon: <SecurityScanOutlined />,
+            label: 'SoD Analysis',
+            children: [
+              {
+                key: '/modules/sod/dashboard',
+                label: 'Dashboard',
+                onClick: () => router.push('/modules/sod/dashboard'),
+              },
+              {
+                key: '/modules/sod/violations',
+                label: 'Violations',
+                onClick: () => router.push('/modules/sod/violations'),
+              },
+              {
+                key: '/modules/sod/config',
+                label: 'Configuration',
+                onClick: () => router.push('/modules/sod/config'),
+              },
+              {
+                key: '/modules/sod/reports',
+                label: 'Reports',
+                onClick: () => router.push('/modules/sod/reports'),
+              },
+            ],
+          },
+          {
+            key: '/modules/user-access-review',
+            icon: <TeamOutlined />,
+            label: 'User Access Review',
+            onClick: () => router.push('/modules/user-access-review'),
+          },
+          {
+            key: '/modules/invoice-matching',
+            icon: <FileTextOutlined />,
+            label: 'Invoice Matching',
+            onClick: () => router.push('/modules/invoice-matching'),
+          },
+          {
+            key: '/modules/gl-anomaly',
+            icon: <BarChartOutlined />,
+            label: 'GL Anomaly Detection',
+            onClick: () => router.push('/modules/gl-anomaly'),
+          },
+          {
+            key: '/modules/vendor-quality',
+            icon: <DatabaseOutlined />,
+            label: 'Vendor Data Quality',
+            onClick: () => router.push('/modules/vendor-quality'),
+          },
+        ],
+      });
+    }
 
     // Admin section - System Admin only
     if (hasRole(Role.SYSTEM_ADMIN)) {

@@ -9,63 +9,48 @@ describe('RuleEngine', () => {
   let ruleEngine: RuleEngine;
 
   beforeEach(() => {
-    // Create mock database
-    mockDb = {
-      'sod_analysis_runs': {
-        insert: jest.fn().mockReturnValue({
+    // Create chainable mock methods
+    const createChainableMock = () => ({
+      where: jest.fn().mockReturnThis(),
+      whereIn: jest.fn().mockReturnThis(),
+      update: jest.fn().mockResolvedValue(undefined),
+      select: jest.fn().mockResolvedValue([]),
+      join: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnValue({
+        returning: jest.fn().mockResolvedValue([]),
+        onConflict: jest.fn().mockReturnValue({
+          merge: jest.fn().mockResolvedValue(undefined),
+        }),
+      }),
+      returning: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockReturnThis(),
+      first: jest.fn().mockResolvedValue({ count: 0 }),
+    });
+
+    // Mock database function call
+    const dbFunc: any = jest.fn((table: string) => {
+      const mock = createChainableMock();
+
+      // Special handling for specific tables
+      if (table === 'sod_analysis_runs') {
+        mock.insert = jest.fn().mockReturnValue({
           returning: jest.fn().mockResolvedValue([{
             id: 'analysis-123',
             tenant_id: 'tenant-123',
             status: 'RUNNING',
           }]),
-        }),
-      },
-      'sod_rulesets': {
-        join: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        select: jest.fn().mockResolvedValue([]),
-      },
-      'access_graph_users': {
-        where: jest.fn().mockReturnThis(),
-        select: jest.fn().mockResolvedValue([]),
-      },
-      'access_graph_roles': {
-        where: jest.fn().mockReturnThis(),
-        select: jest.fn().mockResolvedValue([]),
-      },
-      'access_graph_assignments': {
-        where: jest.fn().mockReturnThis(),
-        select: jest.fn().mockResolvedValue([]),
-      },
-      'sod_permissions': {
-        where: jest.fn().mockReturnThis(),
-        select: jest.fn().mockResolvedValue([]),
-      },
-      'sod_findings': {
-        insert: jest.fn().mockReturnValue({
-          onConflict: jest.fn().mockReturnValue({
-            merge: jest.fn().mockResolvedValue(undefined),
-          }),
-        }),
-      },
-    };
-
-    // Mock database function call
-    const dbFunc = (table: string) => {
-      if (mockDb[table]) {
-        return mockDb[table];
+        });
       }
-      return {
-        insert: jest.fn().mockReturnValue({
-          returning: jest.fn().mockResolvedValue([]),
-        }),
-        where: jest.fn().mockReturnThis(),
-        update: jest.fn().mockResolvedValue(undefined),
-        select: jest.fn().mockResolvedValue([]),
-      };
-    };
 
-    ruleEngine = new RuleEngine(dbFunc as any);
+      return mock;
+    });
+
+    // Add raw method to the function itself
+    dbFunc.raw = jest.fn((sql: string) => ({ toString: () => sql }));
+
+    mockDb = dbFunc;
+    ruleEngine = new RuleEngine(mockDb as any);
   });
 
   describe('analyze', () => {
@@ -74,9 +59,6 @@ describe('RuleEngine', () => {
         mode: 'snapshot' as const,
         includeInactive: false,
       };
-
-      // Mock empty results to avoid complexity
-      mockDb['sod_rulesets'].select.mockResolvedValue([]);
 
       const result = await ruleEngine.analyze('tenant-123', config);
 
@@ -88,10 +70,8 @@ describe('RuleEngine', () => {
     it('should filter by risk levels when specified', async () => {
       const config = {
         mode: 'snapshot' as const,
-        riskLevels: ['CRITICAL', 'HIGH'] as const,
+        riskLevels: ['CRITICAL', 'HIGH'] as ('CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW')[],
       };
-
-      mockDb['sod_rulesets'].select.mockResolvedValue([]);
 
       const result = await ruleEngine.analyze('tenant-123', config);
 
@@ -109,29 +89,16 @@ describe('RuleEngine', () => {
         },
       };
 
-      mockDb['sod_rulesets'].select.mockResolvedValue([]);
-
       const result = await ruleEngine.analyze('tenant-123', config);
 
       expect(result).toBeDefined();
-      expect(mockDb['access_graph_users'].where).toHaveBeenCalled();
+      expect(mockDb).toHaveBeenCalledWith('access_graph_users');
     });
 
     it('should count findings by severity', async () => {
       const config = {
         mode: 'snapshot' as const,
       };
-
-      // Mock findings with different severities
-      const mockFindings = [
-        { severity: 'CRITICAL', id: '1' },
-        { severity: 'CRITICAL', id: '2' },
-        { severity: 'HIGH', id: '3' },
-        { severity: 'MEDIUM', id: '4' },
-        { severity: 'LOW', id: '5' },
-      ];
-
-      mockDb['sod_rulesets'].select.mockResolvedValue([]);
 
       const result = await ruleEngine.analyze('tenant-123', config);
 

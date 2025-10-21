@@ -23,4 +23,5 @@ module.exports = {
     '^@sap-framework/core$': '<rootDir>/../../core/src',
     '^@sap-framework/services$': '<rootDir>/../../services/src',
   },
+  maxConcurrency: 14
 };
