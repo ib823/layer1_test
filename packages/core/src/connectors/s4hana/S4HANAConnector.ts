@@ -67,14 +67,22 @@ export class S4HANAConnector extends BaseERPConnector {
 
     this.retryStrategy = new RetryStrategy();
 
-    this.circuitBreaker = new CircuitBreaker(
-      config.circuitBreaker || {
-        failureThreshold: 5,
-        successThreshold: 2,
-        resetTimeout: 60000,
-        name: 'S4HANA',
-      }
-    );
+    // Extract circuit breaker config from ERPConnectorConfig structure
+    const cbConfig = config.circuitBreaker
+      ? {
+          failureThreshold: config.circuitBreaker.failureThreshold,
+          successThreshold: config.circuitBreaker.successThreshold,
+          resetTimeout: config.circuitBreaker.resetTimeout,
+          name: 'S4HANA',
+        }
+      : {
+          failureThreshold: 5,
+          successThreshold: 2,
+          resetTimeout: 60000,
+          name: 'S4HANA',
+        };
+
+    this.circuitBreaker = new CircuitBreaker(cbConfig);
   }
 
   // ============================================
