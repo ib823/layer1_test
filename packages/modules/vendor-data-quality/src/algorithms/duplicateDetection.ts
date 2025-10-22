@@ -52,10 +52,11 @@ export function levenshteinDistance(str1: string, str2: string): number {
  * Calculate similarity percentage between two strings (0-100)
  */
 export function stringSimilarity(str1: string, str2: string): number {
-  if (!str1 || !str2) return 0;
+  // Handle null/undefined
+  if (str1 == null || str2 == null) return 0;
 
   const maxLength = Math.max(str1.length, str2.length);
-  if (maxLength === 0) return 100;
+  if (maxLength === 0) return 100; // Both empty strings = 100% similar
 
   const distance = levenshteinDistance(str1, str2);
   return ((maxLength - distance) / maxLength) * 100;

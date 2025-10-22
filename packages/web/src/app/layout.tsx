@@ -10,6 +10,7 @@ import "@sap-framework/tokens/tokens.css";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui";
 import { AuthProvider } from "@/lib/auth/AuthContext";
+import { SkipLink } from "@/components/SkipLink";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body suppressHydrationWarning>
+        <SkipLink />
         <QueryClientProvider client={queryClient}>
           <AntdRegistry>
             <TokenThemeProvider mode="light">

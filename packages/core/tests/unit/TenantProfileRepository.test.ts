@@ -1,26 +1,31 @@
 import { TenantProfileRepository } from '../../src/persistence/TenantProfileRepository';
 import { Pool } from 'pg';
 
-// Mock pg Pool
+// Mock the pg module - define mock functions that will be captured in closure
+const mockQuery = jest.fn();
+const mockEnd = jest.fn();
+
 jest.mock('pg', () => {
-  const mPool = {
-    query: jest.fn(),
-    end: jest.fn(),
+  // Define the Pool constructor mock
+  class MockPool {
+    query = mockQuery;
+    end = mockEnd;
+    constructor(config?: any) {}
+  }
+
+  return {
+    Pool: MockPool,
   };
-  return { Pool: jest.fn(() => mPool) };
 });
 
 describe('TenantProfileRepository', () => {
   let repository: TenantProfileRepository;
-  let mockPool: jest.Mocked<Pool>;
 
   beforeEach(() => {
-    mockPool = new Pool() as jest.Mocked<Pool>;
+    // Only clear calls, not implementations
+    mockQuery.mockClear();
+    mockEnd.mockClear();
     repository = new TenantProfileRepository('postgresql://localhost/test');
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   describe('createTenant', () => {
@@ -35,7 +40,7 @@ describe('TenantProfileRepository', () => {
         updated_at: new Date(),
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [mockTenant],
         command: 'INSERT',
         rowCount: 1,
@@ -49,7 +54,7 @@ describe('TenantProfileRepository', () => {
       // Assert
       expect(result.tenant_id).toBe('tenant-123');
       expect(result.company_name).toBe('Acme Corp');
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO tenants'),
         ['tenant-123', 'Acme Corp']
       );
@@ -59,7 +64,7 @@ describe('TenantProfileRepository', () => {
       // Arrange
       const error: any = new Error('duplicate key value violates unique constraint');
       error.code = '23505'; // PostgreSQL unique violation
-      (mockPool.query as jest.Mock).mockRejectedValue(error);
+      (mockQuery as jest.Mock).mockRejectedValue(error);
 
       // Act & Assert
       await expect(
@@ -80,7 +85,7 @@ describe('TenantProfileRepository', () => {
         updated_at: new Date(),
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [mockTenant],
         command: 'SELECT',
         rowCount: 1,
@@ -94,7 +99,7 @@ describe('TenantProfileRepository', () => {
       // Assert
       expect(result).not.toBeNull();
       expect(result?.tenant_id).toBe('tenant-123');
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM tenants'),
         ['tenant-123']
       );
@@ -102,7 +107,7 @@ describe('TenantProfileRepository', () => {
 
     it('should return null for non-existent tenant', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -148,7 +153,7 @@ describe('TenantProfileRepository', () => {
         recommendedActions: [],
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [{ id: '123' }],
         command: 'INSERT',
         rowCount: 1,
@@ -160,7 +165,7 @@ describe('TenantProfileRepository', () => {
       await repository.saveProfile(mockProfile);
 
       // Assert
-      expect(mockPool.query).toHaveBeenCalledTimes(2); // getTenant + insert
+      expect(mockQuery).toHaveBeenCalledTimes(2); // getTenant + insert
     });
 
     it('should throw error if tenant does not exist', async () => {
@@ -185,7 +190,7 @@ describe('TenantProfileRepository', () => {
         recommendedActions: [],
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -208,7 +213,7 @@ describe('TenantProfileRepository', () => {
         { module_name: 'User_Access_Review' },
       ];
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: mockModules,
         command: 'SELECT',
         rowCount: 2,
@@ -227,7 +232,7 @@ describe('TenantProfileRepository', () => {
 
     it('should return empty array when no modules active', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -246,7 +251,7 @@ describe('TenantProfileRepository', () => {
   describe('activateModule', () => {
     it('should activate a module for tenant', async () => {
       // Arrange
-      (mockPool.query as jest.Mock)
+      (mockQuery as jest.Mock)
         .mockResolvedValueOnce({
           // getTenant
           rows: [{ id: '123', tenant_id: 'tenant-123' }],
@@ -268,8 +273,8 @@ describe('TenantProfileRepository', () => {
       await repository.activateModule('tenant-123', 'SoD_Analysis', 'Required for compliance');
 
       // Assert
-      expect(mockPool.query).toHaveBeenCalledTimes(2);
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledTimes(2);
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO tenant_module_activations'),
         expect.arrayContaining(['tenant-123', 'SoD_Analysis', 'Required for compliance'])
       );
@@ -279,7 +284,7 @@ describe('TenantProfileRepository', () => {
   describe('healthCheck', () => {
     it('should return true when database is healthy', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [{ '?column?': 1 }],
         command: 'SELECT',
         rowCount: 1,
@@ -292,12 +297,12 @@ describe('TenantProfileRepository', () => {
 
       // Assert
       expect(result).toBe(true);
-      expect(mockPool.query).toHaveBeenCalledWith('SELECT 1');
+      expect(mockQuery).toHaveBeenCalledWith('SELECT 1');
     });
 
     it('should return false when database is unhealthy', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockRejectedValue(new Error('Connection failed'));
+      (mockQuery as jest.Mock).mockRejectedValue(new Error('Connection failed'));
 
       // Act
       const result = await repository.healthCheck();
@@ -330,7 +335,7 @@ describe('TenantProfileRepository', () => {
         recommended_actions: JSON.stringify([]),
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [mockProfile],
         command: 'SELECT',
         rowCount: 1,
@@ -349,7 +354,7 @@ describe('TenantProfileRepository', () => {
 
     it('should return null for non-existent profile', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -387,7 +392,7 @@ describe('TenantProfileRepository', () => {
         errors: [],
       };
 
-      (mockPool.query as jest.Mock)
+      (mockQuery as jest.Mock)
         .mockResolvedValueOnce({
           rows: [{ id: '123', tenant_id: 'tenant-123' }],
           command: 'SELECT',
@@ -407,8 +412,8 @@ describe('TenantProfileRepository', () => {
       await repository.saveDiscoveryHistory('tenant-123', mockResult);
 
       // Assert
-      expect(mockPool.query).toHaveBeenCalledTimes(2);
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledTimes(2);
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO service_discovery_history'),
         expect.arrayContaining(['tenant-123', expect.any(String), 0, true, []])
       );
@@ -435,7 +440,7 @@ describe('TenantProfileRepository', () => {
         errors: [],
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -461,7 +466,7 @@ describe('TenantProfileRepository', () => {
         auth_credentials: { type: 'oauth' },
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [mockConnection],
         command: 'SELECT',
         rowCount: 1,
@@ -479,7 +484,7 @@ describe('TenantProfileRepository', () => {
 
     it('should return null when no connection exists', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -498,7 +503,7 @@ describe('TenantProfileRepository', () => {
   describe('deactivateModule', () => {
     it('should deactivate a module for tenant', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'UPDATE',
         rowCount: 1,
@@ -510,7 +515,7 @@ describe('TenantProfileRepository', () => {
       await repository.deactivateModule('tenant-123', 'SoD_Analysis');
 
       // Assert
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE tenant_module_activations'),
         ['tenant-123', 'SoD_Analysis']
       );
@@ -539,7 +544,7 @@ describe('TenantProfileRepository', () => {
         },
       ];
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: mockTenants,
         command: 'SELECT',
         rowCount: 2,
@@ -553,14 +558,14 @@ describe('TenantProfileRepository', () => {
       // Assert
       expect(result).toHaveLength(2);
       expect(result[0].tenant_id).toBe('tenant-1');
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM tenants')
       );
     });
 
     it('should return empty array when no tenants exist', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -590,7 +595,7 @@ describe('TenantProfileRepository', () => {
         },
       ];
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: mockTenants,
         command: 'SELECT',
         rowCount: 1,
@@ -604,7 +609,7 @@ describe('TenantProfileRepository', () => {
       // Assert
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe('ACTIVE');
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining("WHERE status = 'ACTIVE'")
       );
     });
@@ -622,7 +627,7 @@ describe('TenantProfileRepository', () => {
         updated_at: new Date(),
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [mockTenant],
         command: 'UPDATE',
         rowCount: 1,
@@ -637,7 +642,7 @@ describe('TenantProfileRepository', () => {
 
       // Assert
       expect(result.company_name).toBe('Updated Corp');
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE tenants'),
         expect.arrayContaining(['Updated Corp', 'tenant-123'])
       );
@@ -654,7 +659,7 @@ describe('TenantProfileRepository', () => {
         updated_at: new Date(),
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [mockTenant],
         command: 'UPDATE',
         rowCount: 1,
@@ -682,7 +687,7 @@ describe('TenantProfileRepository', () => {
         updated_at: new Date(),
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [mockTenant],
         command: 'UPDATE',
         rowCount: 1,
@@ -717,7 +722,7 @@ describe('TenantProfileRepository', () => {
         },
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'INSERT',
         rowCount: 1,
@@ -729,7 +734,7 @@ describe('TenantProfileRepository', () => {
       await repository.saveSAPConnection('tenant-123', connection);
 
       // Assert
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO tenant_sap_connections'),
         expect.arrayContaining([
           'tenant-123',
@@ -754,7 +759,7 @@ describe('TenantProfileRepository', () => {
         },
       };
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'INSERT',
         rowCount: 1,
@@ -766,7 +771,7 @@ describe('TenantProfileRepository', () => {
       await repository.saveSAPConnection('tenant-123', connection);
 
       // Assert
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.any(String),
         expect.arrayContaining(['tenant-123', 'S4HANA'])
       );
@@ -788,7 +793,7 @@ describe('TenantProfileRepository', () => {
         },
       ];
 
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: mockHistory,
         command: 'SELECT',
         rowCount: 1,
@@ -801,7 +806,7 @@ describe('TenantProfileRepository', () => {
 
       // Assert
       expect(result).toHaveLength(1);
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('service_discovery_history'),
         ['tenant-123', 10]
       );
@@ -809,7 +814,7 @@ describe('TenantProfileRepository', () => {
 
     it('should retrieve discovery history with custom limit', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -821,7 +826,7 @@ describe('TenantProfileRepository', () => {
       await repository.getDiscoveryHistory('tenant-123', 5);
 
       // Assert
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.any(String),
         ['tenant-123', 5]
       );
@@ -829,7 +834,7 @@ describe('TenantProfileRepository', () => {
 
     it('should return empty array when no history exists', async () => {
       // Arrange
-      (mockPool.query as jest.Mock).mockResolvedValue({
+      (mockQuery as jest.Mock).mockResolvedValue({
         rows: [],
         command: 'SELECT',
         rowCount: 0,
@@ -848,13 +853,13 @@ describe('TenantProfileRepository', () => {
   describe('close', () => {
     it('should close database pool', async () => {
       // Arrange
-      (mockPool.end as jest.Mock).mockResolvedValue(undefined);
+      (mockEnd as jest.Mock).mockResolvedValue(undefined);
 
       // Act
       await repository.close();
 
       // Assert
-      expect(mockPool.end).toHaveBeenCalled();
+      expect(mockEnd).toHaveBeenCalled();
     });
   });
 });

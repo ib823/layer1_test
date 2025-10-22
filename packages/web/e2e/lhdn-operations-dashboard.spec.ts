@@ -89,7 +89,7 @@ test.describe('LHDN Operations Dashboard', () => {
     await page.waitForLoadState('networkidle');
 
     // Check today's performance heading
-    await expect(page.locator('text=Today\'s Performance, text=Today's Performance').first()).toBeVisible();
+    await expect(page.locator('text=Today\'s Performance').first()).toBeVisible();
 
     // Check for performance stats
     await expect(page.locator('text=Submissions').first()).toBeVisible();

@@ -1,4 +1,5 @@
 import { FrameworkError } from '../errors';
+import logger from './logger';
 
 export interface RetryConfig {
   maxRetries: number;
@@ -40,9 +41,12 @@ export class RetryStrategy {
         attempt++;
 
         // Log retry attempt
-        console.warn(`Retry attempt ${attempt}/${config.maxRetries}:`, {
+        logger.warn(`Retry attempt in progress`, {
+          attempt,
+          maxRetries: config.maxRetries,
           error: (error as Error).message,
-          nextDelay: this.calculateBackoff(attempt, config),
+          nextDelayMs: this.calculateBackoff(attempt, config),
+          backoffStrategy: config.backoffStrategy,
         });
 
         // Determine if we should retry

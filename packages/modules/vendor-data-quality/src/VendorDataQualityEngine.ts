@@ -449,15 +449,19 @@ export class VendorDataQualityEngine {
       if (vendor.city) score += 5;
       if (vendor.postalCode) score += 5;
       if (vendor.bankAccounts?.length) score += 15;
-      if (vendor.lastModifiedAt) {
-        const daysSince = (Date.now() - new Date(vendor.lastModifiedAt).getTime()) / (1000 * 60 * 60 * 24);
-        score += Math.max(0, 10 - (daysSince / 365) * 10); // More recent = higher score
-      }
-      return { vendor, score };
+      return { vendor, score, timestamp: vendor.lastModifiedAt || vendor.createdAt };
     });
 
-    // Return vendor with highest score
-    return scores.sort((a, b) => b.score - a.score)[0].vendor;
+    // Sort by completeness score first, then by recency
+    return scores.sort((a, b) => {
+      if (a.score !== b.score) {
+        return b.score - a.score;
+      }
+      // If scores are equal, prefer more recent
+      const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return timeB - timeA;
+    })[0].vendor;
   }
 
   /**

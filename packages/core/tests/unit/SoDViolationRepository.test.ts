@@ -1,31 +1,35 @@
 import { SoDViolationRepository } from '../../src/persistence/SoDViolationRepository';
 import { Pool } from 'pg';
 
-// Mock pg module
+// Mock pg module - define mock functions that will be captured in closure
+const mockQuery = jest.fn();
+const mockConnect = jest.fn();
+const mockEnd = jest.fn();
+
 jest.mock('pg', () => {
-  const mPool = {
-    query: jest.fn(),
-    connect: jest.fn(),
-    end: jest.fn(),
+  class MockPool {
+    query = mockQuery;
+    connect = mockConnect;
+    end = mockEnd;
+    constructor(config?: any) {}
+  }
+
+  return {
+    Pool: MockPool,
   };
-  return { Pool: jest.fn(() => mPool) };
 });
 
 describe('SoDViolationRepository', () => {
   let repository: SoDViolationRepository;
-  let mockPool: any;
 
   beforeEach(() => {
     // Reset mocks
-    jest.clearAllMocks();
+    mockQuery.mockClear();
+    mockConnect.mockClear();
+    mockEnd.mockClear();
 
     // Create repository with test connection
     repository = new SoDViolationRepository('postgresql://test');
-    mockPool = (repository as any).pool;
-  });
-
-  afterEach(async () => {
-    await repository.close();
   });
 
   describe('createAnalysisRun', () => {
@@ -46,7 +50,7 @@ describe('SoDViolationRepository', () => {
         }]
       };
 
-      mockPool.query.mockResolvedValue(mockResult);
+      mockQuery.mockResolvedValue(mockResult);
 
       const result = await repository.createAnalysisRun('tenant-1', 100, { ruleSet: 'standard' });
 
@@ -54,7 +58,7 @@ describe('SoDViolationRepository', () => {
       expect(result.tenantId).toBe('tenant-1');
       expect(result.status).toBe('RUNNING');
       expect(result.totalUsersAnalyzed).toBe(100);
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO sod_analysis_runs'),
         expect.arrayContaining(['tenant-1', 100])
       );
@@ -63,7 +67,7 @@ describe('SoDViolationRepository', () => {
 
   describe('completeAnalysisRun', () => {
     it('should update analysis run with results', async () => {
-      mockPool.query.mockResolvedValue({ rowCount: 1 });
+      mockQuery.mockResolvedValue({ rowCount: 1 });
 
       await repository.completeAnalysisRun('analysis-123', {
         total: 15,
@@ -72,7 +76,7 @@ describe('SoDViolationRepository', () => {
         low: 3,
       });
 
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE sod_analysis_runs'),
         [15, 5, 7, 3, 'analysis-123']
       );
@@ -81,11 +85,11 @@ describe('SoDViolationRepository', () => {
 
   describe('failAnalysisRun', () => {
     it('should mark analysis as failed', async () => {
-      mockPool.query.mockResolvedValue({ rowCount: 1 });
+      mockQuery.mockResolvedValue({ rowCount: 1 });
 
       await repository.failAnalysisRun('analysis-123', 'Connection timeout');
 
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('SET status = \'FAILED\''),
         ['Connection timeout', 'analysis-123']
       );
@@ -99,7 +103,7 @@ describe('SoDViolationRepository', () => {
         release: jest.fn(),
       };
 
-      mockPool.connect.mockResolvedValue(mockClient);
+      mockConnect.mockResolvedValue(mockClient);
 
       const violations = [
         {
@@ -147,7 +151,7 @@ describe('SoDViolationRepository', () => {
         release: jest.fn(),
       };
 
-      mockPool.connect.mockResolvedValue(mockClient);
+      mockConnect.mockResolvedValue(mockClient);
 
       const violations = [{
         tenantId: 'tenant-1',
@@ -168,7 +172,7 @@ describe('SoDViolationRepository', () => {
 
     it('should handle empty violations array', async () => {
       await repository.storeViolations([]);
-      expect(mockPool.connect).not.toHaveBeenCalled();
+      expect(mockConnect).not.toHaveBeenCalled();
     });
   });
 
@@ -191,7 +195,7 @@ describe('SoDViolationRepository', () => {
         },
       ];
 
-      mockPool.query
+      mockQuery
         .mockResolvedValueOnce({ rows: [{ count: '10' }] }) // count query
         .mockResolvedValueOnce({ rows: mockViolations }); // data query
 
@@ -200,11 +204,11 @@ describe('SoDViolationRepository', () => {
       expect(result.total).toBe(10);
       expect(result.violations).toHaveLength(1);
       expect(result.violations[0].id).toBe('viol-1');
-      expect(mockPool.query).toHaveBeenCalledTimes(2);
+      expect(mockQuery).toHaveBeenCalledTimes(2);
     });
 
     it('should apply filters correctly', async () => {
-      mockPool.query
+      mockQuery
         .mockResolvedValueOnce({ rows: [{ count: '5' }] })
         .mockResolvedValueOnce({ rows: [] });
 
@@ -218,7 +222,7 @@ describe('SoDViolationRepository', () => {
         { page: 1, pageSize: 10 }
       );
 
-      const calls = mockPool.query.mock.calls;
+      const calls = mockQuery.mock.calls;
       const countQuery = calls[0][0];
       const dataQuery = calls[1][0];
 
@@ -244,20 +248,20 @@ describe('SoDViolationRepository', () => {
         updated_at: new Date(),
       };
 
-      mockPool.query.mockResolvedValue({ rows: [mockViolation] });
+      mockQuery.mockResolvedValue({ rows: [mockViolation] });
 
       const result = await repository.getViolation('tenant-1', 'viol-1');
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe('viol-1');
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('WHERE id = $1 AND tenant_id = $2'),
         ['viol-1', 'tenant-1']
       );
     });
 
     it('should return null for non-existent violation', async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
+      mockQuery.mockResolvedValue({ rows: [] });
 
       const result = await repository.getViolation('tenant-1', 'non-existent');
 
@@ -267,7 +271,7 @@ describe('SoDViolationRepository', () => {
 
   describe('updateViolationStatus', () => {
     it('should update status and acknowledgement', async () => {
-      mockPool.query.mockResolvedValue({ rowCount: 1 });
+      mockQuery.mockResolvedValue({ rowCount: 1 });
 
       await repository.updateViolationStatus('viol-1', {
         status: 'ACKNOWLEDGED',
@@ -275,21 +279,21 @@ describe('SoDViolationRepository', () => {
         remediationNotes: 'Business exception approved',
       });
 
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('status = $1'),
         expect.arrayContaining(['ACKNOWLEDGED', 'admin@example.com', 'Business exception approved', 'viol-1'])
       );
     });
 
     it('should update status and resolution', async () => {
-      mockPool.query.mockResolvedValue({ rowCount: 1 });
+      mockQuery.mockResolvedValue({ rowCount: 1 });
 
       await repository.updateViolationStatus('viol-1', {
         status: 'REMEDIATED',
         resolvedBy: 'admin@example.com',
       });
 
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('resolved_by'),
         expect.arrayContaining(['REMEDIATED', 'admin@example.com', 'viol-1'])
       );
@@ -308,20 +312,20 @@ describe('SoDViolationRepository', () => {
         created_at: new Date(),
       };
 
-      mockPool.query.mockResolvedValue({ rows: [mockAnalysis] });
+      mockQuery.mockResolvedValue({ rows: [mockAnalysis] });
 
       const result = await repository.getLatestAnalysis('tenant-1');
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe('analysis-123');
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('ORDER BY started_at DESC'),
         ['tenant-1']
       );
     });
 
     it('should return null when no analysis exists', async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
+      mockQuery.mockResolvedValue({ rows: [] });
 
       const result = await repository.getLatestAnalysis('tenant-1');
 
@@ -337,7 +341,7 @@ describe('SoDViolationRepository', () => {
         { count: '2', status: 'ACKNOWLEDGED', risk_level: 'LOW' },
       ];
 
-      mockPool.query.mockResolvedValue({ rows: mockStats });
+      mockQuery.mockResolvedValue({ rows: mockStats });
 
       const result = await repository.getViolationStats('tenant-1');
 
@@ -352,16 +356,16 @@ describe('SoDViolationRepository', () => {
 
   describe('deleteOldViolations', () => {
     it('should delete violations older than specified days', async () => {
-      mockPool.query.mockResolvedValue({ rowCount: 15 });
+      mockQuery.mockResolvedValue({ rowCount: 15 });
 
       const deleted = await repository.deleteOldViolations('tenant-1', 90);
 
       expect(deleted).toBe(15);
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM sod_violations'),
         ['tenant-1']
       );
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(mockQuery).toHaveBeenCalledWith(
         expect.stringContaining('90 days'),
         expect.any(Array)
       );

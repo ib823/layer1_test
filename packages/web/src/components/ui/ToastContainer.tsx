@@ -42,7 +42,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info }}>
       {children}
-      <div className="toast-container">
+      <div
+        className="toast-container"
+        role="region"
+        aria-label="Notifications"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
         {toasts.map((toast) => (
           <Toast key={toast.id} {...toast} />
         ))}

@@ -71,10 +71,10 @@ function LoginForm() {
   };
 
   return (
-    <div className="login-container">
+    <main className="login-container">
       <div className="login-content">
         {/* Left side - Branding */}
-        <div className="login-branding">
+        <section className="login-branding" aria-label="Platform Branding">
           <div className="branding-content">
             <SafetyOutlined className="branding-icon" />
             <Title level={1} style={{ color: 'white', marginBottom: 16 }}>
@@ -107,19 +107,19 @@ function LoginForm() {
               </div>
             </Space>
           </div>
-        </div>
+        </section>
 
         {/* Right side - Login form */}
-        <div className="login-form-wrapper">
+        <section className="login-form-wrapper" aria-label="Login Form">
           <Card className="login-card" variant="borderless">
-            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <header style={{ textAlign: 'center', marginBottom: 32 }}>
               <Title level={2} style={{ marginBottom: 8 }}>
                 Welcome Back
               </Title>
               <Text type="secondary">
                 Sign in to your account to continue
               </Text>
-            </div>
+            </header>
 
             {error && (
               <Alert
@@ -220,28 +220,28 @@ function LoginForm() {
 
             <Divider style={{ margin: '24px 0' }} />
 
-            <div style={{ textAlign: 'center' }}>
+            <nav aria-label="Login support links" style={{ textAlign: 'center' }}>
               <Space size="large">
                 <Link href="/forgot-password">Forgot password?</Link>
                 <Link href="/help">Need help?</Link>
               </Space>
-            </div>
+            </nav>
           </Card>
 
-          <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <footer style={{ textAlign: 'center', marginTop: 24 }}>
             <Text type="secondary" style={{ fontSize: 12 }}>
               © 2025 ABeam CoreBridge. All rights reserved.
             </Text>
-          </div>
-        </div>
+          </footer>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" /></div>}>
+    <Suspense fallback={<main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" /></main>}>
       <LoginForm />
     </Suspense>
   );

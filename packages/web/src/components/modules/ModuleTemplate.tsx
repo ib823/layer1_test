@@ -24,15 +24,15 @@ export const ModuleTemplate: React.FC<ModuleTemplateProps> = ({ config, children
   if (!hasPermission) {
     return (
       <Content style={{ padding: '24px' }}>
-        <div style={{ 
-          background: '#fff', 
-          padding: '48px', 
+        <main id="main-content" style={{
+          background: '#fff',
+          padding: '48px',
           borderRadius: '8px',
           textAlign: 'center'
         }}>
           <h2>Access Denied</h2>
           <p>You don't have permission to access this module.</p>
-        </div>
+        </main>
       </Content>
     );
   }
@@ -57,16 +57,16 @@ export const ModuleTemplate: React.FC<ModuleTemplateProps> = ({ config, children
 
   return (
     <Content style={{ padding: '0 24px', minHeight: '100vh' }}>
-      <div style={{ padding: '16px 0' }}>
+      <nav aria-label="Breadcrumb" style={{ padding: '16px 0' }}>
         <Breadcrumb items={breadcrumbItems} />
-      </div>
-      <div style={{ 
-        background: '#f0f2f5', 
-        padding: '24px', 
-        borderRadius: '8px' 
+      </nav>
+      <main id="main-content" style={{
+        background: '#f0f2f5',
+        padding: '24px',
+        borderRadius: '8px'
       }}>
         {children}
-      </div>
+      </main>
     </Content>
   );
 };

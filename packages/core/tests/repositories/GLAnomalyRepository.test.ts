@@ -5,30 +5,56 @@
 import { GLAnomalyRepository } from '../../src/repositories/GLAnomalyRepository';
 import { PrismaClient } from '../../src/generated/prisma';
 
-jest.mock('../../src/generated/prisma', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    gLAnomalyRun: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      count: jest.fn(),
-      aggregate: jest.fn(),
-    },
-    gLAnomaly: {
-      createMany: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      groupBy: jest.fn(),
-    },
-  })),
-}));
+// Create mock functions
+const mockGLAnomalyRunCreate = jest.fn();
+const mockGLAnomalyRunFindUnique = jest.fn();
+const mockGLAnomalyRunFindMany = jest.fn();
+const mockGLAnomalyRunCount = jest.fn();
+const mockGLAnomalyRunAggregate = jest.fn();
+const mockGLAnomalyCreateMany = jest.fn();
+const mockGLAnomalyFindMany = jest.fn();
+const mockGLAnomalyUpdate = jest.fn();
+const mockGLAnomalyGroupBy = jest.fn();
+
+// Mock Prisma Client with class-based approach
+jest.mock('../../src/generated/prisma', () => {
+  class MockPrismaClient {
+    gLAnomalyRun = {
+      create: mockGLAnomalyRunCreate,
+      findUnique: mockGLAnomalyRunFindUnique,
+      findMany: mockGLAnomalyRunFindMany,
+      count: mockGLAnomalyRunCount,
+      aggregate: mockGLAnomalyRunAggregate,
+    };
+    gLAnomaly = {
+      createMany: mockGLAnomalyCreateMany,
+      findMany: mockGLAnomalyFindMany,
+      update: mockGLAnomalyUpdate,
+      groupBy: mockGLAnomalyGroupBy,
+    };
+  }
+
+  return {
+    PrismaClient: MockPrismaClient,
+  };
+});
 
 describe('GLAnomalyRepository', () => {
   let repository: GLAnomalyRepository;
-  let prisma: jest.Mocked<PrismaClient>;
 
   beforeEach(() => {
-    prisma = new PrismaClient() as jest.Mocked<PrismaClient>;
+    // Clear individual mocks
+    mockGLAnomalyRunCreate.mockClear();
+    mockGLAnomalyRunFindUnique.mockClear();
+    mockGLAnomalyRunFindMany.mockClear();
+    mockGLAnomalyRunCount.mockClear();
+    mockGLAnomalyRunAggregate.mockClear();
+    mockGLAnomalyCreateMany.mockClear();
+    mockGLAnomalyFindMany.mockClear();
+    mockGLAnomalyUpdate.mockClear();
+    mockGLAnomalyGroupBy.mockClear();
+
+    const prisma = new PrismaClient() as jest.Mocked<PrismaClient>;
     repository = new GLAnomalyRepository(prisma);
   });
 
@@ -51,7 +77,7 @@ describe('GLAnomalyRepository', () => {
         updatedAt: new Date(),
       };
 
-      (prisma.gLAnomalyRun.create as jest.Mock).mockResolvedValue(mockRun);
+      (mockGLAnomalyRunCreate as jest.Mock).mockResolvedValue(mockRun);
 
       const result = await repository.createRun({
         tenantId: 'tenant-1',
@@ -83,22 +109,22 @@ describe('GLAnomalyRepository', () => {
         },
       ];
 
-      (prisma.gLAnomaly.createMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (mockGLAnomalyCreateMany as jest.Mock).mockResolvedValue({ count: 1 });
 
       await repository.saveAnomalies('run-1', anomalies as any);
 
-      expect(prisma.gLAnomaly.createMany).toHaveBeenCalled();
+      expect(mockGLAnomalyCreateMany).toHaveBeenCalled();
     });
   });
 
   describe('getStatistics', () => {
     it('should calculate GL statistics', async () => {
-      (prisma.gLAnomalyRun.count as jest.Mock).mockResolvedValue(5);
-      (prisma.gLAnomalyRun.aggregate as jest.Mock).mockResolvedValue({
+      (mockGLAnomalyRunCount as jest.Mock).mockResolvedValue(5);
+      (mockGLAnomalyRunAggregate as jest.Mock).mockResolvedValue({
         _sum: { totalTransactions: 25000, anomaliesFound: 150 },
         _avg: { anomaliesFound: 30 },
       });
-      (prisma.gLAnomaly.groupBy as jest.Mock).mockResolvedValue([
+      (mockGLAnomalyGroupBy as jest.Mock).mockResolvedValue([
         { riskLevel: 'HIGH', _count: 20 },
         { riskLevel: 'MEDIUM', _count: 30 },
       ]);
