@@ -93,7 +93,7 @@ export class CreditNoteWorkflow {
     } = request;
 
     const errors: string[] = [];
-    const warnings: string[] = [];
+    const _warnings: string[] = [];
 
     try {
       logger.info('Starting credit note workflow', {

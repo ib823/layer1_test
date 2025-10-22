@@ -5,7 +5,6 @@
 
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@sap-framework/core';
-import { ApiResponseUtil } from '../utils/response';
 import logger from '../utils/logger';
 
 const router: Router = Router();

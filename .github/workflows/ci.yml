@@ -29,10 +29,13 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install
-      
+
+      - name: Generate Prisma Client
+        run: cd packages/core && npx prisma generate
+
       - name: Type check
         run: pnpm typecheck
-      
+
       - name: Build
         run: pnpm build
       

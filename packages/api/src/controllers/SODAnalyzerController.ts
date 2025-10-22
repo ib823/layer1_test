@@ -634,7 +634,7 @@ export class SODAnalyzerController {
    *       200:
    *         description: Module is healthy
    */
-  async getModuleHealth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getModuleHealth(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
       logger.info('SoD module health check');
 

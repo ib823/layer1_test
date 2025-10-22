@@ -14,7 +14,10 @@ COPY packages/services/package.json ./packages/services/
 COPY packages/modules/user-access-review/package.json ./packages/modules/user-access-review/
 COPY packages/api/package.json ./packages/api/
 
-# Install dependencies
+# Copy Prisma schema (required for postinstall hook)
+COPY packages/core/prisma ./packages/core/prisma
+
+# Install dependencies (this will run prisma generate via postinstall)
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: Build
@@ -30,6 +33,9 @@ COPY --from=dependencies /app/packages ./packages
 
 # Copy source code
 COPY . .
+
+# Generate Prisma client before building
+RUN cd packages/core && npx prisma generate
 
 # Build all packages
 RUN pnpm build
@@ -48,14 +54,23 @@ COPY packages/services/package.json ./packages/services/
 COPY packages/modules/user-access-review/package.json ./packages/modules/user-access-review/
 COPY packages/api/package.json ./packages/api/
 
+# Copy Prisma schema (required for Prisma client)
+COPY packages/core/prisma ./packages/core/prisma
+
 # Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+RUN pnpm install --prod --frozen-lockfile
+
+# Generate Prisma client for production
+RUN cd packages/core && npx prisma generate
 
 # Copy built files from builder
 COPY --from=builder /app/packages/core/dist ./packages/core/dist
 COPY --from=builder /app/packages/services/dist ./packages/services/dist
 COPY --from=builder /app/packages/modules/user-access-review/dist ./packages/modules/user-access-review/dist
 COPY --from=builder /app/packages/api/dist ./packages/api/dist
+
+# Copy generated Prisma client from builder
+COPY --from=builder /app/packages/core/src/generated ./packages/core/src/generated
 
 # Create non-root user
 RUN addgroup -g 1001 -S sapframework && \

@@ -4,7 +4,7 @@
  * Database persistence layer for LHDN e-invoices
  */
 
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import {
   LHDNInvoice,
   InvoiceStatus,

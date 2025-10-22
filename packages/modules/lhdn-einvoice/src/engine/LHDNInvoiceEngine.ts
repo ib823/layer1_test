@@ -31,7 +31,7 @@ import {
   BulkSubmissionResult,
   ComplianceReport,
 } from '../types';
-import { SAPBillingDocument, MappingContext } from '../types/sap-mapping';
+import { SAPBillingDocument } from '../types/sap-mapping';
 import { logger } from '../utils/logger';
 
 export interface LHDNInvoiceEngineConfig {

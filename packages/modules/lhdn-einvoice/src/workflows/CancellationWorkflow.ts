@@ -17,7 +17,7 @@ import { LHDNInvoiceRepository } from '../repository/LHDNInvoiceRepository';
 import { EventService } from '../services/EventService';
 import { SubmissionService } from '../services/SubmissionService';
 import { NotificationService } from '../services/NotificationService';
-import { LHDNInvoice, ValidationResult } from '../types';
+import type {} from '../types';
 import { logger } from '../utils/logger';
 
 export interface CancelInvoiceRequest {
