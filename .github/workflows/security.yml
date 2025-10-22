@@ -35,7 +35,7 @@ jobs:
 
       - name: Run npm audit
         run: |
-          pnpm audit --audit-level=moderate --json > npm-audit.json || true
+          pnpm audit --audit-level=high --json > npm-audit.json || true
           cat npm-audit.json
 
       - name: Run Snyk test

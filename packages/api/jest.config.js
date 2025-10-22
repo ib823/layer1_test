@@ -3,6 +3,13 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.ts'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    'integration',
+    'e2e',
+    'performance'
+  ],
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
   coverageThreshold: {
     global: {

@@ -160,10 +160,10 @@ export class RuleEngine {
     let rolesQuery = this.db('access_graph_roles')
       .where({ tenant_id: tenantId });
 
-    let assignmentsQuery = this.db('access_graph_assignments')
+    const assignmentsQuery = this.db('access_graph_assignments')
       .where({ tenant_id: tenantId });
 
-    let permissionsQuery = this.db('sod_permissions')
+    const permissionsQuery = this.db('sod_permissions')
       .where({ tenant_id: tenantId });
 
     // Apply scope filters
