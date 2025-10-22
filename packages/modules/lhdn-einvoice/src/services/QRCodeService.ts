@@ -182,7 +182,7 @@ export class QRCodeService {
    * Verify QR code data
    * Decodes QR code and validates structure
    */
-  async verifyQRCode(qrCodeBase64: string): Promise<{
+  async verifyQRCode(_qrCodeBase64: string): Promise<{
     valid: boolean;
     data?: QRCodeData;
     error?: string;

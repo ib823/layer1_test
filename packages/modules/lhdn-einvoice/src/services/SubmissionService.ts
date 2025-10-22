@@ -191,7 +191,7 @@ export class SubmissionService {
 
       logger.info('Cancelling invoice', { submissionUid, reason: request.reason });
 
-      const response = await this.axiosInstance.post(
+      const _response = await this.axiosInstance.post(
         `/api/v1.0/documents/${submissionUid}/cancel`,
         request,
         {
@@ -366,7 +366,7 @@ export class SubmissionService {
    */
   async testConnection(): Promise<boolean> {
     try {
-      const token = await this.authenticate();
+      const _token = await this.authenticate();
       logger.info('LHDN API connection test successful');
       return true;
     } catch (error: any) {

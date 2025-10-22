@@ -12,7 +12,6 @@ import {
   LHDNTaxType,
 } from '../types';
 import {
-  SAPBillingDocument,
   SAPBillingDocumentItem,
   SAPBusinessPartner,
   SAPBusinessPartnerAddress,
@@ -225,7 +224,7 @@ export class MappingService {
     bp: SAPBusinessPartner,
     tin: string,
     name: string,
-    partyType: 'supplier' | 'buyer'
+    _partyType: 'supplier' | 'buyer'
   ): LHDNParty {
     const party: LHDNParty = {
       tin: tin || bp.TaxNumber3 || '',
