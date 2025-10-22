@@ -34,6 +34,9 @@ COPY --from=dependencies /app/packages ./packages
 # Copy source code
 COPY . .
 
+# Generate Prisma client before building
+RUN cd packages/core && npx prisma generate
+
 # Build all packages
 RUN pnpm build
 
@@ -54,8 +57,11 @@ COPY packages/api/package.json ./packages/api/
 # Copy Prisma schema (required for Prisma client)
 COPY packages/core/prisma ./packages/core/prisma
 
-# Install production dependencies only (will generate Prisma client)
+# Install production dependencies only
 RUN pnpm install --prod --frozen-lockfile
+
+# Generate Prisma client for production
+RUN cd packages/core && npx prisma generate
 
 # Copy built files from builder
 COPY --from=builder /app/packages/core/dist ./packages/core/dist
