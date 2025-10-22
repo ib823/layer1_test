@@ -142,7 +142,7 @@ describe('GLAnomalyDetectionEngine', () => {
         documentDate: new Date(`2024-01-${10 + i}`),
         amount: 95000 + (i * 1000), // Similar amounts with variation
         currency: 'USD',
-        debitCredit: 'CREDIT',
+        debitCredit: 'CREDIT' as const,
         documentType: 'DR',
         reference: `REF${100 + i}`,
         description: 'Regular sales',
@@ -150,7 +150,7 @@ describe('GLAnomalyDetectionEngine', () => {
         userName: 'John Doe',
         postingTime: '10:00:00',
         isReversal: false
-      }))
+      })) as GLLineItem[]
     ];
 
     // Default mock behavior
@@ -591,7 +591,7 @@ describe('GLAnomalyDetectionEngine', () => {
 
       expect(result.summary.byType).toBeDefined();
       Object.keys(result.summary.byType).forEach(type => {
-        expect(result.summary.byType[type as any]).toBeGreaterThanOrEqual(0);
+        expect(result.summary.byType[type as keyof typeof result.summary.byType]).toBeGreaterThanOrEqual(0);
       });
     });
 
