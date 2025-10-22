@@ -10,6 +10,9 @@ import {
   getExpiryTimeString,
   passwordResetRateLimiter,
   hashToken,
+  hashPassword,
+  validatePasswordStrength,
+  passwordResetTokenStore,
 } from '@sap-framework/core';
 import { getEmailService } from '@sap-framework/core';
 
@@ -248,21 +251,6 @@ export class AuthController {
   // ===================================================================
 
   /**
-   * In-memory token store (use Redis/database in production)
-   * Map<hashedToken, {hashedToken, email, expiresAt, used}>
-   */
-  private static passwordResetTokens: Map<
-    string,
-    {
-      hashedToken: string;
-      email: string;
-      expiresAt: Date;
-      used: boolean;
-      createdAt: Date;
-    }
-  > = new Map();
-
-  /**
    * Request password reset
    * POST /api/auth/forgot-password
    */
@@ -302,14 +290,18 @@ export class AuthController {
       // Generate reset token
       const tokenData = generatePasswordResetToken(sanitizedEmail, 60); // 60 minutes validity
 
-      // Store token (use database in production)
-      AuthController.passwordResetTokens.set(tokenData.hashedToken, {
-        hashedToken: tokenData.hashedToken,
-        email: sanitizedEmail,
-        expiresAt: tokenData.expiresAt,
-        used: false,
-        createdAt: tokenData.createdAt,
-      });
+      // Store token in Redis (with automatic expiration)
+      const ttlSeconds = 60 * 60; // 60 minutes
+      await passwordResetTokenStore.set(
+        tokenData.hashedToken,
+        {
+          email: sanitizedEmail,
+          expiresAt: tokenData.expiresAt,
+          createdAt: tokenData.createdAt,
+          used: false,
+        },
+        ttlSeconds
+      );
 
       // Generate reset URL
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
@@ -386,7 +378,7 @@ export class AuthController {
 
       // Hash token to look up in store
       const hashedToken = hashToken(token);
-      const storedToken = AuthController.passwordResetTokens.get(hashedToken);
+      const storedToken = await passwordResetTokenStore.get(hashedToken);
 
       if (!storedToken) {
         logger.warn('Password reset token not found');
@@ -431,14 +423,20 @@ export class AuthController {
       }
 
       // Validate password strength
-      if (newPassword.length < 8) {
-        ApiResponseUtil.badRequest(res, 'Password must be at least 8 characters long');
+      const passwordValidation = validatePasswordStrength(newPassword);
+      if (!passwordValidation.isValid) {
+        ApiResponseUtil.error(
+          res,
+          'WEAK_PASSWORD',
+          passwordValidation.errors.join('. '),
+          400
+        );
         return;
       }
 
       // Hash token to look up in store
       const hashedToken = hashToken(token);
-      const storedToken = AuthController.passwordResetTokens.get(hashedToken);
+      const storedToken = await passwordResetTokenStore.get(hashedToken);
 
       if (!storedToken) {
         logger.warn('Password reset token not found');
@@ -459,14 +457,24 @@ export class AuthController {
         return;
       }
 
-      // Mark token as used
-      storedToken.used = true;
+      // Mark token as used in Redis
+      await passwordResetTokenStore.markAsUsed(hashedToken);
+
+      // Hash the new password
+      const hashedPassword = await hashPassword(newPassword);
 
       // TODO: Update password in database
-      // For now, just log the password change
+      // For now, log the password change (but not the actual password!)
       logger.info('Password reset successful', {
         email: verification.email,
+        passwordScore: passwordValidation.score,
       });
+
+      // In production, you would update the user's password in the database:
+      // await prisma.user.update({
+      //   where: { email: verification.email },
+      //   data: { passwordHash: hashedPassword }
+      // });
 
       // Send confirmation email
       try {

@@ -7,10 +7,12 @@
  * - SHA-256 hashing for storage
  * - Time-based expiration
  * - One-time use tokens
+ * - Redis-based storage with fallback to in-memory
  */
 
 import crypto from 'crypto';
 import logger from '../utils/logger';
+import { getRedisService } from '../cache/RedisService';
 
 export interface PasswordResetToken {
   token: string; // Raw token (only available during creation)
@@ -264,3 +266,124 @@ export class PasswordResetRateLimiter {
 
 // Export singleton rate limiter
 export const passwordResetRateLimiter = new PasswordResetRateLimiter(5);
+
+/**
+ * Redis-based Token Store for Password Reset Tokens
+ *
+ * Provides persistent storage for password reset tokens using Redis.
+ * Automatically falls back to in-memory storage if Redis is unavailable.
+ */
+export class RedisTokenStore {
+  private redis = getRedisService();
+  private keyPrefix = 'password_reset:';
+
+  /**
+   * Store a password reset token in Redis
+   *
+   * @param hashedToken - Hashed token (key)
+   * @param tokenData - Token data to store
+   * @param ttlSeconds - Time to live in seconds
+   */
+  async set(
+    hashedToken: string,
+    tokenData: {
+      email: string;
+      expiresAt: Date;
+      createdAt: Date;
+      used?: boolean;
+    },
+    ttlSeconds: number
+  ): Promise<void> {
+    const key = `${this.keyPrefix}${hashedToken}`;
+    const value = JSON.stringify({
+      ...tokenData,
+      expiresAt: tokenData.expiresAt.toISOString(),
+      createdAt: tokenData.createdAt.toISOString(),
+    });
+
+    await this.redis.set(key, value, ttlSeconds);
+
+    logger.debug('Password reset token stored', {
+      hashedToken: hashedToken.substring(0, 10) + '...',
+      email: tokenData.email,
+      ttl: ttlSeconds,
+    });
+  }
+
+  /**
+   * Get a password reset token from Redis
+   *
+   * @param hashedToken - Hashed token (key)
+   * @returns Token data or null if not found
+   */
+  async get(
+    hashedToken: string
+  ): Promise<{
+    hashedToken: string;
+    email: string;
+    expiresAt: Date;
+    createdAt: Date;
+    used?: boolean;
+  } | null> {
+    const key = `${this.keyPrefix}${hashedToken}`;
+    const value = await this.redis.get(key);
+
+    if (!value) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      return {
+        hashedToken,
+        email: parsed.email,
+        expiresAt: new Date(parsed.expiresAt),
+        createdAt: new Date(parsed.createdAt),
+        used: parsed.used || false,
+      };
+    } catch (error) {
+      logger.error('Failed to parse password reset token', { error });
+      return null;
+    }
+  }
+
+  /**
+   * Mark a token as used
+   *
+   * @param hashedToken - Hashed token
+   */
+  async markAsUsed(hashedToken: string): Promise<void> {
+    const tokenData = await this.get(hashedToken);
+    if (tokenData) {
+      tokenData.used = true;
+      const ttl = Math.floor((tokenData.expiresAt.getTime() - Date.now()) / 1000);
+      if (ttl > 0) {
+        await this.set(hashedToken, tokenData, ttl);
+      }
+    }
+  }
+
+  /**
+   * Delete a token from Redis
+   *
+   * @param hashedToken - Hashed token
+   */
+  async delete(hashedToken: string): Promise<void> {
+    const key = `${this.keyPrefix}${hashedToken}`;
+    await this.redis.delete(key);
+  }
+
+  /**
+   * Check if a token exists
+   *
+   * @param hashedToken - Hashed token
+   * @returns True if token exists
+   */
+  async exists(hashedToken: string): Promise<boolean> {
+    const key = `${this.keyPrefix}${hashedToken}`;
+    return await this.redis.exists(key);
+  }
+}
+
+// Export singleton token store
+export const passwordResetTokenStore = new RedisTokenStore();

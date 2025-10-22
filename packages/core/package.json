@@ -22,6 +22,7 @@
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.16",
     "axios": "^1.6.5",
+    "bcrypt": "^6.0.0",
     "bullmq": "^5.61.0",
     "events": "^3.3.0",
     "exceljs": "^4.4.0",
@@ -40,6 +41,8 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/ioredis": "^5.0.0",
     "@types/jest": "^29.5.11",
     "@types/mjml": "^4.7.4",
     "@types/node": "^20.11.0",
