@@ -5,36 +5,51 @@
 import { VendorQualityRepository } from '../../src/repositories/VendorQualityRepository';
 import { PrismaClient } from '../../src/generated/prisma';
 
+// Create mock functions
+const mockVendorQualityRunCreate = jest.fn();
+const mockVendorQualityRunFindUnique = jest.fn();
+const mockVendorQualityRunFindMany = jest.fn();
+const mockVendorQualityRunCount = jest.fn();
+const mockVendorQualityRunAggregate = jest.fn();
+const mockVendorQualityIssueCreateMany = jest.fn();
+const mockVendorQualityIssueFindMany = jest.fn();
+const mockVendorQualityIssueUpdate = jest.fn();
+const mockVendorQualityIssueGroupBy = jest.fn();
+const mockVendorDuplicateClusterCreateMany = jest.fn();
+const mockVendorDuplicateClusterFindMany = jest.fn();
+const mockVendorDuplicateClusterUpdate = jest.fn();
+const mockVendorDuplicateClusterAggregate = jest.fn();
+
 jest.mock('../../src/generated/prisma', () => ({
   PrismaClient: jest.fn().mockImplementation(() => ({
     vendorQualityRun: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      count: jest.fn(),
-      aggregate: jest.fn(),
+      create: mockVendorQualityRunCreate,
+      findUnique: mockVendorQualityRunFindUnique,
+      findMany: mockVendorQualityRunFindMany,
+      count: mockVendorQualityRunCount,
+      aggregate: mockVendorQualityRunAggregate,
     },
     vendorQualityIssue: {
-      createMany: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      groupBy: jest.fn(),
+      createMany: mockVendorQualityIssueCreateMany,
+      findMany: mockVendorQualityIssueFindMany,
+      update: mockVendorQualityIssueUpdate,
+      groupBy: mockVendorQualityIssueGroupBy,
     },
     vendorDuplicateCluster: {
-      createMany: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      aggregate: jest.fn(),
+      createMany: mockVendorDuplicateClusterCreateMany,
+      findMany: mockVendorDuplicateClusterFindMany,
+      update: mockVendorDuplicateClusterUpdate,
+      aggregate: mockVendorDuplicateClusterAggregate,
     },
   })),
 }));
 
 describe('VendorQualityRepository', () => {
   let repository: VendorQualityRepository;
-  let prisma: jest.Mocked<PrismaClient>;
 
   beforeEach(() => {
-    prisma = new PrismaClient() as jest.Mocked<PrismaClient>;
+    jest.clearAllMocks();
+    const prisma = new PrismaClient() as jest.Mocked<PrismaClient>;
     repository = new VendorQualityRepository(prisma);
   });
 
@@ -57,7 +72,7 @@ describe('VendorQualityRepository', () => {
         updatedAt: new Date(),
       };
 
-      (prisma.vendorQualityRun.create as jest.Mock).mockResolvedValue(mockRun);
+      (mockVendorQualityRunCreate as jest.Mock).mockResolvedValue(mockRun);
 
       const result = await repository.createRun({
         tenantId: 'tenant-1',
@@ -88,11 +103,11 @@ describe('VendorQualityRepository', () => {
         },
       ];
 
-      (prisma.vendorQualityIssue.createMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (mockVendorQualityIssueCreateMany as jest.Mock).mockResolvedValue({ count: 1 });
 
       await repository.saveQualityIssues('run-1', issues as any);
 
-      expect(prisma.vendorQualityIssue.createMany).toHaveBeenCalled();
+      expect(mockVendorQualityIssueCreateMany).toHaveBeenCalled();
     });
   });
 
@@ -110,18 +125,18 @@ describe('VendorQualityRepository', () => {
         },
       ];
 
-      (prisma.vendorDuplicateCluster.createMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (mockVendorDuplicateClusterCreateMany as jest.Mock).mockResolvedValue({ count: 1 });
 
       await repository.saveDuplicateClusters('run-1', clusters as any);
 
-      expect(prisma.vendorDuplicateCluster.createMany).toHaveBeenCalled();
+      expect(mockVendorDuplicateClusterCreateMany).toHaveBeenCalled();
     });
   });
 
   describe('getStatistics', () => {
     it('should calculate vendor quality statistics', async () => {
-      (prisma.vendorQualityRun.count as jest.Mock).mockResolvedValue(10);
-      (prisma.vendorQualityRun.aggregate as jest.Mock).mockResolvedValue({
+      (mockVendorQualityRunCount as jest.Mock).mockResolvedValue(10);
+      (mockVendorQualityRunAggregate as jest.Mock).mockResolvedValue({
         _sum: {
           totalVendors: 10000,
           issuesFound: 500,
@@ -130,11 +145,11 @@ describe('VendorQualityRepository', () => {
         },
         _avg: { issuesFound: 50 },
       });
-      (prisma.vendorQualityIssue.groupBy as jest.Mock).mockResolvedValue([
+      (mockVendorQualityIssueGroupBy as jest.Mock).mockResolvedValue([
         { issueType: 'missing_field', _count: 200 },
         { issueType: 'invalid_format', _count: 150 },
       ]);
-      (prisma.vendorDuplicateCluster.aggregate as jest.Mock).mockResolvedValue({
+      (mockVendorDuplicateClusterAggregate as jest.Mock).mockResolvedValue({
         _sum: { estimatedSavings: 100000, clusterSize: 150 },
       });
 
