@@ -1,12 +1,28 @@
 import { TenantProfileRepository } from '../../src/persistence/TenantProfileRepository';
+import { Pool } from 'pg';
 
-jest.mock('pg');
-const { mockQuery, mockEnd } = require('../../__mocks__/pg');
+// Mock the pg module - define mock functions that will be captured in closure
+const mockQuery = jest.fn();
+const mockEnd = jest.fn();
+
+jest.mock('pg', () => {
+  // Define the Pool constructor mock
+  class MockPool {
+    query = mockQuery;
+    end = mockEnd;
+    constructor(config?: any) {}
+  }
+
+  return {
+    Pool: MockPool,
+  };
+});
 
 describe('TenantProfileRepository', () => {
   let repository: TenantProfileRepository;
 
   beforeEach(() => {
+    // Only clear calls, not implementations
     mockQuery.mockClear();
     mockEnd.mockClear();
     repository = new TenantProfileRepository('postgresql://localhost/test');

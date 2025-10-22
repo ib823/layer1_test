@@ -20,35 +20,54 @@ const mockVendorDuplicateClusterFindMany = jest.fn();
 const mockVendorDuplicateClusterUpdate = jest.fn();
 const mockVendorDuplicateClusterAggregate = jest.fn();
 
-jest.mock('../../src/generated/prisma', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    vendorQualityRun: {
+// Mock Prisma Client with class-based approach
+jest.mock('../../src/generated/prisma', () => {
+  class MockPrismaClient {
+    vendorQualityRun = {
       create: mockVendorQualityRunCreate,
       findUnique: mockVendorQualityRunFindUnique,
       findMany: mockVendorQualityRunFindMany,
       count: mockVendorQualityRunCount,
       aggregate: mockVendorQualityRunAggregate,
-    },
-    vendorQualityIssue: {
+    };
+    vendorQualityIssue = {
       createMany: mockVendorQualityIssueCreateMany,
       findMany: mockVendorQualityIssueFindMany,
       update: mockVendorQualityIssueUpdate,
       groupBy: mockVendorQualityIssueGroupBy,
-    },
-    vendorDuplicateCluster: {
+    };
+    vendorDuplicateCluster = {
       createMany: mockVendorDuplicateClusterCreateMany,
       findMany: mockVendorDuplicateClusterFindMany,
       update: mockVendorDuplicateClusterUpdate,
       aggregate: mockVendorDuplicateClusterAggregate,
-    },
-  })),
-}));
+    };
+  }
+
+  return {
+    PrismaClient: MockPrismaClient,
+  };
+});
 
 describe('VendorQualityRepository', () => {
   let repository: VendorQualityRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    // Clear individual mocks
+    mockVendorQualityRunCreate.mockClear();
+    mockVendorQualityRunFindUnique.mockClear();
+    mockVendorQualityRunFindMany.mockClear();
+    mockVendorQualityRunCount.mockClear();
+    mockVendorQualityRunAggregate.mockClear();
+    mockVendorQualityIssueCreateMany.mockClear();
+    mockVendorQualityIssueFindMany.mockClear();
+    mockVendorQualityIssueUpdate.mockClear();
+    mockVendorQualityIssueGroupBy.mockClear();
+    mockVendorDuplicateClusterCreateMany.mockClear();
+    mockVendorDuplicateClusterFindMany.mockClear();
+    mockVendorDuplicateClusterUpdate.mockClear();
+    mockVendorDuplicateClusterAggregate.mockClear();
+
     const prisma = new PrismaClient() as jest.Mocked<PrismaClient>;
     repository = new VendorQualityRepository(prisma);
   });

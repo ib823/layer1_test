@@ -1,18 +1,21 @@
 import { SoDViolationRepository } from '../../src/persistence/SoDViolationRepository';
 import { Pool } from 'pg';
 
-// Mock pg module
+// Mock pg module - define mock functions that will be captured in closure
 const mockQuery = jest.fn();
 const mockConnect = jest.fn();
 const mockEnd = jest.fn();
 
 jest.mock('pg', () => {
+  class MockPool {
+    query = mockQuery;
+    connect = mockConnect;
+    end = mockEnd;
+    constructor(config?: any) {}
+  }
+
   return {
-    Pool: jest.fn().mockImplementation(() => ({
-      query: mockQuery,
-      connect: mockConnect,
-      end: mockEnd,
-    })),
+    Pool: MockPool,
   };
 });
 
@@ -21,7 +24,9 @@ describe('SoDViolationRepository', () => {
 
   beforeEach(() => {
     // Reset mocks
-    jest.clearAllMocks();
+    mockQuery.mockClear();
+    mockConnect.mockClear();
+    mockEnd.mockClear();
 
     // Create repository with test connection
     repository = new SoDViolationRepository('postgresql://test');

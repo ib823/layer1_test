@@ -5,7 +5,7 @@
 import { InvoiceMatchRepository } from '../../src/repositories/InvoiceMatchRepository';
 import { PrismaClient } from '../../src/generated/prisma';
 
-// Create mock functions that will be accessible in tests
+// Create mock functions
 const mockInvoiceMatchRunCreate = jest.fn();
 const mockInvoiceMatchRunFindUnique = jest.fn();
 const mockInvoiceMatchRunFindMany = jest.fn();
@@ -18,34 +18,50 @@ const mockFraudAlertFindMany = jest.fn();
 const mockFraudAlertUpdate = jest.fn();
 const mockFraudAlertCount = jest.fn();
 
-// Mock Prisma Client
-jest.mock('../../src/generated/prisma', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    invoiceMatchRun: {
+// Mock Prisma Client with class-based approach
+jest.mock('../../src/generated/prisma', () => {
+  class MockPrismaClient {
+    invoiceMatchRun = {
       create: mockInvoiceMatchRunCreate,
       findUnique: mockInvoiceMatchRunFindUnique,
       findMany: mockInvoiceMatchRunFindMany,
       count: mockInvoiceMatchRunCount,
       aggregate: mockInvoiceMatchRunAggregate,
-    },
-    invoiceMatchResult: {
+    };
+    invoiceMatchResult = {
       createMany: mockInvoiceMatchResultCreateMany,
       findMany: mockInvoiceMatchResultFindMany,
-    },
-    fraudAlert: {
+    };
+    fraudAlert = {
       createMany: mockFraudAlertCreateMany,
       findMany: mockFraudAlertFindMany,
       update: mockFraudAlertUpdate,
       count: mockFraudAlertCount,
-    },
-  })),
-}));
+    };
+  }
+
+  return {
+    PrismaClient: MockPrismaClient,
+  };
+});
 
 describe('InvoiceMatchRepository', () => {
   let repository: InvoiceMatchRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    // Clear individual mocks
+    mockInvoiceMatchRunCreate.mockClear();
+    mockInvoiceMatchRunFindUnique.mockClear();
+    mockInvoiceMatchRunFindMany.mockClear();
+    mockInvoiceMatchRunCount.mockClear();
+    mockInvoiceMatchRunAggregate.mockClear();
+    mockInvoiceMatchResultCreateMany.mockClear();
+    mockInvoiceMatchResultFindMany.mockClear();
+    mockFraudAlertCreateMany.mockClear();
+    mockFraudAlertFindMany.mockClear();
+    mockFraudAlertUpdate.mockClear();
+    mockFraudAlertCount.mockClear();
+
     const prisma = new PrismaClient() as jest.Mocked<PrismaClient>;
     repository = new InvoiceMatchRepository(prisma);
   });
