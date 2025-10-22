@@ -1,0 +1,104 @@
+{{!-- SoD Violations Report Template --}}
+
+{{#if summary}}
+<div class="summary">
+  <h2>Executive Summary</h2>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="label">Total Violations</div>
+      <div class="value">{{formatNumber summary.totalViolations}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Critical</div>
+      <div class="value" style="color: #dc3545;">{{formatNumber summary.criticalCount}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">High Risk</div>
+      <div class="value" style="color: #ff6b6b;">{{formatNumber summary.highCount}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Users Affected</div>
+      <div class="value">{{formatNumber summary.usersAffected}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Risk Score</div>
+      <div class="value" style="color: {{#if (gt summary.riskScore 7)}}#dc3545{{else}}#ffc107{{/if}};">
+        {{summary.riskScore}}/10
+      </div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Remediation Required</div>
+      <div class="value">{{formatNumber summary.remediationRequired}}</div>
+    </div>
+  </div>
+</div>
+{{/if}}
+
+<h2>Violation Details</h2>
+{{#if data}}
+<table>
+  <thead>
+    <tr>
+      <th>Violation ID</th>
+      <th>User</th>
+      <th>Risk Level</th>
+      <th>Conflicting Roles</th>
+      <th>Business Impact</th>
+      <th>Detected</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each data}}
+    <tr>
+      <td><strong>{{this.violationId}}</strong></td>
+      <td>
+        <div>{{this.userName}}</div>
+        <div style="color: #666; font-size: 9pt;">{{this.userEmail}}</div>
+      </td>
+      <td>
+        {{#if (eq this.riskLevel "CRITICAL")}}
+          <span class="badge badge-critical">CRITICAL</span>
+        {{else if (eq this.riskLevel "HIGH")}}
+          <span class="badge badge-high">HIGH</span>
+        {{else if (eq this.riskLevel "MEDIUM")}}
+          <span class="badge badge-medium">MEDIUM</span>
+        {{else}}
+          <span class="badge badge-low">LOW</span>
+        {{/if}}
+      </td>
+      <td>
+        {{#each this.conflictingRoles}}
+          <div style="font-size: 9pt;">• {{this}}</div>
+        {{/each}}
+      </td>
+      <td style="font-size: 9pt;">{{this.businessImpact}}</td>
+      <td style="white-space: nowrap;">{{formatDate this.detectedAt}}</td>
+      <td>
+        {{#if (eq this.status "OPEN")}}
+          <span class="badge badge-danger">OPEN</span>
+        {{else if (eq this.status "IN_REVIEW")}}
+          <span class="badge badge-warning">IN REVIEW</span>
+        {{else}}
+          <span class="badge badge-success">RESOLVED</span>
+        {{/if}}
+      </td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<p style="text-align: center; color: #666; padding: 40px 0;">No violations found.</p>
+{{/if}}
+
+{{#if metadata.recommendations}}
+<div class="page-break"></div>
+<h2>Recommendations</h2>
+<div style="background: #f5f5f5; padding: 15px; border-left: 4px solid #0066cc; margin-bottom: 20px;">
+  <ul style="margin-left: 20px;">
+    {{#each metadata.recommendations}}
+    <li style="margin-bottom: 10px;">{{this}}</li>
+    {{/each}}
+  </ul>
+</div>
+{{/if}}

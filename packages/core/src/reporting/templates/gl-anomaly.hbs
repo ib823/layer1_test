@@ -1,0 +1,121 @@
+{{!-- GL Anomaly Detection Report Template --}}
+
+{{#if summary}}
+<div class="summary">
+  <h2>Executive Summary</h2>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="label">Total Anomalies</div>
+      <div class="value">{{formatNumber summary.totalAnomalies}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">High Confidence</div>
+      <div class="value" style="color: #dc3545;">{{formatNumber summary.highConfidenceCount}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Total Amount</div>
+      <div class="value" style="color: #0066cc;">{{formatCurrency summary.totalAmount}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Accounts Affected</div>
+      <div class="value">{{formatNumber summary.accountsAffected}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Fraud Alerts</div>
+      <div class="value" style="color: #dc3545;">{{formatNumber summary.fraudAlerts}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Investigation Required</div>
+      <div class="value">{{formatNumber summary.investigationRequired}}</div>
+    </div>
+  </div>
+</div>
+{{/if}}
+
+<h2>Anomaly Details</h2>
+{{#if data}}
+<table>
+  <thead>
+    <tr>
+      <th>Transaction ID</th>
+      <th>Account</th>
+      <th>Amount</th>
+      <th>Type</th>
+      <th>Confidence</th>
+      <th>Reason</th>
+      <th>Date</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each data}}
+    <tr>
+      <td><strong>{{this.transactionId}}</strong></td>
+      <td>
+        <div><strong>{{this.accountNumber}}</strong></div>
+        <div style="color: #666; font-size: 9pt;">{{this.accountName}}</div>
+      </td>
+      <td style="text-align: right; {{#if (gt this.amount 100000)}}color: #dc3545; font-weight: bold;{{/if}}">
+        {{formatCurrency this.amount}}
+      </td>
+      <td>
+        {{#if (eq this.anomalyType "UNUSUAL_AMOUNT")}}
+          <span class="badge" style="background: #ff6b6b; color: white;">Amount</span>
+        {{else if (eq this.anomalyType "UNUSUAL_TIME")}}
+          <span class="badge" style="background: #ffd93d; color: #333;">Time</span>
+        {{else if (eq this.anomalyType "UNUSUAL_PATTERN")}}
+          <span class="badge" style="background: #6c5ce7; color: white;">Pattern</span>
+        {{else if (eq this.anomalyType "DUPLICATE")}}
+          <span class="badge" style="background: #fd79a8; color: white;">Duplicate</span>
+        {{else}}
+          <span class="badge" style="background: #95e1d3; color: #333;">Other</span>
+        {{/if}}
+      </td>
+      <td>
+        <div style="font-weight: bold; {{#if (gt this.confidence 0.8)}}color: #dc3545;{{else if (gt this.confidence 0.6)}}color: #ffc107;{{else}}color: #28a745;{{/if}}">
+          {{formatPercent this.confidence}}
+        </div>
+      </td>
+      <td style="font-size: 9pt;">{{this.reason}}</td>
+      <td style="white-space: nowrap;">{{formatDate this.transactionDate}}</td>
+      <td>
+        {{#if (eq this.status "OPEN")}}
+          <span class="badge badge-danger">OPEN</span>
+        {{else if (eq this.status "INVESTIGATING")}}
+          <span class="badge badge-warning">INVESTIGATING</span>
+        {{else if (eq this.status "FALSE_POSITIVE")}}
+          <span class="badge" style="background: #95e1d3; color: #333;">FALSE POSITIVE</span>
+        {{else}}
+          <span class="badge badge-success">RESOLVED</span>
+        {{/if}}
+      </td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<p style="text-align: center; color: #666; padding: 40px 0;">No anomalies detected.</p>
+{{/if}}
+
+{{#if charts}}
+<div class="page-break"></div>
+<h2>Anomaly Trends</h2>
+{{#each charts}}
+<div style="margin-bottom: 30px;">
+  <h3>{{this.title}}</h3>
+  <p style="color: #666; font-size: 9pt; margin-bottom: 10px;">Chart data available in Excel export</p>
+</div>
+{{/each}}
+{{/if}}
+
+{{#if metadata.riskFactors}}
+<div class="page-break"></div>
+<h2>Risk Factors</h2>
+<div style="background: #fff5f5; padding: 15px; border-left: 4px solid #dc3545; margin-bottom: 20px;">
+  <ul style="margin-left: 20px;">
+    {{#each metadata.riskFactors}}
+    <li style="margin-bottom: 10px;">{{this}}</li>
+    {{/each}}
+  </ul>
+</div>
+{{/if}}

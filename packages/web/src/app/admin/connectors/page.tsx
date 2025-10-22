@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { StatusBadge } from '@/components/admin/StatusBadge';
+import { PageHead } from '@/components/seo/PageHead';
 
 interface Connector {
   name: string;
@@ -53,12 +54,17 @@ export default function ConnectorsPage() {
   const totalCount = connectors.length;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          🔌 SAP Connectors
-        </h1>
+    <>
+      <PageHead
+        title="SAP Connectors"
+        description="Monitor all SAP system connections and health status across tenants"
+      />
+      <div className="p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            🔌 SAP Connectors
+          </h1>
         <p className="text-gray-600">
           Monitor all SAP system connections across tenants
         </p>
@@ -160,6 +166,7 @@ export default function ConnectorsPage() {
           </p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

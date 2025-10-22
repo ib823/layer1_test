@@ -20,7 +20,13 @@
     "test:e2e:comprehensive:workflows": "playwright test --project=comprehensive-module-workflows",
     "test:e2e:comprehensive:summary": "playwright test --project=comprehensive-summary",
     "test:e2e:critical": "playwright test --project=comprehensive-rbac --project=comprehensive-summary --grep='CAN'",
-    "test:e2e:smoke": "playwright test --project=chromium --grep='@smoke'"
+    "test:e2e:smoke": "playwright test --project=chromium --grep='@smoke'",
+    "test:e2e:a11y": "playwright test --project=accessibility",
+    "test:e2e:a11y:ui": "playwright test --project=accessibility --ui",
+    "test:e2e:a11y:headed": "playwright test --project=accessibility --headed",
+    "test:e2e:a11y:wcag": "playwright test --project=accessibility e2e/accessibility/pages.a11y.spec.ts",
+    "test:e2e:a11y:keyboard": "playwright test --project=accessibility e2e/accessibility/keyboard-navigation.spec.ts",
+    "test:e2e:a11y:focus": "playwright test --project=accessibility e2e/accessibility/focus-management.spec.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
@@ -31,11 +37,13 @@
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-table": "^8.21.3",
     "antd": "^5.27.4",
+    "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",
     "next": "15.5.4",
     "react": "^18.3.1",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.64.0",
     "recharts": "^3.2.1",
@@ -43,6 +51,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@axe-core/react": "^4.10.2",
     "@eslint/eslintrc": "^3",
     "@faker-js/faker": "^10.1.0",
@@ -60,6 +69,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "jest": "^29.7.0",
+    "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.2.0",
     "storybook": "^9.1.10",
     "tailwindcss": "^4",

@@ -26,6 +26,7 @@ import {
   TableShell,
 } from '@sap-framework/ui';
 import type { ColumnsType } from 'antd/es/table';
+import { PageHead } from '@/components/seo/PageHead';
 import {
   FilterOutlined,
   DownloadOutlined,
@@ -214,11 +215,16 @@ export default function ViolationsInboxPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">Violations Inbox</h1>
+    <>
+      <PageHead
+        title="SoD Violations Inbox"
+        description="Manage all segregation of duties violations with filtering, search, and bulk actions"
+      />
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Violations Inbox</h1>
           <p className="text-secondary mt-1">
             Manage segregation of duties violations and conflicts
           </p>
@@ -364,6 +370,7 @@ export default function ViolationsInboxPage() {
           </div>
         )}
       </Drawer>
-    </div>
+      </div>
+    </>
   );
 }

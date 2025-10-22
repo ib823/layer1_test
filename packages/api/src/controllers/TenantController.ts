@@ -3,6 +3,7 @@ import { TenantProfileRepository } from '@sap-framework/core';
 import { ApiResponseUtil } from '../utils/response';
 import { CreateTenantRequest, UpdateTenantRequest } from '../types';
 import logger from '../utils/logger';
+import { sanitizeInput } from '../utils/sanitization';
 
 export class TenantController {
   constructor(private tenantRepo: TenantProfileRepository) {}
@@ -173,7 +174,14 @@ export class TenantController {
     try {
       const data: CreateTenantRequest = req.body;
 
-      logger.info('Creating tenant', { tenantId: data.tenantId, companyName: data.companyName });
+      // ✅ SECURITY FIX: Sanitize user inputs to prevent XSS
+      // DEFECT-035: Stored XSS vulnerability fix
+      const sanitizedCompanyName = sanitizeInput(data.companyName, {
+        trim: true,
+        maxLength: 255,
+      });
+
+      logger.info('Creating tenant', { tenantId: data.tenantId, companyName: sanitizedCompanyName });
 
       // Check if tenant already exists
       const existing = await this.tenantRepo.getTenant(data.tenantId);
@@ -182,10 +190,10 @@ export class TenantController {
         return;
       }
 
-      // Create tenant
+      // Create tenant with sanitized data
       const tenant = await this.tenantRepo.createTenant(
         data.tenantId,
-        data.companyName
+        sanitizedCompanyName
       );
 
       // Store SAP connection details
@@ -319,7 +327,13 @@ export class TenantController {
       const { tenantId, moduleName } = req.params;
       const { reason } = req.body;
 
-      logger.info('Activating module', { tenantId, moduleName, reason });
+      // ✅ SECURITY FIX: Sanitize reason field to prevent XSS
+      const sanitizedReason = sanitizeInput(reason, {
+        trim: true,
+        maxLength: 500,
+      });
+
+      logger.info('Activating module', { tenantId, moduleName, reason: sanitizedReason });
 
       const tenant = await this.tenantRepo.getTenant(tenantId);
       if (!tenant) {
@@ -351,7 +365,7 @@ export class TenantController {
         return;
       }
 
-      await this.tenantRepo.activateModule(tenantId, moduleName, reason);
+      await this.tenantRepo.activateModule(tenantId, moduleName, sanitizedReason);
 
       logger.info('Module activated successfully', { tenantId, moduleName });
 

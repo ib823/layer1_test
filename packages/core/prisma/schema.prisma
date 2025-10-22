@@ -903,3 +903,141 @@ model sod_rules {
   @@index([rule_type])
   @@index([severity])
 }
+
+// ============================================
+// AUDIT TRAIL SYSTEM (Phase 2 - P1)
+// ============================================
+
+// Comprehensive Audit Log for all user actions and system events
+model AuditLog {
+  id            String   @id @default(uuid())
+  tenantId      String
+
+  // Event identification
+  eventType     String   // USER_LOGIN, RECORD_CREATED, SOD_ANALYSIS_RUN, etc.
+  eventCategory String   // authentication, data_access, module_operation, configuration, system
+
+  // Actor information (who performed the action)
+  userId        String?
+  userName      String?
+  userEmail     String?
+  userIp        String?
+  userAgent     String?   @db.Text
+
+  // Target information (what was affected)
+  resourceType  String?  // user, role, violation, invoice, tenant, etc.
+  resourceId    String?
+  resourceName  String?
+
+  // Event details
+  action        String   // view, create, update, delete, export, login, etc.
+  description   String   @db.Text
+  details       Json?    // Structured data about the event
+
+  // Changes tracking (for update operations)
+  changesBefore Json?    // Previous state
+  changesAfter  Json?    // New state
+
+  // Result
+  success       Boolean  @default(true)
+  errorMessage  String?  @db.Text
+
+  // Context
+  sessionId     String?
+  requestId     String?
+  apiEndpoint   String?
+  apiMethod     String?  // GET, POST, PUT, DELETE
+
+  // Compliance
+  complianceRelevant Boolean @default(false)
+  retentionYears     Int     @default(7)
+
+  // Timestamps
+  timestamp     DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, timestamp(sort: Desc)])
+  @@index([userId, timestamp(sort: Desc)])
+  @@index([eventType, timestamp(sort: Desc)])
+  @@index([eventCategory, timestamp(sort: Desc)])
+  @@index([resourceType, resourceId])
+  @@index([success, timestamp(sort: Desc)])
+  @@index([complianceRelevant, timestamp(sort: Desc)])
+  @@map("audit_logs")
+}
+
+// ============================================
+// AUTOMATION SYSTEM (Phase 2 - P1)
+// ============================================
+
+// Automation workflow definitions
+model Automation {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?  @db.Text
+
+  // Trigger configuration (JSON)
+  triggerType   String   // event, schedule, condition, webhook
+  triggerConfig Json     // Event type, cron schedule, condition rules, webhook config
+
+  // Actions configuration (JSON array)
+  actions     Json       // Array of action configurations
+
+  // Status
+  enabled     Boolean    @default(true)
+  status      String     @default("active") // active, inactive, paused, error
+
+  // Metadata
+  createdBy   String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Execution statistics
+  lastRun     DateTime?
+  nextRun     DateTime?
+  runCount    Int        @default(0)
+  errorCount  Int        @default(0)
+
+  // Relations
+  executions  AutomationExecution[]
+
+  @@index([tenantId, enabled])
+  @@index([triggerType])
+  @@index([status])
+  @@index([nextRun])
+  @@map("automations")
+}
+
+// Automation execution history
+model AutomationExecution {
+  id             String   @id @default(uuid())
+  automationId   String
+  automation     Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  tenantId       String
+  triggeredBy    String   // event, schedule, webhook, manual
+  triggeredAt    DateTime @default(now())
+
+  // Execution details
+  status         String   // pending, running, completed, failed
+  executedActions Int     @default(0)
+  failedActions   Int     @default(0)
+
+  // Results
+  success        Boolean  @default(false)
+  errors         Json?    // Array of error messages
+  duration       Int?     // Milliseconds
+
+  // Context
+  context        Json?    // Event data, variables, etc.
+
+  // Timestamps
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+
+  @@index([automationId, triggeredAt(sort: Desc)])
+  @@index([tenantId, triggeredAt(sort: Desc)])
+  @@index([status])
+  @@map("automation_executions")
+}

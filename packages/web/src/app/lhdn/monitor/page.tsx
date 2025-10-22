@@ -8,6 +8,7 @@ import { Table } from '@/components/ui/Table';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { PageHead } from '@/components/seo/PageHead';
 import Link from 'next/link';
 
 interface SubmissionQueueItem {
@@ -152,13 +153,18 @@ export default function SubmissionMonitorPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Breadcrumbs
-        items={[
-          { label: 'LHDN e-Invoice', href: '/lhdn' },
-          { label: 'Submission Monitor' },
-        ]}
+    <>
+      <PageHead
+        title="LHDN Submission Monitor"
+        description="Real-time monitoring of LHDN e-Invoice submission queue and processing status"
       />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Breadcrumbs
+          items={[
+            { label: 'LHDN e-Invoice', href: '/lhdn' },
+            { label: 'Submission Monitor' },
+          ]}
+        />
 
       <div className="mb-8 flex justify-between items-start">
         <div>
@@ -249,6 +255,7 @@ export default function SubmissionMonitorPage() {
           />
         </Card.Body>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

@@ -36,9 +36,11 @@ export class VendorDataQualityController {
 
       // Get SAP connector for tenant
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: process.env.SAP_BASE_URL!,
         auth: {
-          type: 'OAUTH' as const,
+          provider: 'SAP',
+          type: 'OAUTH2' as const,
           credentials: {
             clientId: process.env.SAP_CLIENT_ID!,
             clientSecret: process.env.SAP_CLIENT_SECRET!,
@@ -296,9 +298,11 @@ export class VendorDataQualityController {
 
       // Create connector and data source
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: process.env.SAP_BASE_URL!,
         auth: {
-          type: 'OAUTH' as const,
+          provider: 'SAP',
+          type: 'OAUTH2' as const,
           credentials: {
             clientId: process.env.SAP_CLIENT_ID!,
             clientSecret: process.env.SAP_CLIENT_SECRET!,
@@ -430,9 +434,11 @@ export class VendorDataQualityController {
 
       // Create connector and data source
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: process.env.SAP_BASE_URL!,
         auth: {
-          type: 'OAUTH' as const,
+          provider: 'SAP',
+          type: 'OAUTH2' as const,
           credentials: {
             clientId: process.env.SAP_CLIENT_ID!,
             clientSecret: process.env.SAP_CLIENT_SECRET!,

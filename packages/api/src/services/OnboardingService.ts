@@ -63,6 +63,7 @@ export class OnboardingService {
 
       // Create test connector
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: connectionData.baseUrl,
         auth: connectionData.auth,
       });
@@ -117,11 +118,12 @@ export class OnboardingService {
       logger.info('Running service discovery', { sessionId });
 
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: connectionData.baseUrl,
         auth: connectionData.auth,
       });
 
-      const discovery = new ServiceDiscovery(connector);
+      const discovery = new ServiceDiscovery(connector as any);
       const result = await discovery.discoverServices();
 
       if (!result.success) {

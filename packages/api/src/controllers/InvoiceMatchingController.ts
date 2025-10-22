@@ -37,9 +37,11 @@ export class InvoiceMatchingController {
 
       // Get SAP connector for tenant (would come from tenant service)
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: process.env.SAP_BASE_URL!,
         auth: {
-          type: 'OAUTH' as const,
+          provider: 'SAP',
+          type: 'OAUTH2' as const,
           credentials: {
             clientId: process.env.SAP_CLIENT_ID!,
             clientSecret: process.env.SAP_CLIENT_SECRET!,
@@ -51,29 +53,30 @@ export class InvoiceMatchingController {
       // Create data source adapter
       const dataSource: DataSource = {
         async getPurchaseOrders(filter) {
-          const sapPos = await connector.getPurchaseOrders({
+          const erpPos = await connector.getPurchaseOrders({
             poNumbers: filter?.poNumbers,
-            suppliers: filter?.vendorIds,
+            vendorIds: filter?.vendorIds,
             fromDate: filter?.fromDate,
             toDate: filter?.toDate,
           });
 
-          return sapPos.map(po => ({
-            poNumber: po.PurchaseOrder,
-            poItem: po.PurchaseOrderItem,
-            vendorId: po.Supplier,
-            vendorName: po.SupplierName || '',
-            materialNumber: po.Material || '',
-            materialDescription: po.MaterialName || '',
-            orderedQuantity: po.OrderQuantity,
-            orderedValue: po.NetPriceAmount * po.OrderQuantity,
-            currency: po.Currency,
-            unitPrice: po.NetPriceAmount,
-            taxAmount: po.TaxAmount || 0,
-            deliveryDate: po.DeliveryDate ? new Date(po.DeliveryDate) : new Date(),
-            poStatus: (po.PurchasingDocumentStatus as any) || 'OPEN',
-            createdBy: po.CreatedByUser || '',
-            createdAt: new Date(po.PurchaseOrderDate),
+          // Map from ERPPurchaseOrder to module-specific PurchaseOrder
+          return erpPos.map(po => ({
+            poNumber: po.poNumber,
+            poItem: po.lineItems[0]?.lineNumber.toString() || '1',
+            vendorId: po.vendorId,
+            vendorName: po.vendorName || '',
+            materialNumber: po.lineItems[0]?.materialId || '',
+            materialDescription: po.lineItems[0]?.description || '',
+            orderedQuantity: po.lineItems[0]?.quantity || 0,
+            orderedValue: po.totalAmount,
+            currency: po.currency,
+            unitPrice: po.lineItems[0]?.unitPrice || 0,
+            taxAmount: 0, // Not available in base ERPPurchaseOrder
+            deliveryDate: po.deliveryDate || new Date(),
+            poStatus: po.status as any || 'OPEN',
+            createdBy: po.requester || '',
+            createdAt: po.poDate,
           }));
         },
 
@@ -103,35 +106,36 @@ export class InvoiceMatchingController {
         },
 
         async getSupplierInvoices(filter) {
-          const sapInvoices = await connector.getSupplierInvoices({
-            invoiceNumbers: filter?.invoiceNumbers,
-            suppliers: filter?.vendorIds,
+          const erpInvoices = await connector.getInvoices({
+            documentNumbers: filter?.invoiceNumbers,
+            vendorIds: filter?.vendorIds,
             fromDate: filter?.fromDate,
             toDate: filter?.toDate,
           });
 
-          return sapInvoices.map(inv => ({
-            invoiceNumber: inv.SupplierInvoice,
-            invoiceItem: inv.SupplierInvoiceItem || '1',
-            vendorId: inv.Supplier,
-            vendorName: inv.SupplierName || '',
-            poNumber: inv.PurchaseOrder,
-            poItem: inv.PurchaseOrderItem,
-            grNumber: inv.ReferenceDocument,
-            grItem: inv.ReferenceDocumentItem,
-            materialNumber: inv.Material,
-            invoicedQuantity: inv.QuantityInPurchaseOrderUnit || 1,
-            invoicedAmount: inv.SupplierInvoiceItemAmount,
-            taxAmount: inv.TaxAmount || 0,
-            totalAmount: inv.SupplierInvoiceItemAmount + (inv.TaxAmount || 0),
-            currency: inv.DocumentCurrency,
-            invoiceDate: new Date(inv.InvoicingDate),
-            postingDate: new Date(inv.PostingDate),
-            dueDate: new Date(inv.NetDueDate || inv.PostingDate),
-            paymentTerms: inv.PaymentTerms || '',
+          // Map from ERPInvoice to module-specific SupplierInvoice
+          return erpInvoices.map(inv => ({
+            invoiceNumber: inv.invoiceNumber,
+            invoiceItem: inv.lineItems[0]?.lineNumber.toString() || '1',
+            vendorId: inv.vendorId,
+            vendorName: inv.vendorName || '',
+            poNumber: inv.purchaseOrderNumber || '',
+            poItem: '1', // Not available in base ERPInvoice
+            grNumber: '', // Not available in base ERPInvoice
+            grItem: '', // Not available in base ERPInvoice
+            materialNumber: '', // Not available in base ERPInvoice
+            invoicedQuantity: inv.lineItems[0]?.quantity || 1,
+            invoicedAmount: inv.amount,
+            taxAmount: inv.taxAmount || 0,
+            totalAmount: inv.totalAmount,
+            currency: inv.currency,
+            invoiceDate: inv.invoiceDate,
+            postingDate: inv.invoiceDate, // Use invoice date as posting date
+            dueDate: inv.dueDate || inv.invoiceDate,
+            paymentTerms: inv.paymentTerms || '',
             invoiceStatus: (filter?.status?.[0] as any) || 'PENDING',
-            submittedBy: inv.CreatedByUser,
-            submittedAt: new Date(inv.DocumentDate || inv.PostingDate),
+            submittedBy: '', // Not available in base ERPInvoice
+            submittedAt: inv.invoiceDate,
           }));
         },
       };
@@ -292,9 +296,11 @@ export class InvoiceMatchingController {
 
       // Initialize connector and data source (same as runAnalysis)
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: process.env.SAP_BASE_URL!,
         auth: {
-          type: 'OAUTH' as const,
+          provider: 'SAP',
+          type: 'OAUTH2' as const,
           credentials: {
             clientId: process.env.SAP_CLIENT_ID!,
             clientSecret: process.env.SAP_CLIENT_SECRET!,
@@ -306,26 +312,26 @@ export class InvoiceMatchingController {
       const dataSource: DataSource = {
         // Same implementation as above
         getPurchaseOrders: async (filter) => {
-          const sapPos = await connector.getPurchaseOrders({
+          const erpPos = await connector.getPurchaseOrders({
             poNumbers: filter?.poNumbers,
-            suppliers: filter?.vendorIds,
+            vendorIds: filter?.vendorIds,
           });
-          return sapPos.map(po => ({
-            poNumber: po.PurchaseOrder,
-            poItem: po.PurchaseOrderItem,
-            vendorId: po.Supplier,
-            vendorName: po.SupplierName || '',
-            materialNumber: po.Material || '',
-            materialDescription: po.MaterialName || '',
-            orderedQuantity: po.OrderQuantity,
-            orderedValue: po.NetPriceAmount * po.OrderQuantity,
-            currency: po.Currency,
-            unitPrice: po.NetPriceAmount,
-            taxAmount: po.TaxAmount || 0,
-            deliveryDate: po.DeliveryDate ? new Date(po.DeliveryDate) : new Date(),
-            poStatus: (po.PurchasingDocumentStatus as any) || 'OPEN',
-            createdBy: po.CreatedByUser || '',
-            createdAt: new Date(po.PurchaseOrderDate),
+          return erpPos.map(po => ({
+            poNumber: po.poNumber,
+            poItem: po.lineItems[0]?.lineNumber.toString() || '1',
+            vendorId: po.vendorId,
+            vendorName: po.vendorName || '',
+            materialNumber: po.lineItems[0]?.materialId || '',
+            materialDescription: po.lineItems[0]?.description || '',
+            orderedQuantity: po.lineItems[0]?.quantity || 0,
+            orderedValue: po.totalAmount,
+            currency: po.currency,
+            unitPrice: po.lineItems[0]?.unitPrice || 0,
+            taxAmount: 0,
+            deliveryDate: po.deliveryDate || new Date(),
+            poStatus: po.status as any || 'OPEN',
+            createdBy: po.requester || '',
+            createdAt: po.poDate,
           }));
         },
         getGoodsReceipts: async (filter) => {
@@ -350,31 +356,31 @@ export class InvoiceMatchingController {
           }));
         },
         getSupplierInvoices: async (filter) => {
-          const sapInvoices = await connector.getSupplierInvoices({
-            invoiceNumbers: filter?.invoiceNumbers || [invoiceNumber],
+          const erpInvoices = await connector.getInvoices({
+            documentNumbers: filter?.invoiceNumbers || [invoiceNumber],
           });
-          return sapInvoices.map(inv => ({
-            invoiceNumber: inv.SupplierInvoice,
-            invoiceItem: inv.SupplierInvoiceItem || '1',
-            vendorId: inv.Supplier,
-            vendorName: inv.SupplierName || '',
-            poNumber: inv.PurchaseOrder,
-            poItem: inv.PurchaseOrderItem,
-            grNumber: inv.ReferenceDocument,
-            grItem: inv.ReferenceDocumentItem,
-            materialNumber: inv.Material,
-            invoicedQuantity: inv.QuantityInPurchaseOrderUnit || 1,
-            invoicedAmount: inv.SupplierInvoiceItemAmount,
-            taxAmount: inv.TaxAmount || 0,
-            totalAmount: inv.SupplierInvoiceItemAmount + (inv.TaxAmount || 0),
-            currency: inv.DocumentCurrency,
-            invoiceDate: new Date(inv.InvoicingDate),
-            postingDate: new Date(inv.PostingDate),
-            dueDate: new Date(inv.NetDueDate || inv.PostingDate),
-            paymentTerms: inv.PaymentTerms || '',
+          return erpInvoices.map(inv => ({
+            invoiceNumber: inv.invoiceNumber,
+            invoiceItem: inv.lineItems[0]?.lineNumber.toString() || '1',
+            vendorId: inv.vendorId,
+            vendorName: inv.vendorName || '',
+            poNumber: inv.purchaseOrderNumber || '',
+            poItem: '1',
+            grNumber: '',
+            grItem: '',
+            materialNumber: '',
+            invoicedQuantity: inv.lineItems[0]?.quantity || 1,
+            invoicedAmount: inv.amount,
+            taxAmount: inv.taxAmount || 0,
+            totalAmount: inv.totalAmount,
+            currency: inv.currency,
+            invoiceDate: inv.invoiceDate,
+            postingDate: inv.invoiceDate,
+            dueDate: inv.dueDate || inv.invoiceDate,
+            paymentTerms: inv.paymentTerms || '',
             invoiceStatus: 'PENDING' as any,
-            submittedBy: inv.CreatedByUser,
-            submittedAt: new Date(inv.DocumentDate || inv.PostingDate),
+            submittedBy: '',
+            submittedAt: inv.invoiceDate,
           }));
         },
       };
@@ -463,9 +469,11 @@ export class InvoiceMatchingController {
 
       // Create connector and data source
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: process.env.SAP_BASE_URL!,
         auth: {
-          type: 'OAUTH' as const,
+          provider: 'SAP',
+          type: 'OAUTH2' as const,
           credentials: {
             clientId: process.env.SAP_CLIENT_ID!,
             clientSecret: process.env.SAP_CLIENT_SECRET!,
@@ -478,32 +486,32 @@ export class InvoiceMatchingController {
         getPurchaseOrders: async () => [],
         getGoodsReceipts: async () => [],
         getSupplierInvoices: async (filter) => {
-          const sapInvoices = await connector.getSupplierInvoices({
-            suppliers: filter?.vendorIds,
+          const erpInvoices = await connector.getInvoices({
+            vendorIds: filter?.vendorIds,
             fromDate: filter?.fromDate,
           });
-          return sapInvoices.map(inv => ({
-            invoiceNumber: inv.SupplierInvoice,
-            invoiceItem: inv.SupplierInvoiceItem || '1',
-            vendorId: inv.Supplier,
-            vendorName: inv.SupplierName || '',
-            poNumber: inv.PurchaseOrder,
-            poItem: inv.PurchaseOrderItem,
-            grNumber: inv.ReferenceDocument,
-            grItem: inv.ReferenceDocumentItem,
-            materialNumber: inv.Material,
-            invoicedQuantity: inv.QuantityInPurchaseOrderUnit || 1,
-            invoicedAmount: inv.SupplierInvoiceItemAmount,
-            taxAmount: inv.TaxAmount || 0,
-            totalAmount: inv.SupplierInvoiceItemAmount + (inv.TaxAmount || 0),
-            currency: inv.DocumentCurrency,
-            invoiceDate: new Date(inv.InvoicingDate),
-            postingDate: new Date(inv.PostingDate),
-            dueDate: new Date(inv.NetDueDate || inv.PostingDate),
-            paymentTerms: inv.PaymentTerms || '',
+          return erpInvoices.map(inv => ({
+            invoiceNumber: inv.invoiceNumber,
+            invoiceItem: inv.lineItems[0]?.lineNumber.toString() || '1',
+            vendorId: inv.vendorId,
+            vendorName: inv.vendorName || '',
+            poNumber: inv.purchaseOrderNumber || '',
+            poItem: '1',
+            grNumber: '',
+            grItem: '',
+            materialNumber: '',
+            invoicedQuantity: inv.lineItems[0]?.quantity || 1,
+            invoicedAmount: inv.amount,
+            taxAmount: inv.taxAmount || 0,
+            totalAmount: inv.totalAmount,
+            currency: inv.currency,
+            invoiceDate: inv.invoiceDate,
+            postingDate: inv.invoiceDate,
+            dueDate: inv.dueDate || inv.invoiceDate,
+            paymentTerms: inv.paymentTerms || '',
             invoiceStatus: 'PAID' as any,
-            submittedBy: inv.CreatedByUser,
-            submittedAt: new Date(inv.DocumentDate || inv.PostingDate),
+            submittedBy: '',
+            submittedAt: inv.invoiceDate,
           }));
         },
       };

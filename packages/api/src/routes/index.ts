@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../middleware/auth';
+// ✅ SECURITY FIX: Use secure authentication middleware
+import { authenticate, requireRole } from '../middleware/auth.secure';
 import { AuthenticatedRequest } from '../types';
 import {
   apiLimiter,
@@ -7,11 +8,15 @@ import {
   sodAnalysisLimiter,
   adminLimiter
 } from '../middleware/rateLimiting';
+import { auditMiddleware } from '../middleware/auditMiddleware';
+// ✅ SECURITY FIX: Add CSRF protection
+import { csrfProtection } from '../middleware/csrfProtection';
 import tenantsRoutes from './admin/tenants';
 import discoveryRoutes from './admin/discovery';
 import onboardingRoutes from './onboarding';
 import monitoringRoutes from './monitoring';
 import sodRoutes from './modules/sod';
+import auditRoutes from './audit';
 import { ApiResponseUtil } from '../utils/response';
 import { config } from '../config';
 
@@ -62,27 +67,38 @@ router.use('/auth', authRoutes);
 // GLOBAL MIDDLEWARE: Apply to all routes below
 // ==============================================================================
 
-// Apply rate limiting FIRST (before auth, to prevent auth bypass attacks)
+// ✅ SECURITY FIX: Apply rate limiting FIRST (before auth, to prevent auth bypass attacks)
 router.use(apiLimiter);
 
-// Apply authentication
-// IMPORTANT: Always enabled in production. Dev mode requires AUTH_ENABLED=true
-if (config.auth.enabled) {
-  router.use(authenticate);
-} else {
-  // Development mode: Log warning that auth is disabled
-  router.use((req: AuthenticatedRequest, res, next) => {
-    console.warn('⚠️  WARNING: Authentication is DISABLED. Set AUTH_ENABLED=true in production!');
-    // In dev mode with auth disabled, set a fake user for testing
-    req.user = {
-      id: 'dev-user',
-      email: 'dev@example.com',
-      roles: ['admin'],
-      tenantId: 'dev-tenant',
-    };
-    next();
-  });
-}
+// ✅ SECURITY FIX: Apply authentication - ALWAYS required (no bypass)
+// CVE-2025-001 & CVE-2025-002: Authentication is now mandatory in all environments
+// Production: Uses XSUAA (SAP BTP)
+// Development: Uses JWT with signature validation (requires JWT_SECRET)
+router.use(authenticate);
+
+// ✅ SECURITY FIX: Apply CSRF protection for state-changing operations
+// CVE-2025-008: Protects against Cross-Site Request Forgery attacks
+router.use(csrfProtection({
+  allowedOrigins: [process.env.CORS_ORIGIN || 'http://localhost:3001'],
+  skipPaths: [
+    /^\/api\/webhooks/,  // Webhooks typically use other authentication methods
+  ],
+}));
+
+// ✅ SECURITY FIX: Apply tenant isolation middleware
+// CVE-FRAMEWORK-2025-003: Prevents horizontal privilege escalation
+// DEFECT-033, DEFECT-034: Enforces tenant scoping on all operations
+import { enforceTenantIsolation } from '../middleware/tenantIsolation';
+router.use(enforceTenantIsolation);
+
+// ✅ SECURITY FIX: Apply input sanitization middleware
+// CVE-FRAMEWORK-2025-005: Prevents stored XSS attacks
+// DEFECT-035: Sanitizes all user inputs to prevent script injection
+import { sanitizeRequestBody } from '../utils/sanitization';
+router.use(sanitizeRequestBody);
+
+// Apply audit middleware (after auth, so we have user context)
+router.use(auditMiddleware);
 
 // ==============================================================================
 // ADMIN ROUTES: Require admin role + stricter rate limiting
@@ -113,6 +129,26 @@ router.use('/onboarding', onboardingRoutes);
  * Prefix: /api/monitoring
  */
 router.use('/monitoring', monitoringRoutes);
+
+/**
+ * Audit Trail Routes
+ * Prefix: /api/audit
+ */
+router.use('/audit', auditRoutes);
+
+/**
+ * Reporting Routes
+ * Prefix: /api/reports
+ */
+import reportRoutes from './reports';
+router.use('/reports', reportRoutes);
+
+/**
+ * Automation Routes
+ * Prefix: /api/automations
+ */
+import automationRoutes from './automations';
+router.use('/automations', automationRoutes);
 
 // ==============================================================================
 // MODULE ROUTES: Expensive operations need stricter rate limiting

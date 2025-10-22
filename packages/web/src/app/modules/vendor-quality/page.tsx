@@ -1,6 +1,7 @@
 'use client';
 
 import { VendorQualityDashboard } from '@/components/modules/vendor-quality/VendorQualityDashboard';
+import { PageHead } from '@/components/seo/PageHead';
 
 /**
  * Vendor Data Quality Module Page
@@ -12,5 +13,13 @@ import { VendorQualityDashboard } from '@/components/modules/vendor-quality/Vend
  * - Data cleansing recommendations
  */
 export default function VendorQualityPage() {
-  return <VendorQualityDashboard />;
+  return (
+    <>
+      <PageHead
+        title="Vendor Data Quality"
+        description="Comprehensive vendor master data quality analysis with duplicate detection and risk profiling"
+      />
+      <VendorQualityDashboard />
+    </>
+  );
 }

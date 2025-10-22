@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useDashboardKPIs } from '@/hooks/useDashboard';
+import { PageHead } from '@/components/seo/PageHead';
 
 export default function DashboardPage() {
   const { data, isLoading, error } = useDashboardKPIs();
@@ -37,8 +38,13 @@ export default function DashboardPage() {
   ];
 
   return (
-    <main id="main-content" className="p-6 space-y-6">
-      {/* Screen reader status announcements */}
+    <>
+      <PageHead
+        title="Dashboard"
+        description="Real-time metrics and insights from your SAP environment"
+      />
+      <main id="main-content" className="p-6 space-y-6">
+        {/* Screen reader status announcements */}
       <div
         role="status"
         aria-live="polite"
@@ -105,5 +111,6 @@ export default function DashboardPage() {
         </Card>
       </section>
     </main>
+    </>
   );
 }

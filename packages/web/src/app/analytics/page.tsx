@@ -6,6 +6,8 @@ import { Select } from '@/components/ui/Select';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { PageHead } from '@/components/seo/PageHead';
+import { Term } from '@/components/terminology/Term';
 
 const COLORS = { critical: '#BB0000', high: '#E9730C', medium: '#F0AB00', low: '#107E3E' };
 
@@ -26,8 +28,13 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <Breadcrumbs items={[{ label: 'Analytics' }]} />
+    <>
+      <PageHead
+        title="Analytics"
+        description="Real-time compliance analytics and trend analysis with violation tracking and risk distribution"
+      />
+      <div className="p-6 space-y-6">
+        <Breadcrumbs items={[{ label: 'Analytics' }]} />
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1></div>
         <Select
@@ -56,6 +63,7 @@ export default function AnalyticsPage() {
       <Card title="Top Departments"><ResponsiveContainer width="100%" height={300}><BarChart data={departmentBreakdown.data?.data || []}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="department" /><YAxis /><Tooltip /><Legend /><Bar dataKey="violations" fill="#0C2B87" name="Total" /><Bar dataKey="critical_count" fill="#BB0000" name="Critical" /></BarChart></ResponsiveContainer></Card>
 
       <Card title="Top Violation Types"><div className="space-y-4">{(violationTypes.data?.data || []).map((type, i) => <div key={i}><div className="flex justify-between text-sm mb-1"><span className="font-medium">{type.type}</span><span>{type.count} ({type.percentage}%)</span></div><div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{ width: `${type.percentage}%` }} /></div></div>)}</div></Card>
-    </div>
+      </div>
+    </>
   );
 }

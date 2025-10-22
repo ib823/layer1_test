@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { PageHead } from '@/components/seo/PageHead';
 import Link from 'next/link';
 
 interface DashboardMetrics {
@@ -68,13 +69,18 @@ export default function OperationsDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Breadcrumbs
-        items={[
-          { label: 'LHDN e-Invoice', href: '/lhdn' },
-          { label: 'Operations Dashboard' },
-        ]}
+    <>
+      <PageHead
+        title="LHDN Operations Dashboard"
+        description="Real-time monitoring and operational metrics for LHDN e-Invoice integration"
       />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Breadcrumbs
+          items={[
+            { label: 'LHDN e-Invoice', href: '/lhdn' },
+            { label: 'Operations Dashboard' },
+          ]}
+        />
 
       <div className="mb-8">
         <h1 className="text-3xl font-semibold text-text-primary mb-2">
@@ -307,6 +313,7 @@ export default function OperationsDashboardPage() {
           </Card.Body>
         </Card>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

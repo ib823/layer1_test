@@ -11,6 +11,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/hooks/useToast';
 import { Tabs } from '@/components/ui/Tabs';
+import { PageHead } from '@/components/seo/PageHead';
 
 interface LHDNConfig {
   tenantId: string;
@@ -163,13 +164,18 @@ export default function ConfigStudioPage() {
   const currentConfig = isEditing ? editedConfig : config;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Breadcrumbs
-        items={[
-          { label: 'LHDN e-Invoice', href: '/lhdn' },
-          { label: 'Configuration Studio' },
-        ]}
+    <>
+      <PageHead
+        title="LHDN Configuration Studio"
+        description="Configure LHDN e-Invoice integration settings, API credentials, and system parameters"
       />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Breadcrumbs
+          items={[
+            { label: 'LHDN e-Invoice', href: '/lhdn' },
+            { label: 'Configuration Studio' },
+          ]}
+        />
 
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
@@ -645,6 +651,7 @@ export default function ConfigStudioPage() {
           </div>
         </div>
       </Modal>
-    </div>
+      </div>
+    </>
   );
 }

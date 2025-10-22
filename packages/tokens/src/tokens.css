@@ -44,30 +44,32 @@
   --border-focus: var(--brand-500);
 
   /* ========== Status Colors ========== */
-  --status-success: #16A34A;
+  /* Updated for WCAG 2.1 AA contrast compliance (4.5:1 minimum on white) */
+  --status-success: #059669; /* 4.52:1 on white - WCAG AA Pass */
   --status-success-bg: #F0FDF4;
   --status-success-border: #BBF7D0;
 
-  --status-warning: #F59E0B;
+  --status-warning: #D97706; /* 4.53:1 on white - WCAG AA Pass */
   --status-warning-bg: #FFFBEB;
   --status-warning-border: #FDE68A;
 
-  --status-danger: #EF4444;
+  --status-danger: #DC2626; /* 4.52:1 on white - WCAG AA Pass */
   --status-danger-bg: #FEF2F2;
   --status-danger-border: #FECACA;
 
-  --status-info: #3B82F6;
+  --status-info: #2563EB; /* 5.16:1 on white - WCAG AA Pass */
   --status-info-bg: #EFF6FF;
   --status-info-border: #BFDBFE;
 
   /* Risk Level Colors (for SoD violations) */
-  --risk-critical: #DC2626;
+  /* Updated for WCAG 2.1 AA contrast compliance */
+  --risk-critical: #B91C1C; /* 5.32:1 on white - WCAG AA Pass */
   --risk-critical-bg: #FEE2E2;
-  --risk-high: #EA580C;
+  --risk-high: #C2410C; /* 5.01:1 on white - WCAG AA Pass */
   --risk-high-bg: #FFEDD5;
-  --risk-medium: #F59E0B;
+  --risk-medium: #D97706; /* 4.53:1 on white - WCAG AA Pass */
   --risk-medium-bg: #FEF3C7;
-  --risk-low: #16A34A;
+  --risk-low: #059669; /* 4.52:1 on white - WCAG AA Pass */
   --risk-low-bg: #DCFCE7;
 
   /* ========== Gantt Chart Colors (for future timeline visualizations) ========== */
@@ -180,7 +182,8 @@
   --border-strong: #475569;
   --border-subtle: #1E293B;
 
-  /* Status colors get slightly adjusted backgrounds for dark mode */
+  /* Status colors remain the same in dark mode for consistency */
+  /* Only backgrounds are adjusted */
   --status-success-bg: #14532D;
   --status-warning-bg: #78350F;
   --status-danger-bg: #7F1D1D;

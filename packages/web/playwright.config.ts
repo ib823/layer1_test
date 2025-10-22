@@ -37,6 +37,14 @@ export default defineConfig({
 
   // Configure projects for major browsers
   projects: [
+    // Accessibility tests (critical for every PR)
+    {
+      name: 'accessibility',
+      testMatch: '**/accessibility/**/*.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+      timeout: 30000,
+    },
+
     // Comprehensive test suites (desktop only for speed)
     {
       name: 'comprehensive-rbac',

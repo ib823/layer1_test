@@ -12,6 +12,9 @@ import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { Role } from '@/types/auth';
 import type { LoginCredentials } from '@/types/auth';
+import { AccessibleFormField } from '@/components/forms/AccessibleFormField';
+import { ErrorAnnouncer } from '@/components/forms/ErrorAnnouncer';
+import { PageHead } from '@/components/seo/PageHead';
 import './login.css';
 
 const { Title, Text, Link } = Typography;
@@ -22,6 +25,11 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [devRole, setDevRole] = useState<Role>(Role.SYSTEM_ADMIN);
+
+  // Accessible error handling
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -42,12 +50,17 @@ function LoginForm() {
     try {
       setLoading(true);
       setError(null);
+      setErrors({});
+      setErrorMessage('');
 
       await login(values);
 
+      setSuccessMessage('Login successful! Redirecting...');
       // Redirect handled by AuthContext
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      const errorMsg = err.message || 'Login failed. Please check your credentials.';
+      setError(errorMsg);
+      setErrorMessage(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -57,22 +70,33 @@ function LoginForm() {
     try {
       setLoading(true);
       setError(null);
+      setErrors({});
+      setErrorMessage('');
 
       // Use dev credentials
       await login({
         email: 'dev@example.com',
         password: 'dev',
       });
+
+      setSuccessMessage('Development login successful! Redirecting...');
     } catch (err: any) {
-      setError(err.message || 'Development login failed');
+      const errorMsg = err.message || 'Development login failed';
+      setError(errorMsg);
+      setErrorMessage(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="login-container">
-      <div className="login-content">
+    <>
+      <PageHead
+        title="Login"
+        description="Sign in to ABeam CoreBridge GRC Platform"
+      />
+      <main className="login-container">
+        <div className="login-content">
         {/* Left side - Branding */}
         <section className="login-branding" aria-label="Platform Branding">
           <div className="branding-content">
@@ -111,6 +135,13 @@ function LoginForm() {
 
         {/* Right side - Login form */}
         <section className="login-form-wrapper" aria-label="Login Form">
+          <ErrorAnnouncer
+            errorMessage={errorMessage}
+            successMessage={successMessage}
+            onClearError={() => setErrorMessage('')}
+            onClearSuccess={() => setSuccessMessage('')}
+          />
+
           <Card className="login-card" variant="borderless">
             <header style={{ textAlign: 'center', marginBottom: 32 }}>
               <Title level={2} style={{ marginBottom: 8 }}>
@@ -164,32 +195,46 @@ function LoginForm() {
               size="large"
               initialValues={{ remember: true }}
             >
-              <Form.Item
+              <AccessibleFormField
                 name="email"
-                rules={[
-                  { required: true, message: 'Please input your email!' },
-                  { type: 'email', message: 'Please enter a valid email!' },
-                ]}
+                label="Email Address"
+                required
+                helpText="Enter your email address to sign in"
+                errorMessage={errors.email}
+                formItemProps={{
+                  rules: [
+                    { required: true, message: 'Please input your email!' },
+                    { type: 'email', message: 'Please enter a valid email!' },
+                  ],
+                }}
               >
                 <Input
                   prefix={<UserOutlined />}
                   placeholder="Email"
                   autoComplete="email"
                   disabled={loading}
+                  size="large"
                 />
-              </Form.Item>
+              </AccessibleFormField>
 
-              <Form.Item
+              <AccessibleFormField
                 name="password"
-                rules={[{ required: true, message: 'Please input your password!' }]}
+                label="Password"
+                required
+                helpText="Enter your password to sign in"
+                errorMessage={errors.password}
+                formItemProps={{
+                  rules: [{ required: true, message: 'Please input your password!' }],
+                }}
               >
                 <Input.Password
                   prefix={<LockOutlined />}
                   placeholder="Password"
                   autoComplete="current-password"
                   disabled={loading}
+                  size="large"
                 />
-              </Form.Item>
+              </AccessibleFormField>
 
               <Form.Item>
                 <Button
@@ -236,6 +281,7 @@ function LoginForm() {
         </section>
       </div>
     </main>
+    </>
   );
 }
 

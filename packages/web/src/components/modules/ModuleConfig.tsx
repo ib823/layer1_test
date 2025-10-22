@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, Switch, InputNumber, Button, Card, Space, App, Spin } from 'antd';
 import { SaveOutlined, ReloadOutlined } from '@ant-design/icons';
 import { ConfigFormConfig } from './types';
+import { AccessibleFormField } from '@/components/forms/AccessibleFormField';
+import { ErrorAnnouncer } from '@/components/forms/ErrorAnnouncer';
 
 const { TextArea } = Input;
 
@@ -18,18 +20,25 @@ export const ModuleConfig: React.FC<ModuleConfigProps> = ({ config, moduleId }) 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Accessible error handling
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
   useEffect(() => {
     fetchConfig();
   }, []);
 
   const fetchConfig = async () => {
     setLoading(true);
+    setErrorMessage('');
     try {
       const response = await fetch(config.endpoint);
       const data = await response.json();
       form.setFieldsValue(data);
     } catch (error) {
       message.error('Failed to load configuration');
+      setErrorMessage('Failed to load configuration. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -37,6 +46,8 @@ export const ModuleConfig: React.FC<ModuleConfigProps> = ({ config, moduleId }) 
 
   const handleSave = async (values: any) => {
     setSaving(true);
+    setErrors({});
+    setErrorMessage('');
     try {
       const response = await fetch(config.endpoint, {
         method: 'PUT',
@@ -46,11 +57,14 @@ export const ModuleConfig: React.FC<ModuleConfigProps> = ({ config, moduleId }) 
 
       if (response.ok) {
         message.success('Configuration saved successfully');
+        setSuccessMessage('Configuration saved successfully');
       } else {
         message.error('Failed to save configuration');
+        setErrorMessage('Failed to save configuration. Please check your input and try again.');
       }
     } catch (error) {
       message.error('Failed to save configuration');
+      setErrorMessage('Network error. Please check your connection and try again.');
     } finally {
       setSaving(false);
     }
@@ -70,6 +84,13 @@ export const ModuleConfig: React.FC<ModuleConfigProps> = ({ config, moduleId }) 
 
   return (
     <div style={{ background: '#fff', padding: '24px', borderRadius: '8px' }}>
+      <ErrorAnnouncer
+        errorMessage={errorMessage}
+        successMessage={successMessage}
+        onClearError={() => setErrorMessage('')}
+        onClearSuccess={() => setSuccessMessage('')}
+      />
+
       <Form
         form={form}
         layout="vertical"
@@ -86,64 +107,89 @@ export const ModuleConfig: React.FC<ModuleConfigProps> = ({ config, moduleId }) 
               switch (field.type) {
                 case 'input':
                   return (
-                    <Form.Item
+                    <AccessibleFormField
                       key={field.key}
                       name={field.key}
                       label={field.label}
-                      rules={[{ required: field.required, message: `${field.label} is required` }]}
+                      required={field.required}
+                      helpText={field.placeholder}
+                      errorMessage={errors[field.key]}
+                      formItemProps={{
+                        rules: [{ required: field.required, message: `${field.label} is required` }],
+                      }}
                     >
                       <Input placeholder={field.placeholder} />
-                    </Form.Item>
+                    </AccessibleFormField>
                   );
-                
+
                 case 'textarea':
                   return (
-                    <Form.Item
+                    <AccessibleFormField
                       key={field.key}
                       name={field.key}
                       label={field.label}
-                      rules={[{ required: field.required, message: `${field.label} is required` }]}
+                      required={field.required}
+                      helpText={field.placeholder}
+                      errorMessage={errors[field.key]}
+                      formItemProps={{
+                        rules: [{ required: field.required, message: `${field.label} is required` }],
+                      }}
                     >
                       <TextArea rows={4} placeholder={field.placeholder} />
-                    </Form.Item>
+                    </AccessibleFormField>
                   );
-                
+
                 case 'select':
                   return (
-                    <Form.Item
+                    <AccessibleFormField
                       key={field.key}
                       name={field.key}
                       label={field.label}
-                      rules={[{ required: field.required, message: `${field.label} is required` }]}
+                      required={field.required}
+                      helpText={field.placeholder}
+                      errorMessage={errors[field.key]}
+                      formItemProps={{
+                        rules: [{ required: field.required, message: `${field.label} is required` }],
+                      }}
                     >
                       <Select options={field.options} placeholder={field.placeholder} />
-                    </Form.Item>
+                    </AccessibleFormField>
                   );
-                
+
                 case 'number':
                   return (
-                    <Form.Item
+                    <AccessibleFormField
                       key={field.key}
                       name={field.key}
                       label={field.label}
-                      rules={[{ required: field.required, message: `${field.label} is required` }]}
+                      required={field.required}
+                      helpText={field.placeholder}
+                      errorMessage={errors[field.key]}
+                      formItemProps={{
+                        rules: [{ required: field.required, message: `${field.label} is required` }],
+                      }}
                     >
                       <InputNumber style={{ width: '100%' }} placeholder={field.placeholder} />
-                    </Form.Item>
+                    </AccessibleFormField>
                   );
-                
+
                 case 'switch':
                   return (
-                    <Form.Item
+                    <AccessibleFormField
                       key={field.key}
                       name={field.key}
                       label={field.label}
-                      valuePropName="checked"
+                      required={false}
+                      helpText="Toggle to enable or disable this option"
+                      errorMessage={errors[field.key]}
+                      formItemProps={{
+                        valuePropName: 'checked',
+                      }}
                     >
                       <Switch />
-                    </Form.Item>
+                    </AccessibleFormField>
                   );
-                
+
                 default:
                   return null;
               }

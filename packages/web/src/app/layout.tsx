@@ -11,6 +11,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ui";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import { SkipLink } from "@/components/SkipLink";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -36,19 +37,21 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body suppressHydrationWarning>
         <SkipLink />
-        <QueryClientProvider client={queryClient}>
-          <AntdRegistry>
-            <TokenThemeProvider mode="light">
-              <AntdApp>
-                <AuthProvider>
-                  <ToastProvider>
-                    {children}
-                  </ToastProvider>
-                </AuthProvider>
-              </AntdApp>
-            </TokenThemeProvider>
-          </AntdRegistry>
-        </QueryClientProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <AntdRegistry>
+              <TokenThemeProvider mode="light">
+                <AntdApp>
+                  <AuthProvider>
+                    <ToastProvider>
+                      {children}
+                    </ToastProvider>
+                  </AuthProvider>
+                </AntdApp>
+              </TokenThemeProvider>
+            </AntdRegistry>
+          </QueryClientProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

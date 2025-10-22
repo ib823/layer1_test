@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Table } from '@/components/ui/Table';
 import { Tabs } from '@/components/ui/Tabs';
+import { PageHead } from '@/components/seo/PageHead';
 import Link from 'next/link';
 
 interface UserDetail {
@@ -181,15 +182,20 @@ export default function UserDetailPage() {
   const riskLevel = getRiskLevel(user.riskScore);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-text-secondary">
-        <Link href="/users" className="hover:text-brand-primary transition-colors">
-          Users
-        </Link>
-        <span>/</span>
-        <span className="text-text-primary">{user.userName}</span>
-      </div>
+    <>
+      <PageHead
+        title={`User Profile - ${user.userName}`}
+        description="Detailed user profile with roles, permissions, violations, and risk assessment"
+      />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Breadcrumb */}
+        <div className="mb-6 flex items-center gap-2 text-sm text-text-secondary">
+          <Link href="/users" className="hover:text-brand-primary transition-colors">
+            Users
+          </Link>
+          <span>/</span>
+          <span className="text-text-primary">{user.userName}</span>
+        </div>
 
       {/* Header */}
       <div className="mb-8">
@@ -353,6 +359,7 @@ export default function UserDetailPage() {
           },
         ]}
       />
-    </div>
+      </div>
+    </>
   );
 }

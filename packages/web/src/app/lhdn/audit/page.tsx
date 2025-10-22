@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { PageHead } from '@/components/seo/PageHead';
 import Link from 'next/link';
 
 interface AuditEvent {
@@ -155,13 +156,18 @@ export default function AuditExplorerPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Breadcrumbs
-        items={[
-          { label: 'LHDN e-Invoice', href: '/lhdn' },
-          { label: 'Audit Explorer' },
-        ]}
+    <>
+      <PageHead
+        title="LHDN Audit Explorer"
+        description="Immutable audit trail of all LHDN e-Invoice operations and system events"
       />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Breadcrumbs
+          items={[
+            { label: 'LHDN e-Invoice', href: '/lhdn' },
+            { label: 'Audit Explorer' },
+          ]}
+        />
 
       <div className="mb-8 flex justify-between items-start">
         <div>
@@ -261,6 +267,7 @@ export default function AuditExplorerPage() {
           />
         </Card.Body>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

@@ -36,12 +36,13 @@ export class DiscoveryController {
 
       // Create connector based on connection type
       const connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: sapConnection.base_url,
         auth: sapConnection.auth_credentials,
       });
 
       // Run service discovery
-      const discovery = new ServiceDiscovery(connector);
+      const discovery = new ServiceDiscovery(connector as any);
       const result = await discovery.discoverServices();
 
       // Generate and save profile

@@ -143,7 +143,11 @@ export function validateSecurityConfig(env: NodeJS.ProcessEnv = process.env): Se
 }
 
 /**
- * Validate and throw if security config is invalid in production
+ * ✅ SECURITY FIX: CVE-FRAMEWORK-2025-007
+ * Validate and throw if security config is invalid in ALL environments
+ *
+ * CHANGED: Now enforces security in development too (was: only production)
+ * REASON: Prevent accidental deployment with insecure configuration
  */
 export function enforceSecurityConfig(env: NodeJS.ProcessEnv = process.env): void {
   const result = validateSecurityConfig(env);
@@ -155,19 +159,37 @@ export function enforceSecurityConfig(env: NodeJS.ProcessEnv = process.env): voi
     console.warn('');
   }
 
-  // In production, fail on errors
+  // ✅ SECURITY FIX: Fail on errors in ALL environments (not just production)
   if (!result.valid) {
     console.error('❌ Security Configuration Errors:');
     result.errors.forEach(error => console.error(`   - ${error}`));
     console.error('');
 
-    if (env.NODE_ENV === 'production') {
-      console.error('💀 FATAL: Cannot start in production with security configuration errors.');
-      console.error('    Fix the errors above and restart the application.');
-      process.exit(1);
-    } else {
-      console.warn('⚠️  Development mode: Continuing despite errors (would fail in production)');
+    // Check for explicit bypass (for local development only)
+    const allowInsecureDev = env.ALLOW_INSECURE_DEV === 'true';
+
+    if (allowInsecureDev && env.NODE_ENV !== 'production') {
+      console.error('⚠️⚠️⚠️  RUNNING IN INSECURE MODE  ⚠️⚠️⚠️');
+      console.error('         ALLOW_INSECURE_DEV=true');
+      console.error('         THIS IS DANGEROUS - NEVER USE IN PRODUCTION');
+      console.error('         Security checks are BYPASSED');
+      console.error('');
+      return;
     }
+
+    // ✅ ENFORCED: Fail in all environments unless explicit bypass
+    console.error('💀 FATAL: Cannot start with security configuration errors.');
+    console.error('');
+    console.error('To fix:');
+    console.error('  1. Set AUTH_ENABLED=true');
+    console.error('  2. Set strong JWT_SECRET (generate with: openssl rand -base64 32)');
+    console.error('  3. Set ENCRYPTION_MASTER_KEY (generate with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64\'))")');
+    console.error('  4. Update CORS_ORIGIN to your domain');
+    console.error('');
+    console.error('For local development ONLY (NEVER in production):');
+    console.error('  export ALLOW_INSECURE_DEV=true');
+    console.error('');
+    process.exit(1);
   } else if (result.warnings.length === 0) {
     console.log('✅ Security configuration validated successfully');
   }

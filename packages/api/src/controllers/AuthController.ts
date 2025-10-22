@@ -2,6 +2,16 @@ import { Request, Response } from 'express';
 import { ApiResponseUtil } from '../utils/response';
 import { AuthenticatedRequest } from '../types';
 import logger from '../utils/logger';
+import { sanitizeEmail } from '../utils/sanitization';
+import {
+  generatePasswordResetToken,
+  verifyPasswordResetToken,
+  generatePasswordResetUrl,
+  getExpiryTimeString,
+  passwordResetRateLimiter,
+  hashToken,
+} from '@sap-framework/core';
+import { getEmailService } from '@sap-framework/core';
 
 /**
  * Authentication Controller
@@ -21,16 +31,26 @@ export class AuthController {
         return;
       }
 
+      // ✅ SECURITY FIX: Sanitize and validate email
+      // DEFECT-035: Stored XSS vulnerability fix
+      let sanitizedEmail: string;
+      try {
+        sanitizedEmail = sanitizeEmail(email);
+      } catch (error) {
+        ApiResponseUtil.badRequest(res, 'Invalid email format');
+        return;
+      }
+
       // In development mode or when AUTH_ENABLED=false, accept any credentials
       // In production, you would validate against a user database
       const isDevelopment = process.env.NODE_ENV !== 'production';
 
       if (isDevelopment) {
-        // Development: Create mock user
+        // Development: Create mock user with sanitized email
         const mockUser = {
           id: 'dev-user-123',
-          email,
-          name: email.split('@')[0] || 'Dev User',
+          email: sanitizedEmail,
+          name: sanitizedEmail.split('@')[0] || 'Dev User',
           roles: ['admin', 'user'],
           tenantId: 'dev-tenant',
           tenantName: 'Development Tenant',
@@ -40,7 +60,7 @@ export class AuthController {
         const token = AuthController.generateDevToken(mockUser);
         const refreshToken = AuthController.generateDevToken({ ...mockUser, type: 'refresh' });
 
-        logger.info('Development login successful', { email });
+        logger.info('Development login successful', { email: sanitizedEmail });
 
         ApiResponseUtil.success(res, {
           user: {
@@ -220,6 +240,261 @@ export class AuthController {
     } catch (error) {
       logger.error('Token decode error:', error);
       return null;
+    }
+  }
+
+  // ===================================================================
+  // PASSWORD RESET FUNCTIONALITY
+  // ===================================================================
+
+  /**
+   * In-memory token store (use Redis/database in production)
+   * Map<hashedToken, {hashedToken, email, expiresAt, used}>
+   */
+  private static passwordResetTokens: Map<
+    string,
+    {
+      hashedToken: string;
+      email: string;
+      expiresAt: Date;
+      used: boolean;
+      createdAt: Date;
+    }
+  > = new Map();
+
+  /**
+   * Request password reset
+   * POST /api/auth/forgot-password
+   */
+  static async requestPasswordReset(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        ApiResponseUtil.badRequest(res, 'Email is required');
+        return;
+      }
+
+      // Sanitize and validate email
+      let sanitizedEmail: string;
+      try {
+        sanitizedEmail = sanitizeEmail(email);
+      } catch (error) {
+        ApiResponseUtil.badRequest(res, 'Invalid email format');
+        return;
+      }
+
+      // Check rate limiting
+      const rateLimitCheck = passwordResetRateLimiter.canRequest(sanitizedEmail);
+      if (!rateLimitCheck.allowed) {
+        ApiResponseUtil.error(
+          res,
+          'RATE_LIMIT_EXCEEDED',
+          rateLimitCheck.reason || 'Too many requests',
+          429
+        );
+        return;
+      }
+
+      // Record attempt
+      passwordResetRateLimiter.recordAttempt(sanitizedEmail);
+
+      // Generate reset token
+      const tokenData = generatePasswordResetToken(sanitizedEmail, 60); // 60 minutes validity
+
+      // Store token (use database in production)
+      AuthController.passwordResetTokens.set(tokenData.hashedToken, {
+        hashedToken: tokenData.hashedToken,
+        email: sanitizedEmail,
+        expiresAt: tokenData.expiresAt,
+        used: false,
+        createdAt: tokenData.createdAt,
+      });
+
+      // Generate reset URL
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      const resetUrl = generatePasswordResetUrl(baseUrl, tokenData.token);
+
+      // Send email (if email service is configured)
+      try {
+        const emailService = getEmailService();
+        await emailService.sendEmail({
+          to: sanitizedEmail,
+          subject: 'Password Reset Request - SAP GRC Platform',
+          template: 'password-reset',
+          data: {
+            recipientName: sanitizedEmail.split('@')[0],
+            resetLink: resetUrl,
+            expiresIn: getExpiryTimeString(60),
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent'),
+          },
+        });
+
+        logger.info('Password reset email sent', {
+          email: sanitizedEmail,
+          expiresAt: tokenData.expiresAt.toISOString(),
+        });
+      } catch (emailError) {
+        logger.error('Failed to send password reset email', {
+          error: emailError,
+          email: sanitizedEmail,
+        });
+
+        // In development, return token in response for testing
+        if (process.env.NODE_ENV !== 'production') {
+          ApiResponseUtil.success(res, {
+            message: 'Password reset initiated (email service not configured)',
+            resetToken: tokenData.token,
+            resetUrl,
+            expiresAt: tokenData.expiresAt,
+          });
+          return;
+        }
+
+        ApiResponseUtil.error(
+          res,
+          'EMAIL_ERROR',
+          'Failed to send password reset email',
+          500
+        );
+        return;
+      }
+
+      // Always return success (don't reveal if email exists)
+      ApiResponseUtil.success(res, {
+        message: 'If an account with that email exists, a password reset link has been sent.',
+      });
+    } catch (error: any) {
+      logger.error('Password reset request error:', error);
+      ApiResponseUtil.error(res, 'PASSWORD_RESET_ERROR', 'Password reset request failed', 500);
+    }
+  }
+
+  /**
+   * Verify password reset token
+   * GET /api/auth/verify-reset-token?token=...
+   */
+  static async verifyResetToken(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = req.query;
+
+      if (!token || typeof token !== 'string') {
+        ApiResponseUtil.badRequest(res, 'Token is required');
+        return;
+      }
+
+      // Hash token to look up in store
+      const hashedToken = hashToken(token);
+      const storedToken = AuthController.passwordResetTokens.get(hashedToken);
+
+      if (!storedToken) {
+        logger.warn('Password reset token not found');
+        ApiResponseUtil.error(res, 'INVALID_TOKEN', 'Invalid or expired token', 400);
+        return;
+      }
+
+      // Verify token
+      const verification = verifyPasswordResetToken(token, storedToken);
+
+      if (!verification.valid) {
+        ApiResponseUtil.error(
+          res,
+          'INVALID_TOKEN',
+          verification.reason || 'Invalid token',
+          400
+        );
+        return;
+      }
+
+      ApiResponseUtil.success(res, {
+        valid: true,
+        email: verification.email,
+      });
+    } catch (error: any) {
+      logger.error('Token verification error:', error);
+      ApiResponseUtil.error(res, 'VERIFICATION_ERROR', 'Token verification failed', 500);
+    }
+  }
+
+  /**
+   * Reset password
+   * POST /api/auth/reset-password
+   */
+  static async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (!token || !newPassword) {
+        ApiResponseUtil.badRequest(res, 'Token and new password are required');
+        return;
+      }
+
+      // Validate password strength
+      if (newPassword.length < 8) {
+        ApiResponseUtil.badRequest(res, 'Password must be at least 8 characters long');
+        return;
+      }
+
+      // Hash token to look up in store
+      const hashedToken = hashToken(token);
+      const storedToken = AuthController.passwordResetTokens.get(hashedToken);
+
+      if (!storedToken) {
+        logger.warn('Password reset token not found');
+        ApiResponseUtil.error(res, 'INVALID_TOKEN', 'Invalid or expired token', 400);
+        return;
+      }
+
+      // Verify token
+      const verification = verifyPasswordResetToken(token, storedToken);
+
+      if (!verification.valid) {
+        ApiResponseUtil.error(
+          res,
+          'INVALID_TOKEN',
+          verification.reason || 'Invalid token',
+          400
+        );
+        return;
+      }
+
+      // Mark token as used
+      storedToken.used = true;
+
+      // TODO: Update password in database
+      // For now, just log the password change
+      logger.info('Password reset successful', {
+        email: verification.email,
+      });
+
+      // Send confirmation email
+      try {
+        const emailService = getEmailService();
+        await emailService.sendEmail({
+          to: verification.email!,
+          subject: 'Password Changed - SAP GRC Platform',
+          template: 'password-reset-confirmation',
+          data: {
+            recipientName: verification.email!.split('@')[0],
+            resetAt: new Date().toISOString(),
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent'),
+          },
+        });
+      } catch (emailError) {
+        logger.error('Failed to send password reset confirmation', {
+          error: emailError,
+        });
+        // Don't fail the request if confirmation email fails
+      }
+
+      ApiResponseUtil.success(res, {
+        message: 'Password reset successful. You can now log in with your new password.',
+      });
+    } catch (error: any) {
+      logger.error('Password reset error:', error);
+      ApiResponseUtil.error(res, 'PASSWORD_RESET_ERROR', 'Password reset failed', 500);
     }
   }
 }

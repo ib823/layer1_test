@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import { v4 as uuidv4 } from 'uuid';
 import swaggerUi from 'swagger-ui-express';
 import { initializeEncryption } from '@sap-framework/core';
+// ✅ SECURITY FIX: Import security validation
+import { enforceSecurityConfig } from '@sap-framework/core';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { auditLog } from './middleware/auditLog';
@@ -15,6 +17,16 @@ import { swaggerSpec } from './swagger';
 
 export function createApp(): Application {
   const app = express();
+
+  // ✅ SECURITY FIX: Validate security configuration before starting
+  // CVE-2025-007: Prevent startup with insecure configuration
+  try {
+    enforceSecurityConfig(process.env);
+    logger.info('✅ Security configuration validated');
+  } catch (error: any) {
+    logger.error('❌ Security configuration validation failed:', error);
+    throw error;
+  }
 
   // Initialize encryption service at startup
   try {

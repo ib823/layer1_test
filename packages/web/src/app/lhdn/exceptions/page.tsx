@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/hooks/useToast';
+import { PageHead } from '@/components/seo/PageHead';
 import Link from 'next/link';
 
 interface LHDNException {
@@ -362,13 +363,18 @@ export default function ExceptionInboxPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Breadcrumbs
-        items={[
-          { label: 'LHDN e-Invoice', href: '/lhdn' },
-          { label: 'Exception Inbox' },
-        ]}
+    <>
+      <PageHead
+        title="LHDN Exception Inbox"
+        description="Manage and resolve LHDN e-Invoice exceptions, errors, and system failures"
       />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Breadcrumbs
+          items={[
+            { label: 'LHDN e-Invoice', href: '/lhdn' },
+            { label: 'Exception Inbox' },
+          ]}
+        />
 
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
@@ -748,6 +754,7 @@ export default function ExceptionInboxPage() {
           </div>
         </div>
       </Modal>
-    </div>
+      </div>
+    </>
   );
 }
