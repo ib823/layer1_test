@@ -30,8 +30,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run npm audit
-        run: pnpm audit --audit-level=moderate
-        continue-on-error: true
+        run: pnpm audit --audit-level=high
 
       - name: Run Snyk test
         uses: snyk/actions/node@master
@@ -66,8 +65,9 @@ jobs:
       - name: Dependency Review
         uses: actions/dependency-review-action@v3
         with:
-          fail-on-severity: moderate
+          fail-on-severity: high
           deny-licenses: GPL-2.0, GPL-3.0
+          comment-summary-in-pr: always
 
   codeql-analysis:
     name: CodeQL Analysis

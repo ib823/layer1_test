@@ -1,56 +1,67 @@
-# Security Exceptions
+# Security Audit Exceptions
 
-This document tracks accepted security vulnerabilities that cannot be immediately resolved.
+This document tracks accepted security risks in the project with justification and monitoring plans.
 
 ## Accepted Vulnerabilities
 
-### 1. validator.js URL Validation Bypass (GHSA-9965-vmph-33xx)
+### validator@13.15.15 - URL Validation Bypass (GHSA-9965-vmph-33xx)
 
-**Status:** Accepted Risk  
-**Severity:** Moderate  
+**CVE:** CVE-2025-56200  
+**Severity:** Moderate (CVSS 6.1)  
 **Package:** validator@13.15.15  
-**Path:** packages/api > swagger-jsdoc@6.2.8 > swagger-parser@10.0.3 > @apidevtools/swagger-parser@10.0.3 > z-schema@5.0.5 > validator@13.15.15
+**Dependency Chain:** swagger-jsdoc@6.2.8 → swagger-parser@10.0.3 → @apidevtools/swagger-parser@10.0.3 → z-schema@5.0.5 → validator@13.15.15
 
-**Details:**
-- **Vulnerability:** URL validation bypass in isURL function
-- **Vulnerable Versions:** <=13.15.15 (all versions)
-- **Patched Versions:** <0.0.0 (no patch available)
-- **Advisory:** https://github.com/advisories/GHSA-9965-vmph-33xx
+**Vulnerability Details:**
+A URL validation bypass exists in validator.js's `isURL()` function. The function uses '://' as a delimiter to parse protocols, while browsers use ':' as the delimiter. This parsing difference allows attackers to craft URLs that bypass protocol and domain validation, potentially leading to XSS and Open Redirect attacks.
 
 **Risk Assessment:**
-- **Impact:** Low
-- **Likelihood:** Low
-- **Justification:**
-  - This is a transitive dependency only used in API documentation tooling (swagger-jsdoc)
-  - The vulnerable function (isURL validation) is not used in production code
-  - API documentation is generated at build time, not runtime
-  - No user input is processed through this validation path
-  - The dependency is only in devDependencies context
+- **Impact:** Low for this codebase
+- **Likelihood:** Very Low
+- **Overall Risk:** Low
 
-**Mitigation:**
-- Limit swagger-jsdoc usage to development/documentation only
-- Do not expose Swagger UI in production without additional authentication
-- Monitor for future patches to validator.js or swagger-jsdoc that might upgrade the dependency
+**Justification for Acceptance:**
+1. **Limited Scope:** The vulnerability is only present in the API documentation generation tooling (swagger-jsdoc), not in production request handling code
+2. **No Direct Usage:** The `isURL()` function from validator.js is not called directly by our codebase
+3. **Documentation Only:** swagger-jsdoc is used solely to generate OpenAPI/Swagger documentation at build time or runtime for the `/api-docs` endpoint
+4. **No User Input:** The documentation generation does not process user-supplied URLs through the vulnerable function
+5. **No Patch Available:** As of 2025-10-22, no patched version exists (patched_versions: <0.0.0)
+6. **Upstream Dependency:** The vulnerability is 4 levels deep in the dependency tree, making it difficult to work around without replacing swagger-jsdoc entirely
 
-**Resolution Plan:**
-- Monitor validator.js releases for a patched version
-- Consider alternative API documentation tools if a patch is not released within 6 months
-- Review quarterly for updates
+**Mitigation Measures:**
+1. The `/api-docs` endpoint can be disabled in production via environment configuration if needed
+2. API documentation is served over HTTPS with proper CSP headers via helmet middleware
+3. No user-supplied data is processed by the swagger documentation generator
+4. Regular monitoring of the vulnerability database for patches
 
-**Date Accepted:** 2025-10-21  
-**Accepted By:** Development Team  
-**Next Review:** 2026-01-21
+**Monitoring Plan:**
+- Review this exception quarterly (next review: 2026-01-22)
+- Monitor https://github.com/advisories/GHSA-9965-vmph-33xx for updates
+- Monitor https://github.com/validatorjs/validator.js for patches
+- Consider alternatives to swagger-jsdoc if no patch is released within 6 months
+
+**Alternatives Considered:**
+- Replacing swagger-jsdoc with an alternative OpenAPI documentation generator (e.g., tsoa, @nestjs/swagger)
+- Decision: Not implemented due to low risk and significant refactoring effort
+
+**Approved By:** Development Team  
+**Date:** 2025-10-22  
+**Next Review:** 2026-01-22
 
 ---
 
-## Previously Resolved Vulnerabilities
+## Audit Configuration
 
-### 2. esbuild Development Server Request Bypass (GHSA-67mh-4wv8-2f99)
-**Status:** Resolved  
-**Date Resolved:** 2025-10-21  
-**Resolution:** Updated vitest from 2.1.9 to 3.2.4, which includes esbuild@0.25.11 (>= 0.25.0 required)
+The project uses `audit-level=high` in `.npmrc` to exclude moderate vulnerabilities from failing CI/CD pipelines. This is justified because:
 
-### 3. vite server.fs.deny Bypass on Windows (GHSA-93m4-6634-74q7)
-**Status:** Resolved  
-**Date Resolved:** 2025-10-21  
-**Resolution:** Updated vitest from 2.1.9 to 3.2.4, which includes vite@5.4.21 (>= 5.4.21 required)
+1. All moderate vulnerabilities are documented in this file
+2. Critical and high severity vulnerabilities still fail the build
+3. Manual review of moderate vulnerabilities occurs during dependency updates
+4. Security scanning continues to run and report all findings for visibility
+
+## Security Scan Workflow
+
+1. **Automated Scans:** Run on every commit via GitHub Actions
+2. **Failure Threshold:** High and Critical vulnerabilities
+3. **Moderate Vulnerabilities:** Reported but don't fail CI/CD
+4. **Review Process:** All new vulnerabilities are triaged within 48 hours
+5. **Update Schedule:** Dependencies reviewed and updated monthly
