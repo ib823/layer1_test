@@ -1,18 +1,22 @@
 /**
  * Email Service
  *
- * Handles email sending via Nodemailer + Resend
+ * Handles email sending via Nodemailer + Resend + Brevo
  * Inspired by VerifyWise's email architecture
  */
 
 import nodemailer, { Transporter } from 'nodemailer';
 import { Resend } from 'resend';
+import axios from 'axios';
 import logger from '../utils/logger';
 import { renderEmailTemplate } from './templates';
 
 export interface EmailConfig {
-  provider: 'resend' | 'smtp' | 'test';
+  provider: 'resend' | 'smtp' | 'brevo' | 'test';
   resend?: {
+    apiKey: string;
+  };
+  brevo?: {
     apiKey: string;
   };
   smtp?: {
@@ -52,6 +56,7 @@ export class EmailService {
   private config: EmailConfig;
   private transporter?: Transporter;
   private resendClient?: Resend;
+  private brevoApiKey?: string;
 
   private constructor(config: EmailConfig) {
     this.config = config;
@@ -89,6 +94,14 @@ export class EmailService {
         }
         this.resendClient = new Resend(this.config.resend.apiKey);
         logger.info('Email service initialized with Resend');
+        break;
+
+      case 'brevo':
+        if (!this.config.brevo?.apiKey) {
+          throw new Error('Brevo API key is required');
+        }
+        this.brevoApiKey = this.config.brevo.apiKey;
+        logger.info('Email service initialized with Brevo');
         break;
 
       case 'smtp':
@@ -170,6 +183,15 @@ export class EmailService {
           bcc,
           attachments: emailData.attachments,
         });
+      } else if (this.config.provider === 'brevo' && this.brevoApiKey) {
+        return await this.sendViaBrevo({
+          to,
+          subject: emailData.subject,
+          html,
+          cc,
+          bcc,
+          attachments: emailData.attachments,
+        });
       } else if (this.transporter) {
         return await this.sendViaSmtp({
           to,
@@ -237,6 +259,70 @@ export class EmailService {
       return {
         success: false,
         error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Send email via Brevo (REST API)
+   */
+  private async sendViaBrevo(data: {
+    to: string[];
+    subject: string;
+    html: string;
+    cc?: string[];
+    bcc?: string[];
+    attachments?: any[];
+  }): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+      // Prepare recipient list
+      const recipients = data.to.map((email) => ({ email }));
+      const ccRecipients = data.cc?.map((email) => ({ email }));
+      const bccRecipients = data.bcc?.map((email) => ({ email }));
+
+      // Prepare request body
+      const requestBody = {
+        sender: {
+          name: this.config.from.name,
+          email: this.config.from.email,
+        },
+        to: recipients,
+        cc: ccRecipients,
+        bcc: bccRecipients,
+        subject: data.subject,
+        htmlContent: data.html,
+      };
+
+      // Send via Brevo API
+      const response = await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        requestBody,
+        {
+          headers: {
+            'api-key': this.brevoApiKey,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const messageId = response.data.messageId;
+
+      logger.info('Email sent via Brevo', {
+        messageId,
+        to: data.to,
+      });
+
+      return {
+        success: true,
+        messageId,
+      };
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || error.message || 'Unknown error';
+      logger.error('Brevo email failed', { error: errorMessage });
+      return {
+        success: false,
+        error: errorMessage,
       };
     }
   }
@@ -363,6 +449,10 @@ export class EmailService {
       } else if (this.resendClient) {
         // Resend doesn't have a verify method, consider it valid if initialized
         logger.info('Resend email configuration valid');
+        return true;
+      } else if (this.brevoApiKey) {
+        // Brevo API key is set, consider it valid if initialized
+        logger.info('Brevo email configuration valid');
         return true;
       }
       return false;
