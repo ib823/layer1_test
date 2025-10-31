@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className={clsx('sidebar', { 'sidebar-collapsed': collapsed })}>
       {/* Header */}
       <div className="sidebar-header">
-        {!collapsed && <div className="sidebar-logo">SAP GRC</div>}
+        {!collapsed && <div className="sidebar-logo">Prism</div>}
         {onToggleCollapse && (
           <button
             className="sidebar-toggle"

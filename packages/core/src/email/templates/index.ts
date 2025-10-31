@@ -14,8 +14,8 @@ function wrapTemplate(content: string, preheader?: string): string {
   return `
 <mjml>
   <mj-head>
-    <mj-title>SAP GRC Platform</mj-title>
-    <mj-preview>${preheader || 'SAP GRC Platform Notification'}</mj-preview>
+    <mj-title>Prism</mj-title>
+    <mj-preview>${preheader || 'Prism Notification'}</mj-preview>
     <mj-attributes>
       <mj-all font-family="Arial, sans-serif" />
       <mj-text font-size="14px" color="#333333" line-height="1.6" />
@@ -52,7 +52,7 @@ export function userInvitationTemplate(data: {
 <mj-section css-class="header" padding="20px">
   <mj-column>
     <mj-text align="center" font-size="24px" font-weight="bold">
-      Welcome to SAP GRC Platform
+      Welcome to Prism
     </mj-text>
   </mj-column>
 </mj-section>
@@ -61,7 +61,7 @@ export function userInvitationTemplate(data: {
   <mj-column>
     <mj-text>
       <p>Hi ${data.recipientName},</p>
-      <p><strong>${data.inviterName}</strong> has invited you to join <strong>${data.organizationName}</strong> on the SAP GRC Platform as a <strong>${data.role}</strong>.</p>
+      <p><strong>${data.inviterName}</strong> has invited you to join <strong>${data.organizationName}</strong> on the Prism as a <strong>${data.role}</strong>.</p>
       <p>This invitation will expire in ${data.expiresIn}.</p>
     </mj-text>
     <mj-button href="${data.invitationLink}" padding="20px 0">
@@ -77,7 +77,7 @@ export function userInvitationTemplate(data: {
 <mj-section css-class="footer" padding="20px">
   <mj-column>
     <mj-text align="center">
-      <p>SAP GRC Platform - Governance, Risk & Compliance</p>
+      <p>Prism - Governance, Risk & Compliance</p>
       <p>This email was sent to you because you were invited to join an organization.</p>
     </mj-text>
   </mj-column>
@@ -149,7 +149,7 @@ export function violationAlertTemplate(data: {
 <mj-section css-class="footer" padding="20px">
   <mj-column>
     <mj-text align="center">
-      <p>This is an automated alert from SAP GRC Platform</p>
+      <p>This is an automated alert from Prism</p>
       <p>Immediate action may be required for critical violations</p>
     </mj-text>
   </mj-column>
@@ -202,7 +202,7 @@ export function reportDeliveryTemplate(data: {
 <mj-section css-class="footer" padding="20px">
   <mj-column>
     <mj-text align="center">
-      <p>SAP GRC Platform - Automated Reporting</p>
+      <p>Prism - Automated Reporting</p>
     </mj-text>
   </mj-column>
 </mj-section>
@@ -250,7 +250,7 @@ export function accessReviewReminderTemplate(data: {
 <mj-section css-class="footer" padding="20px">
   <mj-column>
     <mj-text align="center">
-      <p>SAP GRC Platform - User Access Review</p>
+      <p>Prism - User Access Review</p>
       <p>Regular access reviews are essential for compliance</p>
     </mj-text>
   </mj-column>
@@ -284,7 +284,7 @@ export function passwordResetTemplate(data: {
   <mj-column>
     <mj-text>
       <p>Hi ${data.recipientName},</p>
-      <p>We received a request to reset your password for your SAP GRC Platform account.</p>
+      <p>We received a request to reset your password for your Prism account.</p>
       <p>Click the button below to create a new password. This link will expire in <strong>${data.expiresIn}</strong>.</p>
     </mj-text>
     <mj-button href="${data.resetLink}" padding="30px 0">
@@ -308,7 +308,7 @@ export function passwordResetTemplate(data: {
 <mj-section css-class="footer" padding="20px">
   <mj-column>
     <mj-text align="center">
-      <p>SAP GRC Platform - Account Security</p>
+      <p>Prism - Account Security</p>
       <p>This email was sent because a password reset was requested for your account.</p>
     </mj-text>
   </mj-column>
@@ -341,7 +341,7 @@ export function passwordResetConfirmationTemplate(data: {
   <mj-column>
     <mj-text>
       <p>Hi ${data.recipientName},</p>
-      <p>Your SAP GRC Platform password was successfully changed at <strong>${data.resetAt}</strong>.</p>
+      <p>Your Prism password was successfully changed at <strong>${data.resetAt}</strong>.</p>
       ${data.ipAddress || data.userAgent ? `
       <p style="border-top: 1px solid #e8e8e8; padding-top: 15px; margin-top: 20px;">
         <strong>Security Information:</strong><br/>
@@ -359,7 +359,7 @@ export function passwordResetConfirmationTemplate(data: {
 <mj-section css-class="footer" padding="20px">
   <mj-column>
     <mj-text align="center">
-      <p>SAP GRC Platform - Account Security</p>
+      <p>Prism - Account Security</p>
       <p>This is a security notification for your account.</p>
     </mj-text>
   </mj-column>
@@ -410,7 +410,7 @@ export function genericNotificationTemplate(data: {
 <mj-section css-class="footer" padding="20px">
   <mj-column>
     <mj-text align="center">
-      <p>SAP GRC Platform</p>
+      <p>Prism</p>
     </mj-text>
   </mj-column>
 </mj-section>

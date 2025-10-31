@@ -63,6 +63,14 @@ router.get('/version', (req, res) => {
 import authRoutes from './auth';
 router.use('/auth', authRoutes);
 
+// MFA, Passkey, and Session Management routes
+import mfaRoutes from './mfa';
+import passkeyRoutes from './passkey';
+import sessionsRoutes from './sessions';
+router.use('/mfa', mfaRoutes);
+router.use('/passkey', passkeyRoutes);
+router.use('/sessions', sessionsRoutes);
+
 // ==============================================================================
 // GLOBAL MIDDLEWARE: Apply to all routes below
 // ==============================================================================

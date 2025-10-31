@@ -68,7 +68,7 @@ export function AppHeader() {
               AB
             </div>
             <div>
-              <div className="text-sm font-semibold text-primary">ABeam DataBridge</div>
+              <div className="text-sm font-semibold text-primary">Prism</div>
               <div className="text-xs text-tertiary">GRC Platform</div>
             </div>
           </div>

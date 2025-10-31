@@ -261,7 +261,7 @@ Please review and correct the invoice data.
       </div>
     </div>
     <div class="footer">
-      <p>SAP GRC Platform - LHDN e-Invoice Module</p>
+      <p>Prism - LHDN e-Invoice Module</p>
       <p>Tenant: ${invoice.tenantId}</p>
     </div>
   </div>

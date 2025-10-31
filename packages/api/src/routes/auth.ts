@@ -58,4 +58,18 @@ router.get('/verify-reset-token', AuthController.verifyResetToken);
  */
 router.post('/reset-password', AuthController.resetPassword);
 
+/**
+ * @route POST /api/auth/register
+ * @desc Request user registration with email verification
+ * @access Public
+ */
+router.post('/register', AuthController.requestRegistration);
+
+/**
+ * @route POST /api/auth/verify-registration
+ * @desc Verify registration token and create user
+ * @access Public
+ */
+router.post('/verify-registration', AuthController.verifyRegistration);
+
 export default router;

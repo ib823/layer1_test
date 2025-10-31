@@ -1,4 +1,4 @@
-# ABeam DataBridge - Design System Package
+# Prism - Design System Package
 
 **Complete setup for enforcing design consistency with Claude Code and human developers**
 
@@ -208,14 +208,14 @@ packages/web/
 **Before (BAD):**
 ```tsx
 <div style={{ backgroundColor: '#0C2B87' }}>
-  ABeam DataBridge
+  Prism
 </div>
 ```
 
 **After (GOOD):**
 ```tsx
 <div className="bg-brand-primary text-white">
-  ABeam DataBridge
+  Prism
 </div>
 ```
 
@@ -525,5 +525,5 @@ Open `SETUP_CHECKLIST.md` and follow the 15-minute Quick Start!
 
 **Package Version:** 1.0.0  
 **Created:** October 8, 2025  
-**For:** ABeam DataBridge Platform  
+**For:** Prism Platform  
 **Status:** ✅ Production Ready

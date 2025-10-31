@@ -47,7 +47,7 @@ export function enforceTenantIsolation(
   }
 
   const userTenantId = req.user.tenantId;
-  const isAdmin = req.user.roles.includes('admin') || req.user.roles.includes('system_admin');
+  const isAdmin = req.user.roles?.includes('admin') || req.user.roles?.includes('system_admin');
 
   // Extract tenant ID from route params (e.g., /api/tenants/:tenantId/...)
   const requestedTenantId = req.params.tenantId || req.params.id;
@@ -55,7 +55,7 @@ export function enforceTenantIsolation(
   // Set tenant filter for defense-in-depth
   // This will be used by repository/service layers to scope queries
   req.tenantFilter = {
-    tenantId: userTenantId,
+    tenantId: userTenantId || '',
   };
 
   // If route has explicit tenant ID, validate access
@@ -168,7 +168,7 @@ export function validateResourceOwnership(
   req: AuthenticatedRequest
 ): void {
   const userTenantId = getTenantId(req);
-  const isAdmin = req.user?.roles.includes('admin') || req.user?.roles.includes('system_admin');
+  const isAdmin = (req.user?.roles?.includes('admin') || req.user?.roles?.includes('system_admin')) ?? false;
 
   // Admins can access any resource (for support/management)
   if (isAdmin) {

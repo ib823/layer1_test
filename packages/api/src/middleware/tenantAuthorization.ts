@@ -76,7 +76,7 @@ export function validateTenantAccess(options: TenantAuthOptions = {}) {
     }
 
     // ✅ SECURITY CHECK 1: Admin override (if enabled)
-    if (adminOverride && req.user.roles.includes('admin')) {
+    if (adminOverride && req.user.roles?.includes('admin')) {
       logger.debug('Tenant access granted via admin override', {
         userId: req.user.id,
         userTenant: req.user.tenantId,
@@ -87,7 +87,7 @@ export function validateTenantAccess(options: TenantAuthOptions = {}) {
 
     // ✅ SECURITY CHECK 2: Custom roles override (if specified)
     if (allowedRoles.length > 0) {
-      const hasAllowedRole = req.user.roles.some(role => allowedRoles.includes(role));
+      const hasAllowedRole = req.user.roles?.some(role => allowedRoles.includes(role));
       if (hasAllowedRole) {
         logger.debug('Tenant access granted via custom role', {
           userId: req.user.id,
@@ -157,7 +157,7 @@ export function validateUserAccess(userIdParam = 'userId') {
     }
 
     // Admin can access any user
-    if (req.user.roles.includes('admin')) {
+    if (req.user.roles?.includes('admin')) {
       return next();
     }
 
@@ -190,12 +190,14 @@ export function enforceTenantFilter() {
 
     // Attach tenant filter to request for use in controllers/repositories
     req.tenantFilter = {
-      tenantId: req.user.tenantId,
+      tenantId: req.user.tenantId || '',
     };
 
     // For admins, allow query parameter to override (for multi-tenant admin tools)
-    if (req.user.roles.includes('admin') && req.query.tenantId) {
-      req.tenantFilter.tenantId = req.query.tenantId as string;
+    if (req.user.roles?.includes('admin') && req.query.tenantId) {
+      if (req.tenantFilter) {
+        req.tenantFilter.tenantId = req.query.tenantId as string;
+      }
     }
 
     next();
@@ -223,7 +225,7 @@ export function assertTenantOwnership(
   }
 
   // Admin can access any tenant's resources
-  if (user.roles.includes('admin')) {
+  if (user.roles?.includes('admin')) {
     return;
   }
 

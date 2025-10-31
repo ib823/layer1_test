@@ -1,6 +1,6 @@
 # @sap-framework/tokens
 
-Design tokens for the ABeam DataBridge GRC Platform.
+Design tokens for the Prism.
 
 ## What are Design Tokens?
 

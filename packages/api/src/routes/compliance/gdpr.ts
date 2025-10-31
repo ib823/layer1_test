@@ -122,7 +122,8 @@ router.get('/requests', authenticate, async (req: AuthenticatedRequest, res: Res
   try {
     const gdprService = new GDPRService(config.databaseUrl);
 
-    const { requests, total } = await gdprService.listRequests(req.user!.tenantId, {
+    const tenantId = req.user?.tenantId || '';
+    const { requests, total } = await gdprService.listRequests(tenantId, {
       status: req.query.status as string,
       requestType: req.query.requestType as string,
       page: req.query.page ? parseInt(req.query.page as string) : undefined,
@@ -251,7 +252,7 @@ router.post(
 router.post('/requests/:requestId/execute', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     // Require admin role for execution
-    if (!req.user!.roles.includes('admin')) {
+    if (!req.user?.roles?.includes('admin')) {
       return ApiResponseUtil.forbidden(res, 'Admin role required to execute GDPR requests');
     }
 

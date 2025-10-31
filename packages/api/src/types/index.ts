@@ -95,8 +95,9 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    roles: string[];
-    tenantId: string;
+    name?: string;
+    roles?: string[];
+    tenantId?: string;
   };
   // ✅ SECURITY FIX: Tenant filter for defense-in-depth
   tenantFilter?: {

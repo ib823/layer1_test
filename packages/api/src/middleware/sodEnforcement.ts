@@ -53,6 +53,13 @@ export function enforceSoD(options: SoDEnforcementOptions = {}) {
     }
 
     const { tenantId, id: userId } = req.user;
+
+    if (!tenantId) {
+      logger.warn('SoD enforcement: No tenantId for user');
+      next();
+      return;
+    }
+
     const operation = req.body?.operation || req.query?.operation || 'UNKNOWN';
 
     try {

@@ -214,7 +214,7 @@ export function requireRole(role: string) {
       return ApiResponseUtil.unauthorized(res);
     }
 
-    if (!req.user.roles.includes(role) && !req.user.roles.includes('admin')) {
+    if (!req.user.roles?.includes(role) && !req.user.roles?.includes('admin')) {
       logger.warn('Insufficient permissions', {
         userId: req.user.id,
         requiredRole: role,

@@ -7,9 +7,11 @@ describe('S/4HANA + IPS Integration', () => {
 
     beforeAll(() => {
       connector = new S4HANAConnector({
+        erpSystem: 'SAP',
         baseUrl: process.env.S4_BASE_URL || 'https://example.com',
         auth: {
-          type: 'OAUTH',
+          provider: 'SAP',
+          type: 'OAUTH2',
           credentials: {
             clientId: process.env.S4_CLIENT_ID,
             clientSecret: process.env.S4_CLIENT_SECRET,
@@ -19,9 +21,7 @@ describe('S/4HANA + IPS Integration', () => {
     });
 
     it('should fetch user roles', async () => {
-      const roles = await connector.getUserRoles({
-        activeOnly: true,
-      });
+      const roles = await connector.getUserRoles('TEST_USER');
 
       expect(Array.isArray(roles)).toBe(true);
     });

@@ -39,6 +39,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { Role, Permission } from '@/types/auth';
 import { Can } from '../auth/Can';
+import { Logo } from '../branding/Logo';
 import type { MenuProps } from 'antd';
 
 const { Header, Sider, Content } = Layout;
@@ -290,14 +291,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           }}
         >
           {!collapsed ? (
-            <Space>
-              <SafetyOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-              <Text strong style={{ color: 'white', fontSize: 16 }}>
-                SAP GRC
-              </Text>
-            </Space>
+            <Logo variant="mark" size="small" href="/dashboard" />
           ) : (
-            <SafetyOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+            <Logo variant="mark" size="small" href="/dashboard" />
           )}
         </div>
 
@@ -369,7 +365,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </Content>
 
         <Layout.Footer style={{ textAlign: 'center' }}>
-          SAP GRC Platform © 2025 | Tenant: {user?.tenantName || user?.tenantId}
+          Prism © 2025 | Tenant: {user?.tenantName || user?.tenantId}
         </Layout.Footer>
       </Layout>
     </Layout>
