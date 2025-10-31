@@ -394,25 +394,58 @@ export class InvoiceMatchingController {
 
   /**
    * GET /api/matching/fraud-alerts
-   * Get fraud alerts
-   * NOTE: Currently returns empty as database persistence is not yet implemented
+   * Get fraud alerts for a tenant
    */
   static async getFraudAlerts(req: Request, res: Response): Promise<void> {
     try {
-      const { tenantId } = req.query;
+      const { tenantId, runId, severity } = req.query;
 
       if (!tenantId) {
         ApiResponseUtil.badRequest(res, 'tenantId is required');
         return;
       }
 
-      logger.info('Getting fraud alerts', { tenantId });
+      logger.info('Getting fraud alerts', { tenantId, runId, severity });
 
-      // TODO: Implement database persistence
+      // Get all runs for tenant
+      const runs = await repository.getRunsByTenant(tenantId as string);
+
+      let alerts: any[] = [];
+
+      if (runId) {
+        // Get alerts for specific run
+        const run = await repository.getRun(runId as string);
+        if (run && run.fraudAlerts) {
+          alerts = run.fraudAlerts;
+        }
+      } else {
+        // Get alerts from all runs
+        for (const run of runs) {
+          if (run.fraudAlerts && run.fraudAlerts.length > 0) {
+            alerts.push(...run.fraudAlerts.map(alert => ({
+              ...alert,
+              runId: run.id,
+              runDate: run.runDate,
+            })));
+          }
+        }
+      }
+
+      // Filter by severity if provided
+      if (severity) {
+        alerts = alerts.filter(alert => alert.severity === severity);
+      }
+
+      // Sort by severity (critical > high > medium > low)
+      const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+      alerts.sort((a, b) =>
+        (severityOrder[a.severity as keyof typeof severityOrder] || 99) -
+        (severityOrder[b.severity as keyof typeof severityOrder] || 99)
+      );
+
       ApiResponseUtil.success(res, {
-        count: 0,
-        alerts: [],
-        message: 'Database persistence not yet implemented. Run POST /api/matching/analyze to see fraud alerts in real-time.',
+        count: alerts.length,
+        alerts,
       });
     } catch (error: any) {
       logger.error('Failed to get fraud alerts', error);
@@ -422,8 +455,7 @@ export class InvoiceMatchingController {
 
   /**
    * GET /api/matching/vendor-patterns
-   * Get vendor payment patterns
-   * NOTE: Currently returns empty as database persistence is not yet implemented
+   * Get vendor payment patterns from historical data
    */
   static async getVendorPatterns(req: Request, res: Response): Promise<void> {
     try {
@@ -436,11 +468,79 @@ export class InvoiceMatchingController {
 
       logger.info('Getting vendor patterns', { tenantId });
 
-      // TODO: Implement database persistence
+      // Get statistics which includes vendor patterns
+      const stats = await repository.getStatistics(tenantId as string);
+
+      // Group match results by vendor
+      const runs = await repository.getRunsByTenant(tenantId as string);
+      const vendorMap = new Map<string, any>();
+
+      for (const run of runs) {
+        if (run.matchResults) {
+          for (const result of run.matchResults) {
+            const vendorId = result.vendorId;
+            if (!vendorId) continue;
+
+            if (!vendorMap.has(vendorId)) {
+              vendorMap.set(vendorId, {
+                vendorId,
+                vendorName: result.vendorName,
+                totalInvoices: 0,
+                matchedInvoices: 0,
+                totalAmount: 0,
+                averageMatchScore: 0,
+                matchScores: [] as number[],
+                fraudAlerts: 0,
+              });
+            }
+
+            const vendor = vendorMap.get(vendorId);
+            vendor.totalInvoices++;
+            vendor.totalAmount += result.amounts?.invoiced || 0;
+            vendor.matchScores.push(result.matchScore || 0);
+
+            if (result.matchStatus === 'matched') {
+              vendor.matchedInvoices++;
+            }
+          }
+        }
+
+        // Count fraud alerts per vendor
+        if (run.fraudAlerts) {
+          for (const alert of run.fraudAlerts) {
+            const vendorId = (alert as any).vendorId;
+            if (vendorId && vendorMap.has(vendorId)) {
+              vendorMap.get(vendorId).fraudAlerts++;
+            }
+          }
+        }
+      }
+
+      // Calculate averages and convert to array
+      const vendors = Array.from(vendorMap.values()).map(vendor => ({
+        ...vendor,
+        averageMatchScore: vendor.matchScores.length > 0
+          ? vendor.matchScores.reduce((a: number, b: number) => a + b, 0) / vendor.matchScores.length
+          : 0,
+        matchRate: vendor.totalInvoices > 0
+          ? (vendor.matchedInvoices / vendor.totalInvoices) * 100
+          : 0,
+        matchScores: undefined, // Remove raw scores array
+      }));
+
+      // Sort by total amount descending
+      vendors.sort((a, b) => b.totalAmount - a.totalAmount);
+
       ApiResponseUtil.success(res, {
-        count: 0,
-        vendors: [],
-        message: 'Database persistence not yet implemented. Use POST /api/matching/vendor-patterns/analyze for real-time analysis.',
+        count: vendors.length,
+        vendors,
+        summary: {
+          totalVendors: vendors.length,
+          totalInvoices: stats.totalInvoices,
+          averageMatchRate: vendors.length > 0
+            ? vendors.reduce((sum, v) => sum + v.matchRate, 0) / vendors.length
+            : 0,
+        },
       });
     } catch (error: any) {
       logger.error('Failed to get vendor patterns', error);
