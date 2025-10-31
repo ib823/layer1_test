@@ -45,6 +45,15 @@ router.get('/healthz', (req, res) => {
   });
 });
 
+// Prometheus metrics endpoint (public for monitoring tools)
+import { prometheusMetricsHandler, getMetrics } from '../middleware/metrics';
+router.get('/metrics', prometheusMetricsHandler);
+
+// Simple metrics endpoint
+router.get('/metrics/simple', (req, res) => {
+  ApiResponseUtil.success(res, getMetrics());
+});
+
 // Version info
 router.get('/version', (req, res) => {
   ApiResponseUtil.success(res, {
