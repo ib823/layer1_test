@@ -23,6 +23,6 @@ module.exports = {
   // },
   moduleNameMapper: {
     // '^@/(.*)$': '<rootDir>/src/$1',
-  },
+  // },
   maxConcurrency: 14
 };

@@ -1,0 +1,1 @@
+Rename your file to logo_input.png (or .jpg/.webp) and place it in this folder.

@@ -5,7 +5,7 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
     '^.+\\.ts$': 'ts-jest',
-  },
+  // },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -19,10 +19,10 @@ module.exports = {
     //   lines: 70,
     //   statements: 70,
     // },
-  },
+  // },
   moduleNameMapper: {
     '^@sap-framework/core$': '<rootDir>/../../core/src',
     '^@sap-framework/services$': '<rootDir>/../../services/src',
-  },
+  // },
   maxConcurrency: 14
 };

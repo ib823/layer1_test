@@ -18,9 +18,9 @@ module.exports = {
     //   lines: 70,
     //   statements: 70
     // }
-  },
+  // },
   moduleNameMapper: {
     '^@sap-framework/(.*)$': '<rootDir>/../../$1/src'
-  },
+  // },
   maxConcurrency: 14
 };

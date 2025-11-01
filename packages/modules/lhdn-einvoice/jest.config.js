@@ -13,7 +13,7 @@ module.exports = {
     //   lines: 70,
     //   statements: 70,
     // },
-  },
+  // },
   // Integration test setup
   globalSetup: '<rootDir>/tests/integration/setup.ts',
   // Note: globalTeardown uses named export from same file

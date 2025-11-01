@@ -414,15 +414,16 @@ export class InvoiceMatchingController {
 
       if (runId) {
         // Get alerts for specific run
-        const run = await repository.getRun(runId as string);
+        const run = await repository.getRun(runId as string) as any;
         if (run && run.fraudAlerts) {
           alerts = run.fraudAlerts;
         }
       } else {
         // Get alerts from all runs
         for (const run of runs) {
-          if (run.fraudAlerts && run.fraudAlerts.length > 0) {
-            alerts.push(...run.fraudAlerts.map(alert => ({
+          const fullRun = await repository.getRun(run.id) as any;
+          if (fullRun && fullRun.fraudAlerts && fullRun.fraudAlerts.length > 0) {
+            alerts.push(...fullRun.fraudAlerts.map((alert: any) => ({
               ...alert,
               runId: run.id,
               runDate: run.runDate,
@@ -476,8 +477,9 @@ export class InvoiceMatchingController {
       const vendorMap = new Map<string, any>();
 
       for (const run of runs) {
-        if (run.matchResults) {
-          for (const result of run.matchResults) {
+        const fullRun = await repository.getRun(run.id) as any;
+        if (fullRun && fullRun.matchResults) {
+          for (const result of fullRun.matchResults) {
             const vendorId = result.vendorId;
             if (!vendorId) continue;
 
@@ -506,8 +508,8 @@ export class InvoiceMatchingController {
         }
 
         // Count fraud alerts per vendor
-        if (run.fraudAlerts) {
-          for (const alert of run.fraudAlerts) {
+        if (fullRun && fullRun.fraudAlerts) {
+          for (const alert of fullRun.fraudAlerts) {
             const vendorId = (alert as any).vendorId;
             if (vendorId && vendorMap.has(vendorId)) {
               vendorMap.get(vendorId).fraudAlerts++;

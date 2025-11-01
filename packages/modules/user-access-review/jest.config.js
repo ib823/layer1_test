@@ -12,6 +12,6 @@ module.exports = {
     //   lines: 70,
     //   statements: 70,
     // },
-  },
+  // },
   maxConcurrency: 14
 };
