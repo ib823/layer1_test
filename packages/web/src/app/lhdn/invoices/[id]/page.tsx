@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Timeline } from '@/components/ui/Timeline';
 import { Tabs } from '@/components/ui/Tabs';
+import { PageHead } from '@/components/seo/PageHead';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -87,14 +88,19 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Breadcrumbs
-        items={[
-          { label: 'LHDN e-Invoice', href: '/lhdn' },
-          { label: 'Invoices', href: '/lhdn/invoices' },
-          { label: invoice.invoiceNumber },
-        ]}
+    <>
+      <PageHead
+        title={`Invoice ${invoice?.invoiceNumber || id}`}
+        description={`Detailed view of LHDN e-Invoice with validation status, line items, and submission history`}
       />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Breadcrumbs
+          items={[
+            { label: 'LHDN e-Invoice', href: '/lhdn' },
+            { label: 'Invoices', href: '/lhdn/invoices' },
+            { label: invoice.invoiceNumber },
+          ]}
+        />
 
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
@@ -326,6 +332,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           </Tabs.Content>
         )}
       </Tabs>
-    </div>
+      </div>
+    </>
   );
 }

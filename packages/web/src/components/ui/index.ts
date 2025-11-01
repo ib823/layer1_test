@@ -3,6 +3,7 @@ export { Input, type InputProps } from './Input';
 export { Card, CardTitle, type CardProps } from './Card';
 export { Badge, type BadgeProps } from './Badge';
 export { Table, type TableProps } from './Table';
+export { TableWithColumnToggle, type ColumnConfig, type TableWithColumnToggleProps } from './TableWithColumnToggle';
 export { Sidebar, type SidebarProps, type SidebarItem } from './Sidebar';
 export { Modal, type ModalProps } from './Modal';
 export { Toast, type ToastProps } from './Toast';

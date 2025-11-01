@@ -37,7 +37,8 @@ export interface CreateTenantRequest {
     baseUrl: string;
     client?: string;
     auth: {
-      type: 'OAUTH' | 'BASIC' | 'CERTIFICATE';
+      provider: 'SAP' | 'Oracle' | 'Dynamics' | 'NetSuite';
+      type: 'OAUTH2' | 'BASIC' | 'CERTIFICATE' | 'TOKEN' | 'API_KEY';
       credentials: any;
     };
   };
@@ -73,7 +74,8 @@ export interface ConnectionTestRequest {
   baseUrl: string;
   client?: string;
   auth: {
-    type: 'OAUTH' | 'BASIC' | 'CERTIFICATE';
+    provider: 'SAP' | 'Oracle' | 'Dynamics' | 'NetSuite';
+    type: 'OAUTH2' | 'BASIC' | 'CERTIFICATE' | 'TOKEN' | 'API_KEY';
     credentials: any;
   };
 }
@@ -93,7 +95,12 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    roles: string[];
+    name?: string;
+    roles?: string[];
+    tenantId?: string;
+  };
+  // ✅ SECURITY FIX: Tenant filter for defense-in-depth
+  tenantFilter?: {
     tenantId: string;
   };
 }

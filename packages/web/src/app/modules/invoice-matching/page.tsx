@@ -1,6 +1,7 @@
 'use client';
 
 import { InvoiceMatchingDashboard } from '@/components/modules/invoice-matching/InvoiceMatchingDashboard';
+import { PageHead } from '@/components/seo/PageHead';
 
 /**
  * Invoice Matching Module Page
@@ -12,5 +13,13 @@ import { InvoiceMatchingDashboard } from '@/components/modules/invoice-matching/
  * - Historical run tracking
  */
 export default function InvoiceMatchingPage() {
-  return <InvoiceMatchingDashboard />;
+  return (
+    <>
+      <PageHead
+        title="Invoice Matching"
+        description="Three-way matching analysis with fraud detection and comprehensive analytics"
+      />
+      <InvoiceMatchingDashboard />
+    </>
+  );
 }

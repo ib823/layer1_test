@@ -21,11 +21,19 @@ async function onboardTenantWithPersistence() {
 
     // Step 3: Connect to SAP and discover
     const connector = new S4HANAConnector({
+      erpSystem: 'SAP',
       baseUrl: 'https://acme.s4hana.cloud.sap',
-      auth: { type: 'OAUTH', credentials: {} },
+      auth: {
+        provider: 'SAP',
+        type: 'OAUTH2',
+        credentials: {
+          clientId: process.env.SAP_CLIENT_ID,
+          clientSecret: process.env.SAP_CLIENT_SECRET
+        }
+      },
     });
 
-    const discovery = new ServiceDiscovery(connector);
+    const discovery = new ServiceDiscovery(connector as any);
     const result = await discovery.discoverServices();
 
     // Step 4: Save discovery history

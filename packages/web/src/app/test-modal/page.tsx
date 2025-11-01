@@ -1,6 +1,7 @@
 'use client';
 
 import { Modal, Button } from '@/components/ui';
+import { PageHead } from '@/components/seo/PageHead';
 import { useState } from 'react';
 
 export default function TestModalPage() {
@@ -8,8 +9,13 @@ export default function TestModalPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1>Modal Component Test</h1>
+    <>
+      <PageHead
+        title="Modal Component Test"
+        description="Test page for modal component functionality and accessibility"
+      />
+      <main style={{ padding: '2rem' }}>
+        <h1>Modal Component Test</h1>
 
       <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
         <Button onClick={() => setIsOpen(true)}>Open Simple Modal</Button>
@@ -48,6 +54,7 @@ export default function TestModalPage() {
         <p>Are you sure you want to delete this violation?</p>
         <p style={{ color: 'var(--status-critical)' }}>This action cannot be undone.</p>
       </Modal>
-    </main>
+      </main>
+    </>
   );
 }

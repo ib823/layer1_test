@@ -1,0 +1,180 @@
+{{!-- Compliance Summary Report Template --}}
+
+{{#if summary}}
+<div class="summary">
+  <h2>Compliance Overview</h2>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="label">Compliance Score</div>
+      <div class="value" style="color: {{#if (gt summary.complianceScore 90)}}#28a745{{else if (gt summary.complianceScore 70)}}#ffc107{{else}}#dc3545{{/if}};">
+        {{summary.complianceScore}}%
+      </div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Controls Tested</div>
+      <div class="value">{{formatNumber summary.controlsTested}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Passed</div>
+      <div class="value" style="color: #28a745;">{{formatNumber summary.controlsPassed}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Failed</div>
+      <div class="value" style="color: #dc3545;">{{formatNumber summary.controlsFailed}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Open Findings</div>
+      <div class="value">{{formatNumber summary.openFindings}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Remediation Rate</div>
+      <div class="value">{{formatPercent summary.remediationRate}}</div>
+    </div>
+  </div>
+</div>
+{{/if}}
+
+<h2>Compliance Framework Coverage</h2>
+{{#if data}}
+<table>
+  <thead>
+    <tr>
+      <th>Framework</th>
+      <th>Control Area</th>
+      <th>Controls</th>
+      <th>Pass Rate</th>
+      <th>Risk Level</th>
+      <th>Status</th>
+      <th>Last Tested</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each data}}
+    <tr>
+      <td>
+        <strong>
+          {{#if (eq this.framework "SOX")}}
+            <span class="badge" style="background: #0066cc; color: white;">SOX</span>
+          {{else if (eq this.framework "GDPR")}}
+            <span class="badge" style="background: #6c5ce7; color: white;">GDPR</span>
+          {{else if (eq this.framework "ISO27001")}}
+            <span class="badge" style="background: #00b894; color: white;">ISO 27001</span>
+          {{else if (eq this.framework "PCI_DSS")}}
+            <span class="badge" style="background: #d63031; color: white;">PCI DSS</span>
+          {{else}}
+            <span class="badge" style="background: #636e72; color: white;">{{this.framework}}</span>
+          {{/if}}
+        </strong>
+      </td>
+      <td>{{this.controlArea}}</td>
+      <td style="text-align: center;">
+        <div>{{formatNumber this.totalControls}}</div>
+        <div style="font-size: 9pt; color: #666;">
+          ({{this.passedControls}}/{{this.totalControls}})
+        </div>
+      </td>
+      <td style="text-align: right; font-weight: bold; color: {{#if (gt this.passRate 0.9)}}#28a745{{else if (gt this.passRate 0.7)}}#ffc107{{else}}#dc3545{{/if}};">
+        {{formatPercent this.passRate}}
+      </td>
+      <td>
+        {{#if (eq this.riskLevel "HIGH")}}
+          <span class="badge badge-high">HIGH</span>
+        {{else if (eq this.riskLevel "MEDIUM")}}
+          <span class="badge badge-medium">MEDIUM</span>
+        {{else}}
+          <span class="badge badge-low">LOW</span>
+        {{/if}}
+      </td>
+      <td>
+        {{#if (eq this.status "COMPLIANT")}}
+          <span class="badge badge-success">COMPLIANT</span>
+        {{else if (eq this.status "PARTIAL")}}
+          <span class="badge badge-warning">PARTIAL</span>
+        {{else}}
+          <span class="badge badge-danger">NON-COMPLIANT</span>
+        {{/if}}
+      </td>
+      <td style="white-space: nowrap;">{{formatDate this.lastTested}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<p style="text-align: center; color: #666; padding: 40px 0;">No compliance data available.</p>
+{{/if}}
+
+{{#if metadata.findings}}
+<div class="page-break"></div>
+<h2>Key Findings & Observations</h2>
+{{#each metadata.findings}}
+<div style="background: {{#if (eq this.severity "HIGH")}}#fff5f5{{else}}#f5f5f5{{/if}}; padding: 15px; border-left: 4px solid {{#if (eq this.severity "HIGH")}}#dc3545{{else if (eq this.severity "MEDIUM")}}#ffc107{{else}}#0066cc{{/if}}; margin-bottom: 15px;">
+  <div style="display: flex; align-items: center; margin-bottom: 10px;">
+    {{#if (eq this.severity "HIGH")}}
+      <span class="badge badge-high" style="margin-right: 10px;">HIGH</span>
+    {{else if (eq this.severity "MEDIUM")}}
+      <span class="badge badge-medium" style="margin-right: 10px;">MEDIUM</span>
+    {{else}}
+      <span class="badge badge-low" style="margin-right: 10px;">LOW</span>
+    {{/if}}
+    <strong>{{this.title}}</strong>
+  </div>
+  <p style="margin-bottom: 10px;">{{this.description}}</p>
+  {{#if this.recommendation}}
+    <div style="background: white; padding: 10px; border-radius: 3px; font-size: 9pt;">
+      <strong>Recommendation:</strong> {{this.recommendation}}
+    </div>
+  {{/if}}
+</div>
+{{/each}}
+{{/if}}
+
+{{#if metadata.auditTrail}}
+<div class="page-break"></div>
+<h2>Audit Activity Summary</h2>
+<table style="margin-top: 20px;">
+  <thead>
+    <tr>
+      <th>Activity Type</th>
+      <th style="text-align: right;">Count</th>
+      <th>Last Activity</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each metadata.auditTrail}}
+    <tr>
+      <td>{{this.activityType}}</td>
+      <td style="text-align: right;">{{formatNumber this.count}}</td>
+      <td>{{formatDate this.lastActivity}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{/if}}
+
+{{#if metadata.nextActions}}
+<div class="page-break"></div>
+<h2>Recommended Next Actions</h2>
+<div style="background: #f5f5f5; padding: 15px; border-left: 4px solid #0066cc;">
+  <ol style="margin-left: 20px;">
+    {{#each metadata.nextActions}}
+    <li style="margin-bottom: 15px;">
+      <strong>{{this.action}}</strong>
+      <div style="color: #666; font-size: 9pt; margin-top: 5px;">
+        Priority: {{this.priority}} | Due: {{formatDate this.dueDate}}
+      </div>
+    </li>
+    {{/each}}
+  </ol>
+</div>
+{{/if}}
+
+<div style="margin-top: 40px; padding: 20px; background: #e3f2fd; border-radius: 5px;">
+  <h3 style="color: #0066cc; margin-bottom: 10px;">Compliance Statement</h3>
+  <p style="font-size: 9pt; line-height: 1.8;">
+    This report has been generated based on automated controls testing and manual assessments
+    conducted during the reporting period. The compliance score represents the percentage of
+    controls that passed testing. All findings have been documented and remediation plans are
+    in progress where applicable. For detailed information on specific controls or findings,
+    please refer to the supporting documentation or contact the Compliance Team.
+  </p>
+</div>

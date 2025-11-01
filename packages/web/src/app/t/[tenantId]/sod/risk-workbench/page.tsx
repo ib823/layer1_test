@@ -21,6 +21,7 @@ import {
   Switch,
   Badge,
 } from '@sap-framework/ui';
+import { PageHead } from '@/components/seo/PageHead';
 import {
   PlayCircleOutlined,
   SaveOutlined,
@@ -411,11 +412,16 @@ export default function RiskWorkbenchPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">Risk Workbench</h1>
+    <>
+      <PageHead
+        title="SoD Risk Workbench"
+        description="Manage SoD rules with two-pane editor, simulation, and validation tools"
+      />
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Risk Workbench</h1>
           <p className="text-secondary mt-1">
             Configure and manage segregation of duties rules
           </p>
@@ -694,6 +700,7 @@ export default function RiskWorkbenchPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

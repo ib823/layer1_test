@@ -8,6 +8,9 @@ import { UserAccessReviewer } from '@sap-framework/user-access-review';
 import { ApiResponseUtil } from '../utils/response';
 import { config } from '../config';
 import logger from '../utils/logger';
+import { AuthenticatedRequest } from '../types';
+import { getTenantId, validateResourceOwnership } from '../middleware/tenantIsolation';
+import { sanitizeInput, sanitizeViolationDescription } from '../utils/sanitization';
 
 export class SoDController {
   private sodRepo: SoDViolationRepository;
@@ -60,18 +63,42 @@ export class SoDController {
    *       404:
    *         $ref: '#/components/responses/NotFoundError'
    */
-  async listViolations(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async listViolations(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { tenantId } = req.params;
+      // ✅ SECURITY FIX: Use validated tenant ID from middleware
+      // DEFECT-033: Prevents horizontal privilege escalation
+      // DEFECT-034: Fixes IDOR vulnerability
+      const tenantId = getTenantId(req);
+
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 20;
       const riskLevel = req.query.riskLevel as string;
 
-      logger.info('Listing SoD violations', { tenantId, page, pageSize, riskLevel });
+      logger.info('Listing SoD violations', {
+        tenantId,
+        page,
+        pageSize,
+        riskLevel,
+        userId: req.user?.id
+      });
 
       const tenant = await this.tenantRepo.getTenant(tenantId);
       if (!tenant) {
         ApiResponseUtil.notFound(res, 'Tenant');
+        return;
+      }
+
+      // ✅ SECURITY FIX: Additional ownership validation
+      // Verify tenant belongs to user (defense-in-depth)
+      try {
+        validateResourceOwnership(tenant.tenant_id, req);
+      } catch (error) {
+        logger.warn('Tenant ownership validation failed', {
+          userId: req.user?.id,
+          requestedTenant: tenantId,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+        ApiResponseUtil.forbidden(res, 'Access denied to this tenant');
         return;
       }
 
@@ -140,12 +167,26 @@ export class SoDController {
    * POST /api/modules/sod/:tenantId/violations/:violationId/acknowledge
    * Acknowledge violation
    */
-  async acknowledgeViolation(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async acknowledgeViolation(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { tenantId, violationId } = req.params;
+      // ✅ SECURITY FIX: Use validated tenant ID
+      const tenantId = getTenantId(req);
+      const { violationId } = req.params;
       const { justification, approvedBy } = req.body;
 
-      logger.info('Acknowledging violation', { tenantId, violationId });
+      // ✅ SECURITY FIX: Sanitize user inputs to prevent XSS
+      // DEFECT-035: Stored XSS vulnerability fix
+      const sanitizedJustification = sanitizeViolationDescription(justification);
+      const sanitizedApprovedBy = sanitizeInput(approvedBy, {
+        trim: true,
+        maxLength: 255,
+      });
+
+      logger.info('Acknowledging violation', {
+        tenantId,
+        violationId,
+        userId: req.user?.id
+      });
 
       const tenant = await this.tenantRepo.getTenant(tenantId);
       if (!tenant) {
@@ -153,11 +194,19 @@ export class SoDController {
         return;
       }
 
-      // Update violation status in database
+      // ✅ SECURITY FIX: Validate resource ownership
+      try {
+        validateResourceOwnership(tenant.tenant_id, req);
+      } catch (error) {
+        ApiResponseUtil.forbidden(res, 'Access denied to this tenant');
+        return;
+      }
+
+      // Update violation status in database with sanitized data
       await this.sodRepo.updateViolationStatus(violationId, {
         status: 'ACKNOWLEDGED',
-        remediationNotes: justification,
-        acknowledgedBy: approvedBy,
+        remediationNotes: sanitizedJustification,
+        acknowledgedBy: sanitizedApprovedBy,
       });
 
       logger.info('Violation acknowledged', { tenantId, violationId });

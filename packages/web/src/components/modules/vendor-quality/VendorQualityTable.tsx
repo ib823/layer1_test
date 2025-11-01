@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { TableWithColumnToggle, ColumnConfig } from '@/components/ui/TableWithColumnToggle';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface VendorQualityIssue {
   id: string;
@@ -20,6 +22,12 @@ interface VendorQualityTableProps {
   issues: VendorQualityIssue[];
 }
 
+/**
+ * Vendor Quality Issues Table
+ *
+ * Displays vendor data quality issues with filtering and sorting capabilities.
+ * Now enhanced with column toggle functionality.
+ */
 export function VendorQualityTable({ issues }: VendorQualityTableProps) {
   const [severityFilter, setSeverityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -59,8 +67,142 @@ export function VendorQualityTable({ issues }: VendorQualityTableProps) {
     return 'text-red-600';
   };
 
+  // Define column configurations for TableWithColumnToggle
+  const columnConfigs: ColumnConfig<VendorQualityIssue>[] = [
+    {
+      column: {
+        id: 'vendor',
+        accessorKey: 'vendorName',
+        header: 'Vendor',
+        cell: (info) => {
+          const issue = info.row.original;
+          return (
+            <div>
+              <div className="text-sm font-medium text-gray-900">{issue.vendorName}</div>
+              <div className="text-xs text-gray-500">{issue.vendorId}</div>
+            </div>
+          );
+        },
+      } as ColumnDef<VendorQualityIssue, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'issueType',
+        accessorKey: 'issueType',
+        header: 'Issue Type',
+        cell: (info) => (
+          <span className="text-sm text-gray-700 capitalize">
+            {info.getValue().replace('_', ' ')}
+          </span>
+        ),
+      } as ColumnDef<VendorQualityIssue, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'severity',
+        accessorKey: 'severity',
+        header: 'Severity',
+        cell: (info) => {
+          const severity = info.getValue();
+          return (
+            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getSeverityBadge(severity)}`}>
+              {severity.toUpperCase()}
+            </span>
+          );
+        },
+      } as ColumnDef<VendorQualityIssue, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'fieldName',
+        accessorKey: 'fieldName',
+        header: 'Field',
+        cell: (info) => (
+          <span className="text-sm text-gray-500">{info.getValue() || '-'}</span>
+        ),
+      } as ColumnDef<VendorQualityIssue, any>,
+      defaultVisible: true,
+      priority: 2, // Important
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'currentValue',
+        accessorKey: 'currentValue',
+        header: 'Current Value',
+        cell: (info) => (
+          <span className="text-sm text-gray-500">{info.getValue() || '-'}</span>
+        ),
+      } as ColumnDef<VendorQualityIssue, any>,
+      defaultVisible: true,
+      priority: 3, // Nice to have
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'suggestedValue',
+        accessorKey: 'suggestedValue',
+        header: 'Suggested',
+        cell: (info) => (
+          <span className="text-sm text-green-600">{info.getValue() || '-'}</span>
+        ),
+      } as ColumnDef<VendorQualityIssue, any>,
+      defaultVisible: true,
+      priority: 3, // Nice to have
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'qualityScore',
+        accessorKey: 'qualityScore',
+        header: 'Quality Score',
+        cell: (info) => {
+          const score = info.getValue();
+          return (
+            <span className={`text-sm font-semibold ${getScoreColor(score)}`}>
+              {score.toFixed(0)}%
+            </span>
+          );
+        },
+      } as ColumnDef<VendorQualityIssue, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'status',
+        accessorKey: 'status',
+        header: 'Status',
+        cell: (info) => {
+          const status = info.getValue();
+          return (
+            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+              status === 'open' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+            }`}>
+              {status}
+            </span>
+          );
+        },
+      } as ColumnDef<VendorQualityIssue, any>,
+      defaultVisible: true,
+      priority: 2, // Important
+      category: 'Data',
+    },
+  ];
+
   return (
     <div className="bg-white rounded-lg shadow">
+      {/* Filters */}
       <div className="p-6 border-b border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -107,6 +249,7 @@ export function VendorQualityTable({ issues }: VendorQualityTableProps) {
               <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                 className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
@@ -115,69 +258,32 @@ export function VendorQualityTable({ issues }: VendorQualityTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Field</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Value</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Suggested</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quality Score</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {sortedIssues.map((issue) => (
-              <tr key={issue.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{issue.vendorName}</div>
-                  <div className="text-xs text-gray-500">{issue.vendorId}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 capitalize">
-                  {issue.issueType.replace('_', ' ')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getSeverityBadge(issue.severity)}`}>
-                    {issue.severity.toUpperCase()}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{issue.fieldName || '-'}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">{issue.currentValue || '-'}</td>
-                <td className="px-6 py-4 text-sm text-green-600">{issue.suggestedValue || '-'}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span className={`font-semibold ${getScoreColor(issue.qualityScore)}`}>
-                    {issue.qualityScore.toFixed(0)}%
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    issue.status === 'open' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                  }`}>
-                    {issue.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {sortedIssues.length === 0 && (
+      {/* Enhanced Table with Column Toggle */}
+      {sortedIssues.length === 0 ? (
         <div className="p-12 text-center">
           <p className="text-gray-500">No issues found for the selected filters.</p>
         </div>
-      )}
+      ) : (
+        <>
+          <TableWithColumnToggle
+            data={sortedIssues}
+            columns={columnConfigs}
+            pageSize={50}
+            isLoading={false}
+            emptyMessage="No issues found for the selected filters."
+            tableId="vendor-quality"
+            showColumnPicker={true}
+            className="vendor-quality-table"
+          />
 
-      {sortedIssues.length > 0 && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{sortedIssues.length}</span> of{' '}
-            <span className="font-medium">{issues.length}</span> issues
-          </p>
-        </div>
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <p className="text-sm text-gray-700">
+              Showing <span className="font-medium">{sortedIssues.length}</span> of{' '}
+              <span className="font-medium">{issues.length}</span> issues
+            </p>
+          </div>
+        </>
       )}
     </div>
   );

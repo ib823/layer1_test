@@ -1,6 +1,6 @@
 # @sap-framework/web
 
-Next.js frontend for the SAP GRC Platform.
+Next.js frontend for the Prism.
 
 ## 🚀 Features
 

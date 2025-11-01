@@ -1,0 +1,171 @@
+{{!-- Vendor Data Quality Report Template --}}
+
+{{#if summary}}
+<div class="summary">
+  <h2>Executive Summary</h2>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="label">Total Vendors</div>
+      <div class="value">{{formatNumber summary.totalVendors}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Data Quality Score</div>
+      <div class="value" style="color: {{#if (gt summary.qualityScore 80)}}#28a745{{else if (gt summary.qualityScore 60)}}#ffc107{{else}}#dc3545{{/if}};">
+        {{summary.qualityScore}}%
+      </div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Critical Issues</div>
+      <div class="value" style="color: #dc3545;">{{formatNumber summary.criticalIssues}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">High Priority</div>
+      <div class="value" style="color: #ff6b6b;">{{formatNumber summary.highPriority}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Duplicates Found</div>
+      <div class="value">{{formatNumber summary.duplicatesFound}}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Action Required</div>
+      <div class="value">{{formatNumber summary.actionRequired}}</div>
+    </div>
+  </div>
+</div>
+{{/if}}
+
+<h2>Vendor Quality Issues</h2>
+{{#if data}}
+<table>
+  <thead>
+    <tr>
+      <th>Vendor ID</th>
+      <th>Vendor Name</th>
+      <th>Issue Type</th>
+      <th>Severity</th>
+      <th>Description</th>
+      <th>Impact</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each data}}
+    <tr>
+      <td><strong>{{this.vendorId}}</strong></td>
+      <td>{{this.vendorName}}</td>
+      <td>
+        {{#if (eq this.issueType "MISSING_DATA")}}
+          <span class="badge" style="background: #ffd93d; color: #333;">Missing Data</span>
+        {{else if (eq this.issueType "INVALID_FORMAT")}}
+          <span class="badge" style="background: #ff6b6b; color: white;">Invalid Format</span>
+        {{else if (eq this.issueType "DUPLICATE")}}
+          <span class="badge" style="background: #fd79a8; color: white;">Duplicate</span>
+        {{else if (eq this.issueType "OUTDATED")}}
+          <span class="badge" style="background: #a29bfe; color: white;">Outdated</span>
+        {{else}}
+          <span class="badge" style="background: #95e1d3; color: #333;">Other</span>
+        {{/if}}
+      </td>
+      <td>
+        {{#if (eq this.severity "CRITICAL")}}
+          <span class="badge badge-critical">CRITICAL</span>
+        {{else if (eq this.severity "HIGH")}}
+          <span class="badge badge-high">HIGH</span>
+        {{else if (eq this.severity "MEDIUM")}}
+          <span class="badge badge-medium">MEDIUM</span>
+        {{else}}
+          <span class="badge badge-low">LOW</span>
+        {{/if}}
+      </td>
+      <td style="font-size: 9pt;">{{this.description}}</td>
+      <td style="font-size: 9pt;">
+        {{#if this.businessImpact}}
+          {{this.businessImpact}}
+        {{else}}
+          None
+        {{/if}}
+      </td>
+      <td>
+        {{#if (eq this.status "OPEN")}}
+          <span class="badge badge-danger">OPEN</span>
+        {{else if (eq this.status "IN_PROGRESS")}}
+          <span class="badge badge-warning">IN PROGRESS</span>
+        {{else}}
+          <span class="badge badge-success">RESOLVED</span>
+        {{/if}}
+      </td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<p style="text-align: center; color: #666; padding: 40px 0;">No quality issues found.</p>
+{{/if}}
+
+{{#if metadata.issueBreakdown}}
+<div class="page-break"></div>
+<h2>Issue Breakdown by Type</h2>
+<table style="margin-top: 20px;">
+  <thead>
+    <tr>
+      <th>Issue Type</th>
+      <th style="text-align: right;">Count</th>
+      <th style="text-align: right;">Percentage</th>
+      <th style="text-align: right;">Avg. Resolution Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each metadata.issueBreakdown}}
+    <tr>
+      <td>{{this.type}}</td>
+      <td style="text-align: right;">{{formatNumber this.count}}</td>
+      <td style="text-align: right;">{{formatPercent this.percentage}}</td>
+      <td style="text-align: right;">{{this.avgResolutionTime}} days</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{/if}}
+
+{{#if metadata.topVendors}}
+<div class="page-break"></div>
+<h2>Vendors with Most Issues</h2>
+<table style="margin-top: 20px;">
+  <thead>
+    <tr>
+      <th>Vendor</th>
+      <th style="text-align: right;">Total Issues</th>
+      <th style="text-align: right;">Critical</th>
+      <th style="text-align: right;">High</th>
+      <th style="text-align: right;">Quality Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each metadata.topVendors}}
+    <tr>
+      <td>
+        <div><strong>{{this.name}}</strong></div>
+        <div style="color: #666; font-size: 9pt;">{{this.id}}</div>
+      </td>
+      <td style="text-align: right;">{{formatNumber this.totalIssues}}</td>
+      <td style="text-align: right; color: #dc3545;">{{formatNumber this.criticalCount}}</td>
+      <td style="text-align: right; color: #ff6b6b;">{{formatNumber this.highCount}}</td>
+      <td style="text-align: right; font-weight: bold; color: {{#if (lt this.qualityScore 50)}}#dc3545{{else if (lt this.qualityScore 70)}}#ffc107{{else}}#28a745{{/if}};">
+        {{this.qualityScore}}%
+      </td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{/if}}
+
+{{#if metadata.recommendations}}
+<div style="margin-top: 30px; background: #f5f5f5; padding: 15px; border-left: 4px solid #0066cc;">
+  <h3>Recommendations</h3>
+  <ul style="margin-left: 20px;">
+    {{#each metadata.recommendations}}
+    <li style="margin-bottom: 10px;">{{this}}</li>
+    {{/each}}
+  </ul>
+</div>
+{{/if}}

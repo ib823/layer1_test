@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { TableWithColumnToggle, ColumnConfig } from '@/components/ui/TableWithColumnToggle';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface InvoiceMatchResult {
   id: string;
@@ -23,6 +25,7 @@ interface InvoiceMatchTableProps {
  * Invoice Match Results Table
  *
  * Displays detailed matching results with filtering and sorting capabilities.
+ * Now enhanced with column toggle functionality.
  */
 export function InvoiceMatchTable({ results }: InvoiceMatchTableProps) {
   const [filter, setFilter] = useState<'all' | 'matched' | 'partial' | 'unmatched'>('all');
@@ -59,6 +62,131 @@ export function InvoiceMatchTable({ results }: InvoiceMatchTableProps) {
     if (score >= 80) return 'text-yellow-600';
     return 'text-red-600';
   };
+
+  // Define column configurations for TableWithColumnToggle
+  const columnConfigs: ColumnConfig<InvoiceMatchResult>[] = [
+    {
+      column: {
+        id: 'invoiceNumber',
+        accessorKey: 'invoiceNumber',
+        header: 'Invoice Number',
+        cell: (info) => (
+          <span className="text-sm font-medium text-gray-900">{info.getValue()}</span>
+        ),
+      } as ColumnDef<InvoiceMatchResult, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'poNumber',
+        accessorKey: 'poNumber',
+        header: 'PO Number',
+        cell: (info) => (
+          <span className="text-sm text-gray-500">{info.getValue() || '-'}</span>
+        ),
+      } as ColumnDef<InvoiceMatchResult, any>,
+      defaultVisible: true,
+      priority: 2, // Important
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'grNumber',
+        accessorKey: 'grNumber',
+        header: 'GR Number',
+        cell: (info) => (
+          <span className="text-sm text-gray-500">{info.getValue() || '-'}</span>
+        ),
+      } as ColumnDef<InvoiceMatchResult, any>,
+      defaultVisible: true,
+      priority: 2, // Important
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'vendor',
+        accessorKey: 'vendorName',
+        header: 'Vendor',
+        cell: (info) => {
+          const result = info.row.original;
+          return (
+            <div className="text-sm">
+              <div className="text-gray-900">{result.vendorName || '-'}</div>
+              {result.vendorId && (
+                <div className="text-xs text-gray-500">{result.vendorId}</div>
+              )}
+            </div>
+          );
+        },
+      } as ColumnDef<InvoiceMatchResult, any>,
+      defaultVisible: true,
+      priority: 2, // Important
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'matchStatus',
+        accessorKey: 'matchStatus',
+        header: 'Match Status',
+        cell: (info) => {
+          const status = info.getValue();
+          return (
+            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(status)}`}>
+              {status}
+            </span>
+          );
+        },
+      } as ColumnDef<InvoiceMatchResult, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'matchScore',
+        accessorKey: 'matchScore',
+        header: 'Match Score',
+        cell: (info) => {
+          const score = info.getValue();
+          return (
+            <span className={`text-sm font-semibold ${getScoreColor(score)}`}>
+              {score.toFixed(1)}%
+            </span>
+          );
+        },
+      } as ColumnDef<InvoiceMatchResult, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'discrepancies',
+        accessorKey: 'discrepancies',
+        header: 'Discrepancies',
+        cell: (info) => {
+          const discrepancies = info.getValue();
+          if (discrepancies && Object.keys(discrepancies).length > 0) {
+            return (
+              <div className="space-y-1 text-sm text-gray-500">
+                {Object.entries(discrepancies).map(([key, value]) => (
+                  <div key={key} className="text-xs">
+                    <span className="font-medium">{key}:</span> {JSON.stringify(value)}
+                  </div>
+                ))}
+              </div>
+            );
+          }
+          return <span className="text-sm text-gray-400">None</span>;
+        },
+      } as ColumnDef<InvoiceMatchResult, any>,
+      defaultVisible: true,
+      priority: 3, // Nice to have
+      category: 'Data',
+    },
+  ];
 
   return (
     <div className="bg-white rounded-lg shadow">
@@ -106,101 +234,32 @@ export function InvoiceMatchTable({ results }: InvoiceMatchTableProps) {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Invoice Number
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                PO Number
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                GR Number
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vendor
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Match Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Match Score
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Discrepancies
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {sortedResults.map((result) => (
-              <tr key={result.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {result.invoiceNumber}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {result.poNumber || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {result.grNumber || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div>
-                    <div className="text-gray-900">{result.vendorName || '-'}</div>
-                    {result.vendorId && (
-                      <div className="text-xs text-gray-500">{result.vendorId}</div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(
-                      result.matchStatus
-                    )}`}
-                  >
-                    {result.matchStatus}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span className={`font-semibold ${getScoreColor(result.matchScore)}`}>
-                    {result.matchScore.toFixed(1)}%
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {result.discrepancies && Object.keys(result.discrepancies).length > 0 ? (
-                    <div className="space-y-1">
-                      {Object.entries(result.discrepancies).map(([key, value]) => (
-                        <div key={key} className="text-xs">
-                          <span className="font-medium">{key}:</span> {JSON.stringify(value)}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-gray-400">None</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination or Empty State */}
-      {sortedResults.length === 0 && (
+      {/* Enhanced Table with Column Toggle */}
+      {sortedResults.length === 0 ? (
         <div className="p-12 text-center">
           <p className="text-gray-500">No results found for the selected filter.</p>
         </div>
-      )}
+      ) : (
+        <>
+          <TableWithColumnToggle
+            data={sortedResults}
+            columns={columnConfigs}
+            pageSize={50}
+            isLoading={false}
+            emptyMessage="No results found for the selected filter."
+            tableId="invoice-matching"
+            showColumnPicker={true}
+            className="invoice-match-table"
+          />
 
-      {sortedResults.length > 0 && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{sortedResults.length}</span> of{' '}
-            <span className="font-medium">{results.length}</span> results
-          </p>
-        </div>
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <p className="text-sm text-gray-700">
+              Showing <span className="font-medium">{sortedResults.length}</span> of{' '}
+              <span className="font-medium">{results.length}</span> results
+            </p>
+          </div>
+        </>
       )}
     </div>
   );

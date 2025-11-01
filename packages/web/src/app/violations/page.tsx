@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { PageHead } from '@/components/seo/PageHead';
 import Link from 'next/link';
 
 interface Violation {
@@ -152,8 +153,13 @@ export default function ViolationsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <Breadcrumbs items={[{ label: 'Violations' }]} />
+    <>
+      <PageHead
+        title="SoD Violations"
+        description="Segregation of Duties violations detected across your organization with risk analysis and filtering"
+      />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Breadcrumbs items={[{ label: 'Violations' }]} />
 
       {/* Header */}
       <div className="mb-8">
@@ -331,6 +337,7 @@ export default function ViolationsPage() {
           />
         </Card.Body>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

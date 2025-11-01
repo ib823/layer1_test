@@ -64,7 +64,7 @@ async function maxRequests(req: AuthenticatedRequest): Promise<number> {
   if (!user) return 10;
 
   // Admin: 1000/min
-  if (user.roles.includes('admin')) return 1000;
+  if (user.roles?.includes('admin')) return 1000;
 
   // Authenticated: 100/min
   return 100;

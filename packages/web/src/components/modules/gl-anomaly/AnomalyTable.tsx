@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { TableWithColumnToggle, ColumnConfig } from '@/components/ui/TableWithColumnToggle';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface GLAnomaly {
   id: string;
@@ -72,6 +74,145 @@ export function AnomalyTable({ anomalies }: AnomalyTableProps) {
     return 'text-green-600';
   };
 
+  // Define column configurations for TableWithColumnToggle
+  const columnConfigs: ColumnConfig<GLAnomaly>[] = [
+    {
+      column: {
+        id: 'documentNumber',
+        accessorKey: 'documentNumber',
+        header: 'Document',
+        cell: (info) => {
+          const anomaly = info.row.original;
+          return (
+            <div>
+              <div className="text-sm font-medium text-gray-900">{anomaly.documentNumber}</div>
+              {anomaly.lineItem && (
+                <div className="text-xs text-gray-500">Line: {anomaly.lineItem}</div>
+              )}
+            </div>
+          );
+        },
+      } as ColumnDef<GLAnomaly, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'glAccount',
+        accessorKey: 'glAccount',
+        header: 'GL Account',
+        cell: (info) => (
+          <span className="text-sm text-gray-900">{info.getValue()}</span>
+        ),
+      } as ColumnDef<GLAnomaly, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'amount',
+        accessorKey: 'amount',
+        header: 'Amount',
+        cell: (info) => (
+          <span className="text-sm text-gray-900">
+            ${info.getValue().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+        ),
+      } as ColumnDef<GLAnomaly, any>,
+      defaultVisible: true,
+      priority: 2, // Important
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'postingDate',
+        accessorKey: 'postingDate',
+        header: 'Posting Date',
+        cell: (info) => (
+          <span className="text-sm text-gray-500">
+            {new Date(info.getValue()).toLocaleDateString()}
+          </span>
+        ),
+      } as ColumnDef<GLAnomaly, any>,
+      defaultVisible: true,
+      priority: 2, // Important
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'detectionMethod',
+        accessorKey: 'detectionMethod',
+        header: 'Detection Method',
+        cell: (info) => (
+          <span className="text-sm text-gray-700 capitalize">
+            {info.getValue().replace('_', ' ')}
+          </span>
+        ),
+      } as ColumnDef<GLAnomaly, any>,
+      defaultVisible: true,
+      priority: 2, // Important
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'riskLevel',
+        accessorKey: 'riskLevel',
+        header: 'Risk Level',
+        cell: (info) => {
+          const level = info.getValue();
+          return (
+            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded border ${getRiskBadge(level)}`}>
+              {level.toUpperCase()}
+            </span>
+          );
+        },
+      } as ColumnDef<GLAnomaly, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'riskScore',
+        accessorKey: 'riskScore',
+        header: 'Risk Score',
+        cell: (info) => {
+          const score = info.getValue();
+          return (
+            <span className={`text-sm font-semibold ${getRiskScoreColor(score)}`}>
+              {score.toFixed(1)}
+            </span>
+          );
+        },
+      } as ColumnDef<GLAnomaly, any>,
+      defaultVisible: true,
+      priority: 1, // Critical
+      category: 'Data',
+    },
+    {
+      column: {
+        id: 'details',
+        header: 'Details',
+        cell: (info) => {
+          const anomaly = info.row.original;
+          return (
+            <button
+              onClick={() => setExpandedAnomaly(expandedAnomaly === anomaly.id ? null : anomaly.id)}
+              className="text-blue-600 hover:text-blue-800 underline text-sm"
+            >
+              {expandedAnomaly === anomaly.id ? 'Hide' : 'Show'}
+            </button>
+          );
+        },
+      } as ColumnDef<GLAnomaly, any>,
+      defaultVisible: true,
+      priority: 1, // Always visible
+      category: 'Actions',
+    },
+  ];
+
   return (
     <div className="bg-white rounded-lg shadow">
       {/* Filters */}
@@ -140,133 +281,63 @@ export function AnomalyTable({ anomalies }: AnomalyTableProps) {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Document
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                GL Account
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Posting Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Detection Method
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Risk Level
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Risk Score
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Details
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {sortedAnomalies.map((anomaly) => (
-              <>
-                <tr key={anomaly.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{anomaly.documentNumber}</div>
-                    {anomaly.lineItem && (
-                      <div className="text-xs text-gray-500">Line: {anomaly.lineItem}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {anomaly.glAccount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${anomaly.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(anomaly.postingDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <span className="capitalize">
-                      {anomaly.detectionMethod.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded border ${getRiskBadge(
-                        anomaly.riskLevel
-                      )}`}
-                    >
-                      {anomaly.riskLevel.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`font-semibold ${getRiskScoreColor(anomaly.riskScore)}`}>
-                      {anomaly.riskScore.toFixed(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button
-                      onClick={() => setExpandedAnomaly(expandedAnomaly === anomaly.id ? null : anomaly.id)}
-                      className="text-blue-600 hover:text-blue-800 underline"
-                    >
-                      {expandedAnomaly === anomaly.id ? 'Hide' : 'Show'}
-                    </button>
-                  </td>
-                </tr>
-                {expandedAnomaly === anomaly.id && (
-                  <tr className="bg-gray-50">
-                    <td colSpan={8} className="px-6 py-4">
-                      <div className="space-y-3">
-                        <div>
-                          <h4 className="font-medium text-sm text-gray-900 mb-1">Description:</h4>
-                          <p className="text-sm text-gray-700">{anomaly.description}</p>
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-sm text-gray-900 mb-1">Evidence:</h4>
-                          <pre className="text-xs bg-white rounded p-3 overflow-x-auto border border-gray-200">
-                            {JSON.stringify(anomaly.evidence, null, 2)}
-                          </pre>
-                        </div>
-                        <div className="flex gap-2 pt-2">
-                          <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-                            Investigate
-                          </button>
-                          <button className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300">
-                            Mark as False Positive
-                          </button>
-                          <button className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300">
-                            Assign
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Empty State or Footer */}
-      {sortedAnomalies.length === 0 && (
+      {/* Enhanced Table with Column Toggle */}
+      {sortedAnomalies.length === 0 ? (
         <div className="p-12 text-center">
           <p className="text-gray-500">No anomalies found for the selected filters.</p>
         </div>
-      )}
+      ) : (
+        <>
+          <TableWithColumnToggle
+            data={sortedAnomalies}
+            columns={columnConfigs}
+            pageSize={50}
+            isLoading={false}
+            emptyMessage="No anomalies found for the selected filters."
+            tableId="gl-anomaly-detection"
+            showColumnPicker={true}
+            className="anomaly-table"
+          />
 
-      {sortedAnomalies.length > 0 && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{sortedAnomalies.length}</span> of{' '}
-            <span className="font-medium">{anomalies.length}</span> anomalies
-          </p>
-        </div>
+          {/* Expanded Details Section */}
+          {expandedAnomaly && sortedAnomalies.find(a => a.id === expandedAnomaly) && (
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-medium text-sm text-gray-900 mb-1">Description:</h4>
+                  <p className="text-sm text-gray-700">
+                    {sortedAnomalies.find(a => a.id === expandedAnomaly)?.description}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm text-gray-900 mb-1">Evidence:</h4>
+                  <pre className="text-xs bg-white rounded p-3 overflow-x-auto border border-gray-200">
+                    {JSON.stringify(sortedAnomalies.find(a => a.id === expandedAnomaly)?.evidence, null, 2)}
+                  </pre>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                    Investigate
+                  </button>
+                  <button className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300">
+                    Mark as False Positive
+                  </button>
+                  <button className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300">
+                    Assign
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <p className="text-sm text-gray-700">
+              Showing <span className="font-medium">{sortedAnomalies.length}</span> of{' '}
+              <span className="font-medium">{anomalies.length}</span> anomalies
+            </p>
+          </div>
+        </>
       )}
     </div>
   );

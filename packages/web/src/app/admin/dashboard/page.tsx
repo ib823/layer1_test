@@ -18,6 +18,7 @@ import {
 } from '@ant-design/icons';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { PageHead } from '@/components/seo/PageHead';
 import { Role } from '@/types/auth';
 
 const { Title, Text } = Typography;
@@ -102,6 +103,10 @@ export default function AdminDashboardPage() {
 
   return (
     <ProtectedRoute allowedRoles={[Role.SYSTEM_ADMIN]}>
+      <PageHead
+        title="System Admin Dashboard"
+        description="System-wide overview of tenants, users, violations, and resource monitoring"
+      />
       <DashboardLayout>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>

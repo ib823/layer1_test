@@ -1,5 +1,5 @@
 /**
- * API Client for SAP GRC Platform
+ * API Client for Prism
  * Connects frontend to backend API
  */
 import type { ApiResponse, FilterOptions } from '@/types';

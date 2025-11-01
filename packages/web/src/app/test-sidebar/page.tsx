@@ -1,6 +1,7 @@
 'use client';
 
 import { Sidebar, SidebarItem } from '@/components/ui';
+import { PageHead } from '@/components/seo/PageHead';
 import { useState } from 'react';
 
 const menuItems: SidebarItem[] = [
@@ -56,8 +57,13 @@ export default function TestSidebarPage() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
-      <Sidebar
+    <>
+      <PageHead
+        title="Sidebar Component Test"
+        description="Test page for sidebar navigation component with collapsible functionality"
+      />
+      <div style={{ display: 'flex', height: '100vh' }}>
+        <Sidebar
         items={menuItems}
         currentPath={currentPath}
         onNavigate={(href) => {
@@ -71,6 +77,7 @@ export default function TestSidebarPage() {
         <h1>Current Page: {currentPath}</h1>
         <p>Click sidebar items to navigate</p>
       </main>
-    </div>
+      </div>
+    </>
   );
 }

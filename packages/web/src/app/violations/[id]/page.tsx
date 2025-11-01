@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Timeline } from '@/components/ui/Timeline';
 import { useToast } from '@/hooks/useToast';
+import { PageHead } from '@/components/seo/PageHead';
 import Link from 'next/link';
 
 interface ViolationDetail {
@@ -184,15 +185,20 @@ export default function ViolationDetailPage() {
   ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-text-secondary">
-        <Link href="/violations" className="hover:text-brand-primary transition-colors">
-          Violations
-        </Link>
-        <span>/</span>
-        <span className="text-text-primary">{violation.id}</span>
-      </div>
+    <>
+      <PageHead
+        title={`Violation ${violation.id} - ${violation.violationType}`}
+        description="Detailed violation analysis with conflict details, timeline, and resolution actions"
+      />
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
+        {/* Breadcrumb */}
+        <div className="mb-6 flex items-center gap-2 text-sm text-text-secondary">
+          <Link href="/violations" className="hover:text-brand-primary transition-colors">
+            Violations
+          </Link>
+          <span>/</span>
+          <span className="text-text-primary">{violation.id}</span>
+        </div>
 
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
@@ -456,6 +462,7 @@ export default function ViolationDetailPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

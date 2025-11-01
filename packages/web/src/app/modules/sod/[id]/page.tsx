@@ -4,6 +4,7 @@ import React from 'react';
 import { useParams } from 'next/navigation';
 import { Card, Descriptions, Tag, Timeline, Badge } from 'antd';
 import { ModuleTemplate } from '@/components/modules/ModuleTemplate';
+import { PageHead } from '@/components/seo/PageHead';
 import { sodConfig } from '../config';
 
 // Component implementations for detail sections
@@ -103,12 +104,18 @@ export default function SoDDetailPage() {
   };
 
   return (
-    <ModuleTemplate config={sodConfig}>
-      <div style={{ background: '#fff', padding: '24px', borderRadius: '8px' }}>
-        <h2>Violation Details: {id}</h2>
-        {/* Detail view will be rendered here */}
-        <p>Detail view implementation using ModuleDetailView component</p>
-      </div>
-    </ModuleTemplate>
+    <>
+      <PageHead
+        title={`SoD Violation ${id}`}
+        description="Detailed analysis of Segregation of Duties violation with role conflicts and remediation history"
+      />
+      <ModuleTemplate config={sodConfig}>
+        <div style={{ background: '#fff', padding: '24px', borderRadius: '8px' }}>
+          <h2>Violation Details: {id}</h2>
+          {/* Detail view will be rendered here */}
+          <p>Detail view implementation using ModuleDetailView component</p>
+        </div>
+      </ModuleTemplate>
+    </>
   );
 }

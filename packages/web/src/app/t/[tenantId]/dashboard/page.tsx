@@ -14,6 +14,7 @@ import {
   ClockCircleOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
+import { PageHead } from '@/components/seo/PageHead';
 
 const mockChartData = [
   { name: 'P2P', critical: 12, high: 24, medium: 18 },
@@ -24,10 +25,15 @@ const mockChartData = [
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
+    <>
+      <PageHead
+        title="Tenant Dashboard"
+        description="Overview of compliance status, recent violations, and key metrics for your organization"
+      />
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
           <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
           <p className="text-secondary mt-1">Overview of compliance and risk status</p>
         </div>
@@ -120,6 +126,7 @@ export default function DashboardPage() {
           ))}
         </div>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

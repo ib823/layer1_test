@@ -100,9 +100,25 @@ export const ModuleDataGrid: React.FC<ModuleDataGridProps> = ({ config }) => {
         onClick: () => action.onClick(record),
       }));
 
+      // Generate descriptive label based on record
+      // Try common identifier fields in order of preference
+      const recordIdentifier =
+        record.name ||
+        record.userName ||
+        record.title ||
+        record.description ||
+        record.id ||
+        'item';
+
       return (
         <Dropdown menu={{ items: menuItems }} trigger={['click']}>
-          <Button type="text" icon={<MoreOutlined />} />
+          <Button
+            type="text"
+            icon={<MoreOutlined />}
+            aria-label={`Actions for ${recordIdentifier}`}
+            aria-haspopup="true"
+            aria-expanded={false}
+          />
         </Dropdown>
       );
     },

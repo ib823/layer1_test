@@ -4,6 +4,7 @@ import { Timeline } from '@/components/ui/Timeline';
 import { MockDataBanner } from '@/components/ui';
 import { mockTimelineData } from '@/data/timeline-data';
 import { isFeatureEnabled, FeatureFlag } from '@/lib/featureFlags';
+import { PageHead } from '@/components/seo/PageHead';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -16,12 +17,17 @@ export default function TimelinePage() {
   const isLiveDataEnabled = isFeatureEnabled(FeatureFlag.LIVE_TIMELINE_DATA);
 
   return (
-    <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Page Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-          Activity Timeline
-        </h1>
+    <>
+      <PageHead
+        title="Activity Timeline"
+        description="Recent activity and events across the platform with real-time updates"
+      />
+      <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Page Header */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+            Activity Timeline
+          </h1>
         <p style={{ color: 'var(--text-secondary)' }}>
           Recent activity and events across the platform
         </p>
@@ -79,6 +85,7 @@ export default function TimelinePage() {
           <li>Color-coded markers indicate event type</li>
         </ul>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

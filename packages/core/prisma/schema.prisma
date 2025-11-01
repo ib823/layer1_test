@@ -903,3 +903,386 @@ model sod_rules {
   @@index([rule_type])
   @@index([severity])
 }
+
+// ============================================
+// AUDIT TRAIL SYSTEM (Phase 2 - P1)
+// ============================================
+
+// Comprehensive Audit Log for all user actions and system events
+model AuditLog {
+  id            String   @id @default(uuid())
+  tenantId      String
+
+  // Event identification
+  eventType     String   // USER_LOGIN, RECORD_CREATED, SOD_ANALYSIS_RUN, etc.
+  eventCategory String   // authentication, data_access, module_operation, configuration, system
+
+  // Actor information (who performed the action)
+  userId        String?
+  userName      String?
+  userEmail     String?
+  userIp        String?
+  userAgent     String?   @db.Text
+
+  // Target information (what was affected)
+  resourceType  String?  // user, role, violation, invoice, tenant, etc.
+  resourceId    String?
+  resourceName  String?
+
+  // Event details
+  action        String   // view, create, update, delete, export, login, etc.
+  description   String   @db.Text
+  details       Json?    // Structured data about the event
+
+  // Changes tracking (for update operations)
+  changesBefore Json?    // Previous state
+  changesAfter  Json?    // New state
+
+  // Result
+  success       Boolean  @default(true)
+  errorMessage  String?  @db.Text
+
+  // Context
+  sessionId     String?
+  requestId     String?
+  apiEndpoint   String?
+  apiMethod     String?  // GET, POST, PUT, DELETE
+
+  // Compliance
+  complianceRelevant Boolean @default(false)
+  retentionYears     Int     @default(7)
+
+  // Timestamps
+  timestamp     DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, timestamp(sort: Desc)])
+  @@index([userId, timestamp(sort: Desc)])
+  @@index([eventType, timestamp(sort: Desc)])
+  @@index([eventCategory, timestamp(sort: Desc)])
+  @@index([resourceType, resourceId])
+  @@index([success, timestamp(sort: Desc)])
+  @@index([complianceRelevant, timestamp(sort: Desc)])
+  @@map("audit_logs")
+}
+
+// ============================================
+// AUTOMATION SYSTEM (Phase 2 - P1)
+// ============================================
+
+// Automation workflow definitions
+model Automation {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?  @db.Text
+
+  // Trigger configuration (JSON)
+  triggerType   String   // event, schedule, condition, webhook
+  triggerConfig Json     // Event type, cron schedule, condition rules, webhook config
+
+  // Actions configuration (JSON array)
+  actions     Json       // Array of action configurations
+
+  // Status
+  enabled     Boolean    @default(true)
+  status      String     @default("active") // active, inactive, paused, error
+
+  // Metadata
+  createdBy   String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Execution statistics
+  lastRun     DateTime?
+  nextRun     DateTime?
+  runCount    Int        @default(0)
+  errorCount  Int        @default(0)
+
+  // Relations
+  executions  AutomationExecution[]
+
+  @@index([tenantId, enabled])
+  @@index([triggerType])
+  @@index([status])
+  @@index([nextRun])
+  @@map("automations")
+}
+
+// Automation execution history
+model AutomationExecution {
+  id             String   @id @default(uuid())
+  automationId   String
+  automation     Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  tenantId       String
+  triggeredBy    String   // event, schedule, webhook, manual
+  triggeredAt    DateTime @default(now())
+
+  // Execution details
+  status         String   // pending, running, completed, failed
+  executedActions Int     @default(0)
+  failedActions   Int     @default(0)
+
+  // Results
+  success        Boolean  @default(false)
+  errors         Json?    // Array of error messages
+  duration       Int?     // Milliseconds
+
+  // Context
+  context        Json?    // Event data, variables, etc.
+
+  // Timestamps
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+
+  @@index([automationId, triggeredAt(sort: Desc)])
+  @@index([tenantId, triggeredAt(sort: Desc)])
+  @@index([status])
+  @@map("automation_executions")
+}
+
+// ============================================
+// ENHANCED AUTHENTICATION SYSTEM
+// ============================================
+
+// User MFA Configuration
+model UserMFAConfig {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  mfaEnabled    Boolean  @default(false)
+
+  // TOTP Configuration
+  totpSecret      String?
+  totpEnabled     Boolean   @default(false)
+  totpBackupCodes String[]
+  totpSetupAt     DateTime?
+  totpLastUsedAt  DateTime?
+
+  // Passkey Configuration
+  passkeyEnabled Boolean   @default(false)
+  passkeySetupAt DateTime?
+
+  // User Preference
+  preferredMfaMethod String? // 'totp' or 'passkey'
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  webauthnCredentials WebAuthnCredential[]
+
+  @@index([userId])
+  @@index([userId, mfaEnabled])
+  @@map("user_mfa_config")
+}
+
+// WebAuthn Credentials (Passkeys)
+model WebAuthnCredential {
+  id                   String   @id @default(uuid())
+  userId               String
+  credentialId         String   @unique
+  credentialPublicKey  String   @db.Text
+  counter              BigInt   @default(0)
+  transports           String[]
+
+  // Device Info
+  deviceName      String?
+  deviceType      String? // 'platform' or 'cross-platform'
+
+  // WebAuthn Metadata
+  aaguid            String?
+  attestationFormat String?
+
+  // Usage Tracking
+  lastUsedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  mfaConfig UserMFAConfig @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([credentialId])
+  @@index([userId, lastUsedAt(sort: Desc)])
+  @@map("webauthn_credentials")
+}
+
+// User Sessions
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  sessionToken String   @unique
+
+  // Device Fingerprint & Info
+  deviceFingerprint String?
+  deviceName        String?
+  deviceType        String? // 'desktop', 'mobile', 'tablet'
+  browser           String?
+  os                String?
+
+  // Location
+  ipAddress String
+  country   String?
+  city      String?
+  latitude  Decimal? @db.Decimal(10, 8)
+  longitude Decimal? @db.Decimal(11, 8)
+
+  // Security Flags
+  isTrustedDevice Boolean @default(false)
+  mfaVerified     Boolean @default(false)
+  riskScore       Int     @default(0)
+
+  // Session Lifecycle
+  createdAt      DateTime  @default(now())
+  lastActivityAt DateTime  @default(now())
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  revocationReason String?
+
+  // User Agent
+  userAgent String? @db.Text
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([userId, revokedAt, expiresAt])
+  @@index([lastActivityAt(sort: Desc)])
+  @@index([userId, deviceFingerprint])
+  @@map("user_sessions")
+}
+
+// Login Attempts & Security Events
+model LoginAttempt {
+  id    String  @id @default(uuid())
+  userId String?
+  email String
+
+  // Attempt Status
+  status        String // 'success', 'failed_password', 'failed_mfa', 'blocked', 'requires_confirmation'
+  failureReason String? @db.Text
+
+  // Device & Location
+  ipAddress       String
+  deviceFingerprint String?
+  userAgent       String? @db.Text
+  country         String?
+  city            String?
+  latitude        Decimal? @db.Decimal(10, 8)
+  longitude       Decimal? @db.Decimal(11, 8)
+
+  // Risk Analysis
+  isNewDevice    Boolean @default(false)
+  isNewLocation  Boolean @default(false)
+  isSuspicious   Boolean @default(false)
+  riskScore      Int     @default(0)
+  riskFactors    Json?
+
+  // Email Confirmation
+  requiresConfirmation Boolean   @default(false)
+  confirmationToken    String?   @unique
+  confirmationSentAt   DateTime?
+  confirmedAt          DateTime?
+  deniedAt             DateTime?
+
+  // MFA Details
+  mfaMethod   String?  // 'totp', 'passkey', 'none'
+  mfaVerified Boolean  @default(false)
+
+  // Session Created
+  sessionId String?
+
+  // Timestamp
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([ipAddress])
+  @@index([isSuspicious, createdAt(sort: Desc)])
+  @@index([confirmationToken])
+  @@index([createdAt(sort: Desc)])
+  @@map("login_attempts")
+}
+
+// Trusted Devices
+model TrustedDevice {
+  id                String   @id @default(uuid())
+  userId            String
+  deviceFingerprint String
+
+  // Device Info
+  deviceName String?
+  deviceType String?
+  browser    String?
+  os         String?
+
+  // Trust Metadata
+  firstSeenAt    DateTime  @default(now())
+  lastUsedAt     DateTime  @default(now())
+  trustedAt      DateTime  @default(now())
+  trustExpiresAt DateTime?
+
+  // Location
+  ipAddress String?
+  country   String?
+  city      String?
+
+  // Revocation
+  revokedAt       DateTime?
+  revocationReason String?
+
+  @@unique([userId, deviceFingerprint])
+  @@index([userId])
+  @@index([userId, deviceFingerprint])
+  @@index([userId, revokedAt])
+  @@map("trusted_devices")
+}
+
+// Security Events Log
+model SecurityEvent {
+  id     String  @id @default(uuid())
+  userId String?
+
+  // Event Details
+  eventType     String
+  eventCategory String // 'auth', 'mfa', 'session', 'security'
+  severity      String // 'info', 'warning', 'critical'
+
+  // Event Data
+  description String
+  metadata    Json?
+
+  // Source
+  ipAddress         String?
+  deviceFingerprint String?
+  userAgent         String? @db.Text
+
+  // Context
+  sessionId   String?
+  triggeredBy String? // 'user', 'system', 'admin'
+
+  // Timestamp
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventType, createdAt(sort: Desc)])
+  @@index([severity, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@map("security_events")
+}
+
+// MFA Rate Limiting
+model MFARateLimit {
+  id          String   @id @default(uuid())
+  userId      String
+  limitType   String   // 'totp_attempts', 'passkey_attempts', 'backup_code_attempts'
+  attemptCount Int     @default(0)
+  lastAttemptAt DateTime @default(now())
+  lockedUntil DateTime?
+  windowStart DateTime @default(now())
+
+  @@unique([userId, limitType])
+  @@index([userId])
+  @@index([userId, lockedUntil])
+  @@map("mfa_rate_limits")
+}

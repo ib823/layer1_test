@@ -1,13 +1,19 @@
 'use client';
 
 import { Button, useToast } from '@/components/ui';
+import { PageHead } from '@/components/seo/PageHead';
 
 export default function TestToastPage() {
   const toast = useToast();
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1>Toast Notification Test</h1>
+    <>
+      <PageHead
+        title="Toast Notification Test"
+        description="Test page for toast notification component with success, error, warning, and info variants"
+      />
+      <main style={{ padding: '2rem' }}>
+        <h1>Toast Notification Test</h1>
 
       <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', flexWrap: 'wrap' }}>
         <Button variant="primary" onClick={() => toast.success('Operation completed successfully!')}>
@@ -32,6 +38,7 @@ export default function TestToastPage() {
           <li>Click × button to manually close</li>
         </ul>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
